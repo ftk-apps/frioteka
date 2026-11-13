@@ -3660,7 +3660,7 @@ function renderListas(c){
   +'</div>';
 }
 
-function _listaHtml(titulo,subtitulo,filas,maxW){
+function _listaHtml(titulo,subtitulo,filas,maxW,fileTitle){
   maxW=maxW||720;
   var fecha=new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"});
   var css=''
@@ -3690,7 +3690,7 @@ function _listaHtml(titulo,subtitulo,filas,maxW){
 
   var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
     +'<meta name="viewport" content="width=device-width,initial-scale=1">'
-    +'<title>'+titulo+'</title>'
+    +'<title>'+(fileTitle||titulo)+'</title>'
     +'<style>'+css+'</style>'
     +'<scr'+'ipt>'
     +'async function compartirListaWA(titulo){'
@@ -3714,7 +3714,7 @@ function _listaHtml(titulo,subtitulo,filas,maxW){
     +'<div class="body">'
     +'<button class="print-btn no-print" style="margin:20px 0 0;" onclick="window.print()">📥 Descargar PDF para enviar</button>'
     +'<table>'+filas+'</table>'
-    +'<div class="footer">Precios en pesos argentinos · vigentes al '+fecha+' · sujetos a cambio sin previo aviso</div>'
+    +'<div class="footer">Precios en pesos argentinos · vigentes al '+fecha+'<br><strong>Los precios están sujetos a modificación sin previo aviso.</strong></div>'
     +'</div>'
     +'</div>'
     +'</body></html>';
@@ -3770,8 +3770,13 @@ function exportListaCongelados(tipo){
   });
   var titulo=esMay?"Lista Mayorista":"Lista Minorista";
   var sub=esMay?"Precios mayoristas":"Precios al público";
+  var hoy=new Date();
+  var dd=String(hoy.getDate()).padStart(2,"0");
+  var mm=String(hoy.getMonth()+1).padStart(2,"0");
+  var aaaa=hoy.getFullYear();
+  var fileTitle="FRIOTEKA_"+(esMay?"Lista_Mayorista":"Lista_Minorista")+"_Congelados_"+dd+"-"+mm+"-"+aaaa;
   var w=window.open("","_blank");
-  w.document.write(_listaHtml(titulo,sub,filas,esMay?900:720));
+  w.document.write(_listaHtml(titulo,sub,filas,esMay?900:720,fileTitle));
   w.document.close();
 }
 
@@ -3783,8 +3788,13 @@ function exportListaSantaMaria(){
       +'<td class="precio">$'+p.precioMay.toLocaleString("es-AR")+' c/u</td>'
       +'</tr>';
   });
+  var hoy=new Date();
+  var dd=String(hoy.getDate()).padStart(2,"0");
+  var mm=String(hoy.getMonth()+1).padStart(2,"0");
+  var aaaa=hoy.getFullYear();
+  var fileTitle="FRIOTEKA_Lista_Lacteos_Santa_Maria_"+dd+"-"+mm+"-"+aaaa;
   var w=window.open("","_blank");
-  w.document.write(_listaHtml("Lista Santa María","Precios mayoristas",filas));
+  w.document.write(_listaHtml("Lista Santa María","Precios mayoristas",filas,720,fileTitle));
   w.document.close();
 }
 
