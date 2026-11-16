@@ -351,9 +351,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
   </div>
 </div>
 
-<div class="ofertas-section" id="ofertasSection"></div>
-<div class="ofertas-section" id="masVendidosSection"></div>
-<div class="ofertas-section" id="promo5x4Section"></div>
 <div class="ofertas-section" id="destacadosSection"></div>
 <div class="prog-wrap" id="progWrap" style="display:none;">
   <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
@@ -717,17 +714,15 @@ var PROMO_5X4=[3353,3354,3355,3356,3357,3358,3359,3360,3304,3305,3306,3309,3301,
 function renderDestacados(){
   var sec=document.getElementById("destacadosSection");
   if(!sec) return;
-  if(MODO!=="mayorista"){sec.style.display="none";sec.innerHTML="";return;}
   sec.style.display="";
   var prods=DESTACADOS_MAY.map(function(cod){return P.find(function(p){return p.codigo===cod;});}).filter(Boolean);
   if(!prods.length){sec.style.display="none";return;}
-  var html='<div class="ofertas-header"><span style="font-size:20px;">🥔</span><span class="ofertas-titulo">NUEVAS PAPAS · DESTACADOS</span></div><div class="ofertas-scroll">';
+  var html='<div class="ofertas-header"><span style="font-size:20px;">⭐</span><span class="ofertas-titulo">DESTACADOS VIP</span></div><div class="ofertas-scroll">';
   prods.forEach(function(p){
-    var pCaja=getPrecio(p)*p.unidadesCaja;
     html+='<div class="oferta-card" onclick="irAProducto('+p.codigo+')">'+
-      '<div class="oferta-flame" style="background:#E65100;">📦 CAJA</div>'+
-      '<div class="oferta-precio">'+fmt(pCaja)+'</div>'+
-      '<div class="oferta-unid">x'+p.unidadesCaja+' u.</div>'+
+      '<div class="oferta-flame" style="background:#d4830a;">⭐ VIP</div>'+
+      '<div class="oferta-precio">'+fmt(getPrecio(p))+'</div>'+
+      '<div class="oferta-unid">por unidad</div>'+
       '<div class="oferta-nombre">'+p.nombre+'</div>'+
     '</div>';
   });
@@ -1218,9 +1213,6 @@ function cerrarConfirmacion(){
 }
 
 // Init
-renderOfertas();
-renderMasVendidos();
-renderPromo5x4();
 renderDestacados();
 renderFamilias();
 renderCatalogo();
