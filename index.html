@@ -2163,84 +2163,120 @@ function renderCC(c){
     var saldoFinal=saldoCorrido;
     var cliIdx=clientes.indexOf(cli);
 
-    // Estado de facturas pendientes para este cliente
+    // Facturas con estado de imputación
     var facturasCliente=_obtenerFacturasCC(cli);
-    var facsPendientes=facturasCliente.filter(function(f){return f.saldo>0&&f.id!=='__saldo__'&&!f.id.startsWith('__mov__');});
+    var vencidas=facturasCliente.filter(function(f){return f.saldo>0&&f.vencida;}).length;
+    var proximas=facturasCliente.filter(function(f){return f.saldo>0&&!f.vencida&&f.diasVenc!==null&&f.diasVenc<=5;}).length;
     var facsBadge='';
-    if(facsPendientes.length){
-      var vencidas=facsPendientes.filter(function(f){return f.vencida;}).length;
-      var proximas=facsPendientes.filter(function(f){return !f.vencida&&f.diasVenc!==null&&f.diasVenc<=5;}).length;
-      if(vencidas>0) facsBadge=' <span style="background:#B40000;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">'+vencidas+' vencida'+(vencidas>1?'s':'')+'</span>';
-      else if(proximas>0) facsBadge=' <span style="background:#ffc107;color:#333;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">vence pronto</span>';
-    }
+    if(vencidas>0) facsBadge=' <span style="background:#B40000;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">'+vencidas+' vencida'+(vencidas>1?'s':'')+'</span>';
+    else if(proximas>0) facsBadge=' <span style="background:#ffc107;color:#333;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">vence pronto</span>';
 
-    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-      +'<div class="form-tit" style="margin-bottom:0;">'+cli.nombre+facsBadge+'</div>'
-      +(cli.tel?'<a href="tel:'+cli.tel+'" class="btn-sm g" style="font-size:11px;">Llamar</a>':'')
-      +'</div>'
-      +'<div class="cc-saldo"><div><div style="font-size:12px;color:var(--gris)">Saldo pendiente</div>'
-      +'<div class="cc-val" style="color:'+(saldoFinal>0?'var(--rojo)':'#16a34a')+'">'+fmt(saldoFinal)+'</div></div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">'
-      +'<button class="btn-sm" style="background:#1a73e8;color:white;" onclick="abrirPagoCC('+cliIdx+')">💰 Registrar pago</button>'
-      +(_ccAdminMode?'<button class="btn-sm" style="background:#6c757d;color:white;" onclick="abrirMovCC('+cliIdx+')">✏️ Agregar mov.</button>':'')
-      +(_ccAdminMode?'<button class="btn-sm" style="background:#ffc107;color:#333;" onclick="editarSaldoInicial('+cliIdx+')">⚙️ Saldo inicial</button>':'')
-      +(_ccAdminMode?'<button class="btn-sm" style="background:#dc3545;color:white;" onclick="eliminarCC('+cliIdx+')">🗑️ Eliminar CC</button>':'')
-      +'</div></div>'
-      // Mini-tabla de facturas pendientes
-      +(facsPendientes.length?'<div style="margin:8px 0 4px;border-top:1px solid var(--borde);padding-top:8px;">'
-        +'<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px;">FACTURAS PENDIENTES</div>'
-        +facsPendientes.map(function(fac){
+    // Construir detalle de facturas (ventas CC) con pagos imputados
+    var facturasHtml='';
+    // Mapear pagos a facturas para mostrar qué pago canceló qué
+    var pagosPorFac={};
+    (cli.pagosCC||[]).forEach(function(pago,pi){
+      (pago.imputacion||[]).forEach(function(imp){
+        if(!pagosPorFac[imp.id]) pagosPorFac[imp.id]=[];
+        pagosPorFac[imp.id].push({fecha:pago.fecha,nota:pago.nota,monto:imp.montoAplicado,pagoIdx:pi});
+      });
+    });
+    // Solo ventas CC (no saldo inicial ni movs manuales)
+    var facVentas=facturasCliente.filter(function(f){return f.id!=='__saldo__'&&!f.id.startsWith('__mov__');});
+    if(facVentas.length){
+      facturasHtml+='<div style="margin-top:10px;">';
+      facVentas.forEach(function(fac){
+        var cancelada=fac.saldo<=0;
+        var parcial=fac.pagado>0&&fac.saldo>0;
+        var estadoBg=cancelada?'#e8f5e9':(fac.vencida?'#fff0f0':(parcial?'#e3f0ff':'#fafafa'));
+        var estadoBorder=cancelada?'#16a34a':(fac.vencida?'#B40000':(parcial?'#1a73e8':'#ddd'));
+        var estadoTag=cancelada
+          ?'<span style="background:#16a34a;color:white;border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;">✅ CANCELADA</span>'
+          :(fac.vencida
+            ?'<span style="background:#B40000;color:white;border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;">⚠️ VENCIDA</span>'
+            :(parcial
+              ?'<span style="background:#1a73e8;color:white;border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;">🔵 PARCIAL</span>'
+              :'<span style="background:#888;color:white;border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;">🔴 PENDIENTE</span>'));
+        var vencTxt='';
+        if(!cancelada&&fac.fechaVenc){
           var dias=fac.diasVenc;
-          var estadoColor=fac.vencida?'#B40000':(dias!==null&&dias<=2?'#cc5500':(dias!==null&&dias<=5?'#856404':'#555'));
-          var estadoTxt=fac.vencida?'⚠️ Vencida hace '+Math.abs(dias)+' día'+(Math.abs(dias)!==1?'s':'')
-            :(dias===null?'':(dias===0?'⚠️ Vence HOY':'📅 Vence en '+dias+' día'+(dias!==1?'s':'')+' ('+fac.fechaVenc+')'));
-          var pagParcial=fac.pagado>0?' · Pagado: '+fmt(fac.pagado):'';
-          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;border-bottom:1px solid #f0f0f0;">'
-            +'<span style="color:#333;">'+fac.label+pagParcial+'</span>'
-            +'<span style="display:flex;gap:8px;align-items:center;">'
-            +(estadoTxt?'<span style="color:'+estadoColor+';font-size:11px;">'+estadoTxt+'</span>':'')
-            +'<b style="color:var(--rojo);">'+fmt(fac.saldo)+'</b>'
-            +'</span></div>';
-        }).join('')
-        +'</div>':'');
-
-    // Tabla de movimientos
-    if(!movs.length){
-      h+='<div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0;">Sin movimientos</div>';
-    } else {
-      h+='<div style="font-size:12px;color:#888;display:grid;grid-template-columns:1fr 2fr 80px 80px '+((_ccAdminMode)?'40px':'')+'};gap:2px;padding:4px 0;font-weight:700;border-bottom:2px solid var(--borde);">'
-        +'<span>Fecha</span><span>Descripción</span><span style="text-align:right;">Importe</span><span style="text-align:right;">Saldo</span>'
-        +(_ccAdminMode?'<span></span>':'')
-        +'</div>';
-      movs.forEach(function(m){
-        var colorTipo=m.tipo==='p'?'#16a34a':'var(--rojo)';
-        var icono=m.tipo==='p'?'✅':'🛒';
-        if(m.esInicial) icono='📌';
-        if(m.esMov&&m.tipo==='v') icono='➕';
-        if(m.esMov&&m.tipo==='p') icono='➖';
-        var montoStr=(m.tipo==='p'?'− ':'+ ')+fmt(m.monto);
-        var editBtn='';
-        if(_ccAdminMode){
-          if(m.esPago){
-            editBtn='<button class="cc-mov-edit" title="Editar pago" onclick="editarPagoCC('+cliIdx+','+m.pagoIdx+')">✏️</button>';
-          } else if(m.esMov){
-            editBtn='<button class="cc-mov-edit" title="Editar movimiento" onclick="editarMovCC('+cliIdx+','+m.movIdx+')">✏️</button>';
-          } else if(m.esInicial){
-            editBtn='<button class="cc-mov-edit" title="Editar saldo inicial" onclick="editarSaldoInicial('+cliIdx+')">✏️</button>';
-          } else {
-            editBtn='<span style="width:28px;display:inline-block;"></span>';
-          }
+          vencTxt=fac.vencida
+            ?'<span style="font-size:11px;color:#B40000;"> · Vencida hace '+Math.abs(dias)+' día'+(Math.abs(dias)!==1?'s':'')+'</span>'
+            :(dias===0?'<span style="font-size:11px;color:#cc5500;"> · Vence HOY</span>'
+              :'<span style="font-size:11px;color:#555;"> · Vence '+fac.fechaVenc+'</span>');
         }
-        h+='<div class="cc-mov '+m.tipo+'" style="display:grid;grid-template-columns:1fr 2fr 80px 80px '+((_ccAdminMode)?'40px':'')+';">'
-          +'<span style="color:#555;">'+(m.fecha==='00000000'||m.fecha==='00000001'?'—':m.fecha)+'</span>'
-          +'<span>'+icono+' '+m.desc+'</span>'
-          +'<span style="text-align:right;color:'+colorTipo+';font-weight:700;">'+montoStr+'</span>'
-          +'<span class="cc-mov-saldo" style="color:'+(m.saldoTras>0?'var(--rojo)':'#16a34a')+';">'+fmt(m.saldoTras)+'</span>'
-          +(_ccAdminMode?editBtn:'')
+        facturasHtml+='<div style="border:1.5px solid '+estadoBorder+';border-radius:10px;background:'+estadoBg+';margin-bottom:8px;overflow:hidden;">'
+          // Cabecera factura
+          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;">'
+          +'<div><span style="font-size:13px;font-weight:700;">'+fac.label+'</span>'+vencTxt+'</div>'
+          +'<div style="display:flex;gap:8px;align-items:center;">'
+          +estadoTag
+          +(cancelada
+            ?'<span style="font-size:12px;color:#16a34a;font-weight:700;">'+fmt(fac.monto)+'</span>'
+            :'<span style="font-size:13px;font-weight:700;color:var(--rojo);">Debe: '+fmt(fac.saldo)+'</span>')
+          +'</div></div>'
+          // Pagos imputados a esta factura
+          +((pagosPorFac[fac.id]&&pagosPorFac[fac.id].length)
+            ?'<div style="border-top:1px solid '+estadoBorder+';padding:4px 10px 6px;">'
+              +'<div style="font-size:10px;font-weight:700;color:#888;margin-bottom:3px;text-transform:uppercase;">Pagos aplicados</div>'
+              +pagosPorFac[fac.id].map(function(p){
+                return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;">'
+                  +'<span style="color:#555;">'+p.fecha+' · '+(p.nota||'Pago')+'</span>'
+                  +'<span style="color:#16a34a;font-weight:700;">− '+fmt(p.monto)+'</span>'
+                  +'</div>';
+              }).join('')
+              +'</div>'
+            :'')
           +'</div>';
       });
+      facturasHtml+='</div>';
     }
-    h+='</div>';
+
+    // Pagos sin imputación (los viejos registrados antes del sistema nuevo)
+    var pagosSinImp=(cli.pagosCC||[]).filter(function(p){return !p.imputacion||!p.imputacion.length;});
+    var pagosSinImpHtml='';
+    if(pagosSinImp.length){
+      pagosSinImpHtml='<div style="margin-top:8px;border-top:1px solid var(--borde);padding-top:8px;">'
+        +'<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px;">PAGOS SIN IMPUTAR (anteriores)</div>'
+        +pagosSinImp.map(function(p,pi){
+          var editBtn=_ccAdminMode?'<button class="cc-mov-edit" onclick="editarPagoCC('+cliIdx+','+cli.pagosCC.indexOf(p)+')">✏️</button>':'';
+          return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0;border-bottom:1px solid #f0f0f0;">'
+            +'<span style="color:#555;">'+p.fecha+' · '+(p.nota||'Pago')+'</span>'
+            +'<span style="display:flex;gap:6px;align-items:center;"><span style="color:#16a34a;font-weight:700;">− '+fmt(p.monto)+'</span>'+editBtn+'</span>'
+            +'</div>';
+        }).join('')
+        +'</div>';
+    }
+
+    var detalleId='ccdet_'+cliIdx;
+    h+='<div class="card" style="padding:0;overflow:hidden;">'
+      // Header colapsable
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;" onclick="toggleCC(\''+detalleId+'\')">'
+        +'<div style="display:flex;align-items:center;gap:8px;">'
+          +'<span style="font-size:16px;font-weight:700;">'+cli.nombre+'</span>'+facsBadge
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:10px;">'
+          +'<div style="text-align:right;">'
+            +'<div style="font-size:11px;color:var(--gris);">Saldo</div>'
+            +'<div style="font-size:16px;font-weight:700;color:'+(saldoFinal>0?'var(--rojo)':'#16a34a')+';">'+fmt(saldoFinal)+'</div>'
+          +'</div>'
+          +'<span id="arr_'+detalleId+'" style="font-size:18px;color:#aaa;transition:transform .2s;">▸</span>'
+        +'</div>'
+      +'</div>'
+      // Detalle colapsado
+      +'<div id="'+detalleId+'" style="display:none;padding:0 14px 14px;border-top:1px solid var(--borde);">'
+        // Botones acción
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 0;">'
+          +'<button class="btn-sm" style="background:#1a73e8;color:white;" onclick="abrirPagoCC('+cliIdx+')">💰 Registrar pago</button>'
+          +(cli.tel?'<a href="tel:'+cli.tel+'" class="btn-sm g" style="font-size:12px;">📞 Llamar</a>':'')
+          +(_ccAdminMode?'<button class="btn-sm" style="background:#6c757d;color:white;" onclick="abrirMovCC('+cliIdx+')">✏️ Agregar mov.</button>':'')
+          +(_ccAdminMode?'<button class="btn-sm" style="background:#ffc107;color:#333;" onclick="editarSaldoInicial('+cliIdx+')">⚙️ Saldo inicial</button>':'')
+          +(_ccAdminMode?'<button class="btn-sm" style="background:#dc3545;color:white;" onclick="eliminarCC('+cliIdx+')">🗑️ Eliminar CC</button>':'')
+        +'</div>'
+        +facturasHtml
+        +pagosSinImpHtml
+      +'</div>'
+    +'</div>';
   });
 
   // Modal registrar pago
@@ -2317,6 +2353,14 @@ function cerrarPagoCC(e){
   if(e.target===document.getElementById('ccModal')) document.getElementById('ccModal').style.display='none';
 }
 function cerrarImputModal(){document.getElementById('ccImputModal').style.display='none';}
+function toggleCC(id){
+  var det=document.getElementById(id);
+  var arr=document.getElementById('arr_'+id);
+  if(!det) return;
+  var open=det.style.display!=='none';
+  det.style.display=open?'none':'block';
+  if(arr) arr.style.transform=open?'':'rotate(90deg)';
+}
 function previsualizarImputacion(){
   var monto=parseFloat(document.getElementById('ccModalMonto').value.replace(',','.'));
   if(!monto||monto<=0){alert('Ingresá un monto válido.');return;}
