@@ -2287,8 +2287,13 @@ function renderCC(c){
     +'<div id="ccModalNombre" style="font-weight:600;margin-bottom:16px;"></div>'
     +'<div style="font-size:14px;color:var(--gris);margin-bottom:4px;">Monto pagado ($)</div>'
     +'<input id="ccModalMonto" type="number" inputmode="numeric" placeholder="Ej: 50000" style="width:100%;padding:12px;font-size:18px;border:2px solid var(--borde);border-radius:12px;margin-bottom:12px;box-sizing:border-box;">'
-    +'<div style="font-size:14px;color:var(--gris);margin-bottom:4px;">Nota (opcional)</div>'
-    +'<input id="ccModalNota" type="text" placeholder="Ej: transferencia, efectivo..." style="width:100%;padding:10px;font-size:14px;border:2px solid var(--borde);border-radius:12px;margin-bottom:12px;box-sizing:border-box;">'
+    +'<div style="font-size:14px;color:var(--gris);margin-bottom:6px;">Forma de pago</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;" id="ccModalNotaBtns">'
+    +['Efectivo','Transferencia','QR','Cheque','Otro'].map(function(op){
+      return '<button type="button" onclick="selNotaCC(this)" data-val="'+op+'" style="padding:8px 14px;border-radius:20px;border:2px solid var(--borde);background:white;font-size:14px;cursor:pointer;">'+op+'</button>';
+    }).join('')
+    +'</div>'
+    +'<input id="ccModalNota" type="text" placeholder="Otro..." style="width:100%;padding:10px;font-size:14px;border:2px solid var(--borde);border-radius:12px;margin-bottom:12px;box-sizing:border-box;display:none;">'
     +'<div style="font-size:14px;color:var(--gris);margin-bottom:4px;">Fecha del pago</div>'
     +'<input id="ccModalFecha" type="text" placeholder="dd/mm/aaaa" style="width:100%;padding:10px;font-size:14px;border:2px solid var(--borde);border-radius:12px;margin-bottom:20px;box-sizing:border-box;">'
     +'<div style="display:flex;gap:10px;">'
@@ -2344,6 +2349,9 @@ function abrirPagoCC(idx){
   document.getElementById('ccModalNombre').textContent=cli.nombre;
   document.getElementById('ccModalMonto').value='';
   document.getElementById('ccModalNota').value='';
+  document.getElementById('ccModalNota').style.display='none';
+  var btns=document.querySelectorAll('#ccModalNotaBtns button');
+  btns.forEach(function(b){b.style.background='white';b.style.color='#333';b.style.borderColor='var(--borde)';});
   var hoyDef=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
   document.getElementById('ccModalFecha').value=hoyDef;
   setTimeout(function(){document.getElementById('ccModalMonto').focus();},100);
@@ -2353,6 +2361,27 @@ function cerrarPagoCC(e){
   if(e.target===document.getElementById('ccModal')) document.getElementById('ccModal').style.display='none';
 }
 function cerrarImputModal(){document.getElementById('ccImputModal').style.display='none';}
+function selNotaCC(btn){
+  // Toggle: si ya estaba seleccionado, deseleccionar
+  var btns=document.querySelectorAll('#ccModalNotaBtns button');
+  var eraActivo=btn.style.background==='#1a73e8';
+  btns.forEach(function(b){b.style.background='white';b.style.color='#333';b.style.borderColor='var(--borde)';});
+  var inputNota=document.getElementById('ccModalNota');
+  if(eraActivo){
+    // deseleccionar
+    inputNota.style.display='none';
+    inputNota.value='';
+  } else if(btn.dataset.val==='Otro'){
+    btn.style.background='#1a73e8';btn.style.color='white';btn.style.borderColor='#1a73e8';
+    inputNota.style.display='block';
+    inputNota.value='';
+    inputNota.focus();
+  } else {
+    btn.style.background='#1a73e8';btn.style.color='white';btn.style.borderColor='#1a73e8';
+    inputNota.style.display='none';
+    inputNota.value=btn.dataset.val;
+  }
+}
 function toggleCC(id){
   var det=document.getElementById(id);
   var arr=document.getElementById('arr_'+id);
