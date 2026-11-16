@@ -675,6 +675,7 @@ function fjFila(id,f,ti,loc,a,b,x,ahora){
   let cuenta=0;
   if(fuera){est.push(["Fuera de horario","warn"]);if(ent!=null&&sal!=null){const ex=sal-ent;
     if(ed.ent||ed.sal||ed.just)cuenta=Math.max(0,ex); // si Banchi lo editó, cuenta lo que puso
+    else if(ex<30&&!DB.fj.aprob[key]){est.push([`Marca suelta de ${ex} min: no cuenta, no se aprueba`,"mut"])} // Banchi 16/11: los minutos sueltos no se aprueban ni se pagan
     else{if(!DB.fj.aprob[key])acc={a:"apr",min:ex,t:`Aprobar ${fhm(ex)}`};cuenta=DB.fj.aprob[key]||0}}}
   else if(ent==null&&sal==null){if(pasado){est.push(["Falta","bad"]);est.push(["Sin aviso es falta grave","mut"]);acc={a:"nov",nov:"Falta",t:"Pasar a novedades"}}else est.push(["Todavía no","mut"])}
   else{
@@ -714,7 +715,9 @@ function fjDatos(id,lun){const FF=fjCruce(id,lun);const pend=[];
     let ini=null,fin=null,obs=[];
     if(r.man){ini=r.ent;fin=r.sal;obs.push("Agregado a mano")}
     else if(r.fuera){if(r.cuenta){ini=r.ent;fin=r.ent+r.cuenta;obs.push("Fuera de horario")}}
-    else if(r.ent!=null&&r.sal!=null){ini=ed.ent?r.ent:Math.max(r.ent,r.a);fin=ed.sal?r.sal:Math.min(r.sal,r.b)+(ed.sal?0:ap)}
+    else if(r.ent!=null&&r.sal!=null){ini=ed.ent?r.ent:Math.max(r.ent,r.a);fin=ed.sal?r.sal:Math.min(r.sal,r.b)+(ed.sal?0:ap);
+      // Regla de Banchi (16/11): se paga el horario. Diferencias de menos de 30 min no se preguntan: va el horario (lo de más queda en "minutos de más", lo de menos como tarde/novedad)
+      if(!ed.ent&&Math.abs(ini-r.a)<30)ini=r.a;if(!ed.sal&&Math.abs(fin-r.b)<30)fin=r.b}
     // horas sueltas: las decide Banchi
     if(ini!=null&&!ed.ent&&!r.man&&ini%30)pend.push({k:"r",key:r.key,campo:"ent",f:r.f,m:ini});
     if(fin!=null&&!ed.sal&&!r.man&&fin%30)pend.push({k:"r",key:r.key,campo:"sal",f:r.f,m:fin});
