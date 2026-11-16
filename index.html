@@ -1343,7 +1343,14 @@ function pdfNota(items, ctx){
         if(ctx.nroFactura){
           d.text("Factura Nro: "+ctx.nroFactura, X + W - 6, B - 33, 9, "F2", "#1a73e8", "r");
         }
-        d.text("Gracias por su compra  -  FRIOTEKA Especialistas en Congelados", X + W / 2, B - 21, 8.5, "F2", ROJO, "c");
+        if(ctx.ctaCteInfo){
+          var cc=ctx.ctaCteInfo;
+          d.text("ESTADO CTA. CTE.:", X + 6, B - 38, 7.5, "F2", "#1a73e8", "l");
+          d.text("Saldo anterior: "+fmt(cc.saldoAnterior), X + 6, B - 30, 7.5, "F1", "#555555", "l");
+          d.text("Esta venta: +"+fmt(cc.estaVenta), X + 6, B - 22, 7.5, "F1", "#555555", "l");
+          d.text("Nuevo saldo: "+fmt(cc.saldoNuevo), X + 6, B - 14, 8, "F2", cc.saldoNuevo>0?"#B40000":"#16a34a", "l");
+        }
+        if(!ctx.ctaCteInfo) d.text("Gracias por su compra  -  FRIOTEKA Especialistas en Congelados", X + W / 2, B - 21, 8.5, "F2", ROJO, "c");
       } else {
         d.rect(X, B - 62, W, 22, "#eeeeee");
         d.text("CONTINÚA EN LA HOJA SIGUIENTE…", X + W - 6, B - 47, 10, "F2", "#000000", "r");
@@ -2988,7 +2995,17 @@ document.addEventListener("DOMContentLoaded", function(){
     else if(nvDescEsp>0) descLinea="Desc. especial "+nvDescEsp+"%";
     var obsVal=($("nvObs")?$("nvObs").value:"").trim();
     var nroFactVal=($("nvNroFactura")?$("nvNroFactura").value:"").trim();
-    var ctx={cl:cl,dir:dir2,pago:nvFpago,np:nvFmt(nv),fecha:new Date().toLocaleDateString("es-AR"),total:f.final,subtotal:subtotal,bultos:bultos,kg:kg,descLinea:descLinea,envio:tMin>=60000,obs:obsVal,nroFactura:nroFactVal};
+    // Estado de CC: solo si la venta va a Cta. Corriente
+    var ctaCteInfo=null;
+    if(nvFpago==="Cta. Corriente"){
+      var cliCC=clientes.find(function(c){return c.nombre.toLowerCase()===cl.toLowerCase();});
+      if(cliCC){
+        var saldoActual=_calcSaldoCC(cliCC);
+        var saldoTrasVenta=saldoActual+f.final;
+        ctaCteInfo={saldoAnterior:saldoActual,estaVenta:f.final,saldoNuevo:saldoTrasVenta};
+      }
+    }
+    var ctx={cl:cl,dir:dir2,pago:nvFpago,np:nvFmt(nv),fecha:new Date().toLocaleDateString("es-AR"),total:f.final,subtotal:subtotal,bultos:bultos,kg:kg,descLinea:descLinea,envio:tMin>=60000,obs:obsVal,nroFactura:nroFactVal,ctaCteInfo:ctaCteInfo};
     var ok=await generarPDF(items,ctx);
     if(ok){
       var selPrev=$("nvPreventista");nvPreventistaVal=selPrev?selPrev.value:"";
