@@ -1486,13 +1486,20 @@ function marcarPendienteProcessado(){
 
 function renderGestion(){
   var nPend=pendientes.filter(function(p){return p.estado==="pendiente";}).length;
+  // Contar facturas vencidas en CC
+  var nVencidas=0;
+  clientes.filter(function(cl){return cl.cc;}).forEach(function(cl){
+    _obtenerFacturasCC(cl).forEach(function(fac){
+      if(fac.saldo>0&&fac.vencida) nVencidas++;
+    });
+  });
   var tabDefs=[
     ["pendientes","⏳","Pendientes"+(nPend>0?" ("+nPend+")":"")],
     ["panel","📊","Panel"],
     ["ventas","💰","Ventas"],
     ["pasadas","✅","Sistema"],
     ["clientes","👥","Clientes"],
-    ["cc","📒","Cta. Cte."],
+    ["cc","📒","Cta. Cte."+(nVencidas>0?" ⚠️":"")],
     ["prev","🛵","Preventistas"],
     ["listas","📋","Listas"],
     ["nv","➕","Nueva venta"]
@@ -2094,8 +2101,39 @@ function renderCC(c){
       +'</div>';
   }
 
-  if(!ccCli.length){c.innerHTML=adminBar+'<div class="vacio">No hay clientes con cuenta corriente.</div>';return;}
-  var h=adminBar;
+  // Cartel de vencimientos próximos (≤5 días) o vencidos
+  var alertasVenc=[];
+  clientes.filter(function(cl){return cl.cc;}).forEach(function(cl){
+    _obtenerFacturasCC(cl).forEach(function(fac){
+      if(fac.saldo>0&&fac.fechaVenc){
+        var dias=_diasHasta(fac.fechaVenc);
+        if(dias!==null&&dias<=5){
+          alertasVenc.push({cliente:cl.nombre,label:fac.label,saldo:fac.saldo,dias:dias,fechaVenc:fac.fechaVenc});
+        }
+      }
+    });
+  });
+  var alertaHtml='';
+  if(alertasVenc.length){
+    alertaHtml='<div style="background:#fff3cd;border:1.5px solid #ffc107;border-radius:12px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-weight:700;font-size:13px;color:#856404;margin-bottom:8px;">⚠️ Facturas próximas a vencer o vencidas</div>';
+    alertasVenc.sort(function(a,b){return a.dias-b.dias;}).forEach(function(a){
+      var color=a.dias<0?'#B40000':(a.dias<=2?'#cc5500':'#856404');
+      var estado=a.dias<0?'Vencida hace '+Math.abs(a.dias)+' día'+(Math.abs(a.dias)!==1?'s':'')
+                         :(a.dias===0?'Vence HOY':'Vence en '+a.dias+' día'+(a.dias!==1?'s':''));
+      alertaHtml+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #ffe08a;">'
+        +'<div><span style="font-weight:600;font-size:13px;">'+a.cliente+'</span>'
+        +' <span style="font-size:12px;color:#555;">'+a.label+'</span></div>'
+        +'<div style="text-align:right;">'
+        +'<span style="font-size:12px;font-weight:700;color:'+color+';">'+estado+'</span>'
+        +' <span style="font-size:12px;color:#555;">· Debe: '+fmt(a.saldo)+'</span>'
+        +'</div></div>';
+    });
+    alertaHtml+='</div>';
+  }
+
+  if(!ccCli.length){c.innerHTML=adminBar+alertaHtml+'<div class="vacio">No hay clientes con cuenta corriente.</div>';return;}
+  var h=adminBar+alertaHtml;
   ccCli.forEach(function(cli){
     var mv=pedidos.filter(function(p){return p.cliente===cli.nombre&&p.fpago==="Cta. Corriente";});
     // Construir lista completa de movimientos con saldo corrido
@@ -2125,8 +2163,19 @@ function renderCC(c){
     var saldoFinal=saldoCorrido;
     var cliIdx=clientes.indexOf(cli);
 
+    // Estado de facturas pendientes para este cliente
+    var facturasCliente=_obtenerFacturasCC(cli);
+    var facsPendientes=facturasCliente.filter(function(f){return f.saldo>0&&f.id!=='__saldo__'&&!f.id.startsWith('__mov__');});
+    var facsBadge='';
+    if(facsPendientes.length){
+      var vencidas=facsPendientes.filter(function(f){return f.vencida;}).length;
+      var proximas=facsPendientes.filter(function(f){return !f.vencida&&f.diasVenc!==null&&f.diasVenc<=5;}).length;
+      if(vencidas>0) facsBadge=' <span style="background:#B40000;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">'+vencidas+' vencida'+(vencidas>1?'s':'')+'</span>';
+      else if(proximas>0) facsBadge=' <span style="background:#ffc107;color:#333;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">vence pronto</span>';
+    }
+
     h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-      +'<div class="form-tit" style="margin-bottom:0;">'+cli.nombre+'</div>'
+      +'<div class="form-tit" style="margin-bottom:0;">'+cli.nombre+facsBadge+'</div>'
       +(cli.tel?'<a href="tel:'+cli.tel+'" class="btn-sm g" style="font-size:11px;">Llamar</a>':'')
       +'</div>'
       +'<div class="cc-saldo"><div><div style="font-size:12px;color:var(--gris)">Saldo pendiente</div>'
@@ -2136,7 +2185,24 @@ function renderCC(c){
       +(_ccAdminMode?'<button class="btn-sm" style="background:#6c757d;color:white;" onclick="abrirMovCC('+cliIdx+')">✏️ Agregar mov.</button>':'')
       +(_ccAdminMode?'<button class="btn-sm" style="background:#ffc107;color:#333;" onclick="editarSaldoInicial('+cliIdx+')">⚙️ Saldo inicial</button>':'')
       +(_ccAdminMode?'<button class="btn-sm" style="background:#dc3545;color:white;" onclick="eliminarCC('+cliIdx+')">🗑️ Eliminar CC</button>':'')
-      +'</div></div>';
+      +'</div></div>'
+      // Mini-tabla de facturas pendientes
+      +(facsPendientes.length?'<div style="margin:8px 0 4px;border-top:1px solid var(--borde);padding-top:8px;">'
+        +'<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px;">FACTURAS PENDIENTES</div>'
+        +facsPendientes.map(function(fac){
+          var dias=fac.diasVenc;
+          var estadoColor=fac.vencida?'#B40000':(dias!==null&&dias<=2?'#cc5500':(dias!==null&&dias<=5?'#856404':'#555'));
+          var estadoTxt=fac.vencida?'⚠️ Vencida hace '+Math.abs(dias)+' día'+(Math.abs(dias)!==1?'s':'')
+            :(dias===null?'':(dias===0?'⚠️ Vence HOY':'📅 Vence en '+dias+' día'+(dias!==1?'s':'')+' ('+fac.fechaVenc+')'));
+          var pagParcial=fac.pagado>0?' · Pagado: '+fmt(fac.pagado):'';
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;border-bottom:1px solid #f0f0f0;">'
+            +'<span style="color:#333;">'+fac.label+pagParcial+'</span>'
+            +'<span style="display:flex;gap:8px;align-items:center;">'
+            +(estadoTxt?'<span style="color:'+estadoColor+';font-size:11px;">'+estadoTxt+'</span>':'')
+            +'<b style="color:var(--rojo);">'+fmt(fac.saldo)+'</b>'
+            +'</span></div>';
+        }).join('')
+        +'</div>':'');
 
     // Tabla de movimientos
     if(!movs.length){
@@ -2191,7 +2257,17 @@ function renderCC(c){
     +'<input id="ccModalFecha" type="text" placeholder="dd/mm/aaaa" style="width:100%;padding:10px;font-size:14px;border:2px solid var(--borde);border-radius:12px;margin-bottom:20px;box-sizing:border-box;">'
     +'<div style="display:flex;gap:10px;">'
     +'<button class="btn-sm" style="flex:1;padding:14px;background:#f0f0f0;" onclick="cerrarPagoCC(null)">Cancelar</button>'
-    +'<button class="btn-sm" style="flex:1;padding:14px;background:#16a34a;color:white;font-size:16px;" onclick="confirmarPagoCC()">✅ Confirmar pago</button>'
+    +'<button class="btn-sm" style="flex:1;padding:14px;background:#1a73e8;color:white;font-size:16px;" onclick="previsualizarImputacion()">Ver imputación →</button>'
+    +'</div></div></div>'
+  // Modal de confirmación con imputación
+  +'<div id="ccImputModal" class="cc-modal" style="display:none;" onclick="if(event.target===this)cerrarImputModal()">'
+    +'<div class="cc-modal-box" onclick="event.stopPropagation()">'
+    +'<div style="font-size:17px;font-weight:700;margin-bottom:4px;">📋 Imputación del pago</div>'
+    +'<div id="ccImputCliente" style="font-size:13px;color:var(--gris);margin-bottom:14px;"></div>'
+    +'<div id="ccImputDetalle" style="margin-bottom:16px;"></div>'
+    +'<div style="display:flex;gap:10px;">'
+    +'<button class="btn-sm" style="flex:1;padding:14px;background:#f0f0f0;" onclick="cerrarImputModal()">← Volver</button>'
+    +'<button class="btn-sm" style="flex:2;padding:14px;background:#16a34a;color:white;font-size:16px;" onclick="confirmarPagoCC()">✅ Confirmar pago</button>'
     +'</div></div></div>';
 
   // Modal agregar movimiento manual (admin)
@@ -2240,6 +2316,44 @@ function cerrarPagoCC(e){
   if(e===null||!e){document.getElementById('ccModal').style.display='none';return;}
   if(e.target===document.getElementById('ccModal')) document.getElementById('ccModal').style.display='none';
 }
+function cerrarImputModal(){document.getElementById('ccImputModal').style.display='none';}
+function previsualizarImputacion(){
+  var monto=parseFloat(document.getElementById('ccModalMonto').value.replace(',','.'));
+  if(!monto||monto<=0){alert('Ingresá un monto válido.');return;}
+  var cli=clientes.find(function(c){return c.nombre===_ccModalCliente;});
+  if(!cli)return;
+  var imp=_calcularImputacion(cli,monto);
+  var saldoAnterior=_calcSaldoCC(cli);
+  var saldoNuevo=saldoAnterior-monto;
+  var html='<div style="font-size:13px;color:#555;margin-bottom:8px;">Pago: <b>'+fmt(monto)+'</b></div>';
+  if(!imp.length){
+    html+='<div style="color:#16a34a;font-size:13px;">Sin facturas pendientes — el pago queda como saldo a favor.</div>';
+  } else {
+    imp.forEach(function(it){
+      var estado=it.cancelada
+        ?'<span style="color:#16a34a;font-weight:700;">✅ CANCELADA</span>'
+        :'<span style="color:#1a73e8;font-weight:700;">Pago parcial · queda: '+fmt(it.saldoDespues)+'</span>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid #eee;gap:8px;">'
+        +'<div style="font-size:13px;"><b>'+it.label+'</b><br><span style="color:#888;font-size:11px;">Debe: '+fmt(it.saldoAntes)+' · Aplica: '+fmt(it.montoAplicado)+'</span></div>'
+        +'<div style="text-align:right;font-size:12px;white-space:nowrap;">'+estado+'</div>'
+        +'</div>';
+    });
+  }
+  // Si sobra dinero
+  var totalImputado=imp.reduce(function(s,i){return s+i.montoAplicado;},0);
+  var sobrante=monto-totalImputado;
+  if(sobrante>1){
+    html+='<div style="margin-top:8px;padding:6px 10px;background:#e8f5e9;border-radius:8px;font-size:13px;color:#16a34a;font-weight:600;">Saldo a favor: '+fmt(sobrante)+'</div>';
+  }
+  html+='<div style="margin-top:12px;padding:8px 12px;background:#f5f5f5;border-radius:8px;display:flex;justify-content:space-between;font-size:13px;">'
+    +'<span>Saldo anterior:</span><span style="font-weight:700;color:'+(saldoAnterior>0?'var(--rojo)':'#16a34a')+';">'+fmt(saldoAnterior)+'</span></div>'
+    +'<div style="padding:8px 12px;background:#e8f5e9;border-radius:8px;display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:4px;">'
+    +'<span>Saldo nuevo:</span><span style="color:'+(saldoNuevo>0?'var(--rojo)':'#16a34a')+';">'+fmt(saldoNuevo)+'</span></div>';
+  document.getElementById('ccImputCliente').textContent=_ccModalCliente;
+  document.getElementById('ccImputDetalle').innerHTML=html;
+  document.getElementById('ccModal').style.display='none';
+  document.getElementById('ccImputModal').style.display='flex';
+}
 function _calcSaldoCC(cli){
   // Calcula el saldo corrido del cliente (igual que renderCC)
   var mv=pedidos.filter(function(p){return p.cliente===cli.nombre&&p.fpago==="Cta. Corriente";});
@@ -2251,6 +2365,99 @@ function _calcSaldoCC(cli){
   var s=0;
   movs.forEach(function(m){if(m.tipo==='v')s+=m.monto;else s-=m.monto;});
   return s;
+}
+
+// Convierte fecha dd/mm/aaaa a número aaaammdd para ordenar
+function _fechaNum(f){if(!f||f==='—')return 0;var p=f.split('/');if(p.length===3)return parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]);return 0;}
+
+// Días desde hoy hasta una fecha dd/mm/aaaa (negativo = ya venció)
+function _diasHasta(f){
+  if(!f||f==='—')return null;
+  var p=f.split('/');if(p.length!==3)return null;
+  var d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  return Math.round((d-hoy)/(1000*60*60*24));
+}
+
+// Suma dd/mm/aaaa + N días → dd/mm/aaaa
+function _sumarDias(f,n){
+  var p=f.split('/');
+  var d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
+  d.setDate(d.getDate()+n);
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+// Devuelve lista de "facturas" (ventas CC) del cliente, ordenadas de más vieja a más nueva,
+// con el saldo pendiente calculado contra los pagos ya registrados (imputación FIFO).
+// Cada item: {id, label, fecha, fechaVenc, monto, pagado, saldo, vencida, diasVenc}
+function _obtenerFacturasCC(cli){
+  var mv=pedidos.filter(function(p){return p.cliente===cli.nombre&&p.fpago==="Cta. Corriente";});
+  var facturas=[];
+  // Saldo inicial como "factura" sin vencimiento
+  if(cli.saldo&&cli.saldo>0){
+    facturas.push({id:'__saldo__',label:'Saldo inicial',fecha:'00/00/0000',fechaVenc:null,monto:cli.saldo,pagado:0,saldo:cli.saldo,vencida:false,diasVenc:null});
+  }
+  // Movimientos manuales de cargo
+  (cli.movCC||[]).forEach(function(m,i){
+    if(m.monto>0){
+      facturas.push({id:'__mov__'+i,label:(m.desc||'Cargo manual'),fecha:m.fecha||'—',fechaVenc:null,monto:Math.abs(m.monto),pagado:0,saldo:Math.abs(m.monto),vencida:false,diasVenc:null});
+    }
+  });
+  // Ventas en CC
+  mv.forEach(function(v){
+    var lbl=v.nv+(v.nroFactura?' · Fac.'+v.nroFactura:'');
+    var fvenc=v.fecha?_sumarDias(v.fecha,20):null;
+    var dias=fvenc?_diasHasta(fvenc):null;
+    facturas.push({id:v.nv,label:lbl,fecha:v.fecha||'—',fechaVenc:fvenc,monto:parseFloat(v.total)||0,pagado:0,saldo:parseFloat(v.total)||0,vencida:dias!==null&&dias<0,diasVenc:dias});
+  });
+  // Ordenar por fecha (más vieja primero)
+  facturas.sort(function(a,b){return _fechaNum(a.fecha)-_fechaNum(b.fecha);});
+  // Imputar pagos existentes (FIFO)
+  var pagosOrdenados=(cli.pagosCC||[]).slice().sort(function(a,b){return _fechaNum(a.fecha)-_fechaNum(b.fecha);});
+  pagosOrdenados.forEach(function(pago){
+    var resto=pago.monto;
+    // Si el pago tiene imputación guardada, usarla
+    if(pago.imputacion&&pago.imputacion.length){
+      pago.imputacion.forEach(function(imp){
+        var fac=facturas.find(function(f){return f.id===imp.id;});
+        if(fac){fac.pagado+=imp.monto;fac.saldo=Math.max(0,fac.monto-fac.pagado);}
+      });
+    } else {
+      // Imputación FIFO automática
+      for(var i=0;i<facturas.length&&resto>0;i++){
+        if(facturas[i].saldo>0){
+          var imp=Math.min(facturas[i].saldo,resto);
+          facturas[i].pagado+=imp;
+          facturas[i].saldo=Math.max(0,facturas[i].monto-facturas[i].pagado);
+          resto-=imp;
+        }
+      }
+    }
+  });
+  return facturas;
+}
+
+// Calcula la imputación de un monto nuevo contra las facturas pendientes (sin modificar nada)
+// Devuelve array: [{id, label, montoAplicado, saldoAntes, saldoDespues, cancelada}]
+function _calcularImputacion(cli, monto){
+  var facturas=_obtenerFacturasCC(cli);
+  var resultado=[];
+  var resto=monto;
+  for(var i=0;i<facturas.length&&resto>0;i++){
+    if(facturas[i].saldo>0){
+      var aplicado=Math.min(facturas[i].saldo,resto);
+      resultado.push({
+        id:facturas[i].id,
+        label:facturas[i].label,
+        montoAplicado:aplicado,
+        saldoAntes:facturas[i].saldo,
+        saldoDespues:facturas[i].saldo-aplicado,
+        cancelada:aplicado>=facturas[i].saldo
+      });
+      resto-=aplicado;
+    }
+  }
+  return resultado;
 }
 
 function _generarReciboCC(cli,monto,nota,fecha,saldoAnterior,saldoNuevo,nroRecibo){
@@ -2329,7 +2536,9 @@ function confirmarPagoCC(){
   nroReciboCC=(nroReciboCC||0)+1;
   var nroRecibo=nroReciboCC;
 
-  cli.pagosCC.push({fecha:fecha,monto:monto,nota:nota||'Pago registrado',nroRecibo:nroRecibo});
+  // Calcular y guardar imputación
+  var imputacion=_calcularImputacion(cli,monto);
+  cli.pagosCC.push({fecha:fecha,monto:monto,nota:nota||'Pago registrado',nroRecibo:nroRecibo,imputacion:imputacion});
 
   // Saldo DESPUÉS del pago
   var saldoNuevo=saldoAnterior-monto;
@@ -2351,6 +2560,7 @@ function confirmarPagoCC(){
   window.guardarNroRecibo();
 
   document.getElementById('ccModal').style.display='none';
+  document.getElementById('ccImputModal').style.display='none';
   renderGestion();
   toast('✅ Pago de '+fmt(monto)+' registrado para '+_ccModalCliente);
 
