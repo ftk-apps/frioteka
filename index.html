@@ -2212,8 +2212,8 @@ function renderCC(c){
           +'<div style="display:flex;gap:8px;align-items:center;">'
           +estadoTag
           +(cancelada
-            ?'<span style="font-size:12px;color:#16a34a;font-weight:700;">'+fmt(fac.monto)+'</span>'
-            :'<span style="font-size:13px;font-weight:700;color:var(--rojo);">Debe: '+fmt(fac.saldo)+'</span>')
+            ?'<span style="font-size:12px;color:#16a34a;font-weight:700;">'+fmt(fac.monto||0)+'</span>'
+            :'<span style="font-size:13px;font-weight:700;color:var(--rojo);">Debe: '+fmt(isNaN(fac.saldo)?fac.monto||0:fac.saldo)+'</span>')
           +'</div></div>'
           // Pagos imputados a esta factura
           +((pagosPorFac[fac.id]&&pagosPorFac[fac.id].length)
