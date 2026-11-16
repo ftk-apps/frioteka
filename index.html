@@ -1341,14 +1341,15 @@ function pdfNota(items, ctx){
           d.text("Obs: "+ctx.obs, X + 6, B - 33, 15, "F2", "#000000", "l", W * 0.6);
         }
         if(ctx.nroFactura){
-          d.text("Factura Nro: "+ctx.nroFactura, X + W - 6, B - 33, 9, "F2", "#1a73e8", "r");
+          d.text("Factura Nro: "+ctx.nroFactura, X + 6, B - 33, 9, "F2", "#1a73e8", "l");
         }
         if(ctx.ctaCteInfo){
           var cc=ctx.ctaCteInfo;
-          d.text("ESTADO CTA. CTE.:", X + 6, B - 38, 7.5, "F2", "#1a73e8", "l");
-          d.text("Saldo anterior: "+fmt(cc.saldoAnterior), X + 6, B - 30, 7.5, "F1", "#555555", "l");
-          d.text("Esta venta: +"+fmt(cc.estaVenta), X + 6, B - 22, 7.5, "F1", "#555555", "l");
-          d.text("Nuevo saldo: "+fmt(cc.saldoNuevo), X + 6, B - 14, 8, "F2", cc.saldoNuevo>0?"#B40000":"#16a34a", "l");
+          var ccX=W/2+X+10;
+          d.text("ESTADO CTA. CTE.:", ccX, B - 55, 8, "F2", "#1a73e8", "l");
+          d.text("Saldo anterior: "+fmt(cc.saldoAnterior), ccX, B - 44, 8, "F1", "#555555", "l");
+          d.text("Esta venta:  +"+fmt(cc.estaVenta), ccX, B - 33, 8, "F1", "#555555", "l");
+          d.text("Nuevo saldo: "+fmt(cc.saldoNuevo), ccX, B - 22, 9, "F2", cc.saldoNuevo>0?"#B40000":"#16a34a", "l");
         }
         if(!ctx.ctaCteInfo) d.text("Gracias por su compra  -  FRIOTEKA Especialistas en Congelados", X + W / 2, B - 21, 8.5, "F2", ROJO, "c");
       } else {
