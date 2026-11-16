@@ -46,6 +46,7 @@ async function loadFromFirestore() {
     window._fsPedidos = pedSnap.exists() ? pedSnap.data().lista : [];
     window._fsPendientes = pendSnap.exists() ? pendSnap.data().lista : [];
     window._fsNv = nvSnap.exists() ? nvSnap.data().valor : 1;
+    window._fsNroRecibo = nvSnap.exists() ? (nvSnap.data().nroRecibo||0) : 0;
     window._fsPreventistas = prevSnap.exists() ? prevSnap.data().lista : [];
     window._fsHistorialRemitos = histSnap.exists() ? histSnap.data().lista : [];
     window._dbReady = true;
@@ -85,6 +86,7 @@ async function loadFromFirestore() {
     window._fsPedidos = [];
     window._fsPendientes = [];
     window._fsNv = 1;
+    window._fsNroRecibo = 0;
     window._fsPreventistas = [];
     window._fsHistorialRemitos = [];
     window._dbReady = true;
@@ -110,7 +112,10 @@ window.guardarHistorialRemitos = async function() {
   await setDoc(doc(db, "datos", "historialRemitos"), {lista: window.historialRemitos});
 };
 window.guardarNv = async function() {
-  await setDoc(doc(db, "datos", "nv"), {valor: window.nv});
+  await setDoc(doc(db, "datos", "nv"), {valor: window.nv, nroRecibo: window.nroReciboCC||0}, {merge:true});
+};
+window.guardarNroRecibo = async function() {
+  await setDoc(doc(db, "datos", "nv"), {nroRecibo: window.nroReciboCC||0}, {merge:true});
 };
 </script>
 <style>
@@ -881,6 +886,7 @@ var fpago="Efectivo";
 var tabActual="cong";
 var gTab="panel";
 var nv=1;
+var nroReciboCC=0;
 var clientes=[];
 var pedidos=[];
 var editCliIdx=-1;
@@ -890,6 +896,7 @@ var historialRemitos=[];
 var nvPreventistaVal="";
 window.addEventListener("dbready",function(){
   nv=window._fsNv||1;
+  nroReciboCC=window._fsNroRecibo||0;
   clientes=window._fsClientes||[];
   pedidos=window._fsPedidos||[];
   pendientes=window._fsPendientes||[];
@@ -2218,6 +2225,78 @@ function cerrarPagoCC(e){
   if(e===null||!e){document.getElementById('ccModal').style.display='none';return;}
   if(e.target===document.getElementById('ccModal')) document.getElementById('ccModal').style.display='none';
 }
+function _calcSaldoCC(cli){
+  // Calcula el saldo corrido del cliente (igual que renderCC)
+  var mv=pedidos.filter(function(p){return p.cliente===cli.nombre&&p.fpago==="Cta. Corriente";});
+  var movs=[];
+  if(cli.saldo&&cli.saldo!==0) movs.push({monto:Math.abs(cli.saldo),tipo:cli.saldo>0?'v':'p'});
+  (cli.movCC||[]).forEach(function(m){movs.push({monto:Math.abs(m.monto),tipo:m.monto>0?'v':'p'});});
+  mv.forEach(function(v){movs.push({monto:parseFloat(v.total)||0,tipo:'v'});});
+  (cli.pagosCC||[]).forEach(function(p){movs.push({monto:p.monto,tipo:'p'});});
+  var s=0;
+  movs.forEach(function(m){if(m.tipo==='v')s+=m.monto;else s-=m.monto;});
+  return s;
+}
+
+function _generarReciboCC(cli,monto,nota,fecha,saldoAnterior,saldoNuevo,nroRecibo){
+  var fpago=nota||'Pago';
+  var tel=(cli.tel||'').replace(/\D/g,'');
+  var htmlRecibo='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>Recibo N°'+nroRecibo+' - '+cli.nombre+'</title>'
+    +'<style>'
+    +'body{font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:24px;color:#222;}'
+    +'.logo{font-size:22px;font-weight:800;color:#e63946;letter-spacing:1px;margin-bottom:2px;}'
+    +'.sub{font-size:12px;color:#888;margin-bottom:20px;}'
+    +'.titulo{font-size:18px;font-weight:700;border-bottom:2px solid #e63946;padding-bottom:8px;margin-bottom:16px;}'
+    +'.fila{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}'
+    +'.fila b{color:#333;}'
+    +'.saldo-box{background:#f8f8f8;border-radius:10px;padding:14px 16px;margin:16px 0;}'
+    +'.saldo-row{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;}'
+    +'.saldo-nuevo{font-size:18px;font-weight:800;color:'+(saldoNuevo>0?'#e63946':'#16a34a')+';}'
+    +'.pie{font-size:11px;color:#aaa;text-align:center;margin-top:20px;}'
+    +'@media print{body{margin:0;padding:16px;}}'
+    +'</style></head><body>'
+    +'<div class="logo">🧊 FRIOTEKA</div>'
+    +'<div class="sub">Culasso Izaguirre SAS</div>'
+    +'<div class="titulo">RECIBO DE PAGO N° '+String(nroRecibo).padStart(4,'0')+'</div>'
+    +'<div class="fila"><span>Cliente</span><b>'+cli.nombre+'</b></div>'
+    +(cli.tel?'<div class="fila"><span>Teléfono</span><b>'+cli.tel+'</b></div>':'')
+    +(cli.dir?'<div class="fila"><span>Dirección</span><b>'+cli.dir+'</b></div>':'')
+    +'<div class="fila"><span>Fecha de pago</span><b>'+fecha+'</b></div>'
+    +'<div class="fila"><span>Forma de pago</span><b>'+fpago+'</b></div>'
+    +'<div class="fila"><span>Monto recibido</span><b style="color:#16a34a;font-size:16px;">'+fmt(monto)+'</b></div>'
+    +'<div class="saldo-box">'
+    +'<div class="saldo-row"><span>Saldo anterior</span><span style="color:'+(saldoAnterior>0?'#e63946':'#16a34a')+';">'+fmt(saldoAnterior)+'</span></div>'
+    +'<div class="saldo-row"><span>Pago aplicado</span><span style="color:#16a34a;">− '+fmt(monto)+'</span></div>'
+    +'<div class="saldo-row" style="border-top:2px solid #ddd;margin-top:6px;padding-top:6px;"><span style="font-weight:700;">Saldo nuevo</span><span class="saldo-nuevo">'+fmt(saldoNuevo)+'</span></div>'
+    +'</div>'
+    +'<div class="pie">Documento no válido como factura · Frioteka © '+new Date().getFullYear()+'</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>';
+
+  var w=window.open('','_blank');
+  if(w){
+    w.document.write(htmlRecibo);
+    w.document.close();
+  }
+
+  // Botón WhatsApp si tiene teléfono
+  if(tel){
+    var txt='🧊 *FRIOTEKA* – Recibo N° '+String(nroRecibo).padStart(4,'0')+'\n'
+      +'━━━━━━━━━━━━━━━━━\n'
+      +'Cliente: '+cli.nombre+'\n'
+      +'Fecha: '+fecha+'\n'
+      +'Forma de pago: '+fpago+'\n'
+      +'Monto recibido: *'+fmt(monto)+'*\n'
+      +'━━━━━━━━━━━━━━━━━\n'
+      +'Saldo anterior: '+fmt(saldoAnterior)+'\n'
+      +'Saldo nuevo: *'+fmt(saldoNuevo)+'*\n'
+      +(saldoNuevo<=0?'✅ Cuenta al día':'⚠️ Saldo pendiente: '+fmt(saldoNuevo));
+    var url='https://wa.me/'+tel+'?text='+encodeURIComponent(txt);
+    setTimeout(function(){window.open(url,'_blank');},800);
+  }
+}
+
 function confirmarPagoCC(){
   var monto=parseFloat(document.getElementById('ccModalMonto').value.replace(',','.'));
   if(!monto||monto<=0){alert('Ingresá un monto válido.');return;}
@@ -2227,9 +2306,20 @@ function confirmarPagoCC(){
   if(!cli){alert('Cliente no encontrado.');return;}
   if(!cli.pagosCC) cli.pagosCC=[];
   var fecha=fechaInput||new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  cli.pagosCC.push({fecha:fecha,monto:monto,nota:nota||'Pago registrado'});
-  // Impactar en panel: marcar como "en sistema" los pedidos de este cliente por el monto del pago
-  // Se busca el pedido más antiguo sin enSistema de este cliente y se lo marca
+
+  // Calcular saldo ANTES del pago
+  var saldoAnterior=_calcSaldoCC(cli);
+
+  // Número de recibo correlativo
+  nroReciboCC=(nroReciboCC||0)+1;
+  var nroRecibo=nroReciboCC;
+
+  cli.pagosCC.push({fecha:fecha,monto:monto,nota:nota||'Pago registrado',nroRecibo:nroRecibo});
+
+  // Saldo DESPUÉS del pago
+  var saldoNuevo=saldoAnterior-monto;
+
+  // Impactar en panel: marcar como "en sistema" los pedidos de este cliente
   var montoPendiente=monto;
   pedidos.filter(function(p){return p.cliente===_ccModalCliente&&p.fpago==="Cta. Corriente"&&!p.enSistema;})
     .forEach(function(p){
@@ -2239,11 +2329,18 @@ function confirmarPagoCC(){
         montoPendiente-=p.total;
       }
     });
+
+  window.nroReciboCC=nroReciboCC;
   window.guardarClientes();
   window.guardarPedidos();
+  window.guardarNroRecibo();
+
   document.getElementById('ccModal').style.display='none';
   renderGestion();
   toast('✅ Pago de '+fmt(monto)+' registrado para '+_ccModalCliente);
+
+  // Generar recibo y enviar por WhatsApp
+  _generarReciboCC(cli,monto,nota,fecha,saldoAnterior,saldoNuevo,nroRecibo);
 }
 
 // Admin: agregar / editar movimiento manual
