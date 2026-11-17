@@ -438,6 +438,7 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
   <div class="tabs">
     <div class="tab on" id="tab-cong" onclick="switchTab('cong')">❄ Congelados</div>
     <div class="tab" id="tab-lac" onclick="switchTab('lac')">🧀 Lácteos S.M.</div>
+    <div class="tab" id="tab-togo" onclick="switchTab('togo')">🍕 TOGO</div>
   </div>
   <div class="chips-scroll" id="chipsScroll"></div>
   <div id="lista" style="padding-bottom:90px;"></div>
@@ -826,6 +827,14 @@ var LAC=[
   }
 ];
 var ped={};
+var TOGO=[
+  {"codigo":8148,"nombre":"Pizzita Especial","precioMay":3590,"precioMin":3890,"unid":1,"detalle":"prepizzeta, muzza, jamón, morrón, aceitunas"},
+  {"codigo":8149,"nombre":"Pizzita Muzza","precioMay":2990,"precioMin":3290,"unid":1,"detalle":"prepizzeta, muzza, aceitunas"},
+  {"codigo":8150,"nombre":"Pizzita Roquefort","precioMay":3790,"precioMin":3990,"unid":1,"detalle":"prepizzeta, muzza, queso roquefort"},
+  {"codigo":8151,"nombre":"Pizzita Fugazza","precioMay":3090,"precioMin":3390,"unid":1,"detalle":"prepizzeta, muzza, cebolla"},
+  {"codigo":8152,"nombre":"Pizzita Jamón","precioMay":3490,"precioMin":3690,"unid":1,"detalle":"prepizzeta, muzza, jamón"}
+];
+var pedTogo={};
 var pedLac={};
 var vip=false;
 var descEsp=0;
@@ -896,6 +905,7 @@ function calcT(){
   var t=0,n=0,tMin=0;
   for(var c in ped){var e=ped[c];if(e.cant>0){for(var i=0;i<P.length;i++){if(String(P[i].codigo)===c){var pr=precio(P[i],e.modo);t+=pr*e.cant;if(!esCaja(e.modo)) tMin+=pr*e.cant;n++;break;}}}}
   for(var lk in pedLac){var le=pedLac[lk];if(le&&le.cant>0){var idx2=parseInt(lk.replace("lac-",""));if(LAC[idx2]){var prLac=LAC[idx2].precioMay*le.cant;t+=prLac;tMin+=prLac;n++;}}}
+  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0){var ti=parseInt(tk.replace("togo-",""));if(TOGO[ti]){var prTogo=TOGO[ti].precioMay*te.cant;t+=prTogo;tMin+=prTogo;n++;}}}
   return {t:t,n:n,tMin:tMin};
 }
 function calcFinal(t,n,tMin){
@@ -967,8 +977,11 @@ function switchTab(t){
   tabActual=t;
   $("tab-cong").className="tab"+(t==="cong"?" on":"");
   $("tab-lac").className="tab"+(t==="lac"?" on":"");
+  $("tab-togo").className="tab"+(t==="togo"?" on":"");
   $("lista").style.display=t==="cong"?"block":"none";
   $("lista-lac").style.display=t==="lac"?"block":"none";
+  $("lista-togo").style.display=t==="togo"?"block":"none";
+  if(t==="togo") renderTogo();
 }
 
 /* ===== RENDER PRODUCTOS ===== */
@@ -1048,6 +1061,35 @@ function renderLac(){
   }
 }
 
+
+function renderTogo(){
+  var lista=$("lista-togo"); lista.innerHTML="";
+  for(var i=0;i<TOGO.length;i++){
+    var p=TOGO[i],k="togo-"+i,cant=(pedTogo[k]&&pedTogo[k].cant)||0;
+    var div=document.createElement("div"); div.className="lac-prod"+(cant>0?" act":""); div.id="tprd-"+k;
+    var inf=document.createElement("div"); inf.className="lac-info";
+    var nom=document.createElement("div"); nom.className="lac-nom"; nom.textContent=p.nombre;
+    var det=document.createElement("div"); det.className="lac-det"; det.textContent=(p.codigo?"Cód: "+p.codigo+" · ":"")+( p.detalle||"");
+    var pr2=document.createElement("div"); pr2.className="lac-precio"; pr2.textContent="May: "+fmt(p.precioMay)+" c/u";
+    var bl=document.createElement("div"); bl.className="lac-bulto"; bl.textContent="Min: "+fmt(p.precioMin)+" c/u";
+    inf.appendChild(nom);inf.appendChild(det);inf.appendChild(pr2);inf.appendChild(bl);
+    var ctr=document.createElement("div");ctr.className="ctr";
+    var bm=document.createElement("button");bm.className="cb";bm.innerHTML="&#8722;";
+    var cs=document.createElement("span");cs.className="cn";cs.id="tcn-"+k;cs.textContent=cant;
+    var bp=document.createElement("button");bp.className="cb";bp.textContent="+";
+    (function(key){bm.onclick=function(){cambiarTogo(key,-1);};bp.onclick=function(){cambiarTogo(key,1);};})(k);
+    ctr.appendChild(bm);ctr.appendChild(cs);ctr.appendChild(bp);
+    div.appendChild(inf);div.appendChild(ctr);lista.appendChild(div);
+  }
+}
+function cambiarTogo(k,d){
+  if(!pedTogo[k]) pedTogo[k]={cant:0};
+  pedTogo[k].cant=Math.max(0,pedTogo[k].cant+d);
+  var el=$("tcn-"+k); if(el) el.textContent=pedTogo[k].cant;
+  var row=$("tprd-"+k); if(row) row.className="lac-prod"+(pedTogo[k].cant>0?" act":"");
+  updT();
+}
+
 /* ===== AUTOCOMPLETADO ===== */
 function buscarCli(q){
   if(!q||q.length<2){$("clienteSugg").style.display="none";return;}
@@ -1075,6 +1117,7 @@ function buildMsg(t,n,tMin,f){
   var m="\u{1F9CA} *PEDIDO FRIOTEKA*\n"+nvFmt(nv)+"\n\uD83D\uDCCB "+cl+(vip?" \u2B50VIP":"")+(dir2?"\n\uD83D\uDCCD "+dir2:"")+"\n\uD83D\uDCB3 "+fpago+"\n\n";
   for(var i=0;i<P.length;i++){var p=P[i],e=ped[String(p.codigo)];if(!e||!e.cant) continue;var pr=precio(p,e.modo);var tg=e.modo==="caja"?" (x"+p.unidadesCaja+"u)":e.modo==="mayorista"?" (VIP)":"";var cantStr=p.unidad==="K"?e.cant+"kg":"x"+e.cant;m+="• ["+p.codigo+"] "+p.nombre+tg+" "+cantStr+" = "+fmt(pr*e.cant)+"\n";}
   for(var lk in pedLac){var le=pedLac[lk];if(!le||!le.cant) continue;var idx=parseInt(lk.replace("lac-",""));var lp=LAC[idx];m+="• "+lp.nombre+" x"+le.cant+" = "+fmt(lp.precioMay*le.cant)+"\n";}
+  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue;var ti=parseInt(tk.replace("togo-",""));var tp=TOGO[ti];m+="• 🍕 "+tp.nombre+" x"+te.cant+" = "+fmt(tp.precioMay*te.cant)+"\n";}
   m+="\n\uD83D\uDCB0 Subtotal: "+fmt(t);
   if(f.d10) m+="\n10% off: -"+fmt(tMin*0.1);
   if(descEsp>0) m+="\nDesc. "+descEsp+"%: -"+fmt((f.tMin*(f.d10?0.9:1)+f.tCaja)*(descEsp/100));
@@ -1115,7 +1158,7 @@ function abrirRes(){
 }
 
 function nuevoPedido(){
-  ped={};pedLac={};descEsp=0;fpago="Efectivo";
+  ped={};pedLac={};pedTogo={};descEsp=0;fpago="Efectivo";
   $("cliente").value="";$("direccion").value="";
   document.querySelectorAll(".fpbtn").forEach(function(b){b.className="fpbtn"+(b.dataset.fp==="Efectivo"?" on":"");});
   $("dtnone").className="dtbtn on";$("dt5").className="dtbtn";$("dt10d").className="dtbtn";

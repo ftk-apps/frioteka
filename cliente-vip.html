@@ -172,6 +172,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .oferta-nombre{font-family:'Fredoka One',cursive;font-size:12px;font-weight:400;color:#ddd;line-height:1.3;letter-spacing:.3px;}
 /* Badge en catálogo */
 .badge-oferta{display:inline-block;background:var(--rojo);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:6px;vertical-align:middle;margin-left:4px;letter-spacing:.2px;}
+
+.togo-section{padding:0 0 8px;}
+.togo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px 12px 12px;background:#1a1a1a;}
+.togo-card{background:#111;border-radius:12px;padding:12px 10px 10px;border:1px solid #333;position:relative;overflow:hidden;}
+.togo-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#d4830a;}
+.togo-card.act{border-color:#d4830a;}
+.togo-nombre{font-size:13px;font-weight:800;color:#fff;margin-bottom:4px;}
+.togo-det{font-size:11px;color:#888;margin-bottom:6px;line-height:1.3;}
+.togo-precio{font-size:16px;font-weight:900;color:#d4830a;margin-bottom:8px;}
+.togo-ctrl{display:flex;align-items:center;gap:8px;}
+
 </style>
 </head>
 <body>
@@ -337,6 +348,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 </div>
 
 <div class="ofertas-section" id="destacadosSection"></div>
+<div class="ofertas-section" id="togoSection"></div>
 <div class="prog-wrap" id="progWrap" style="display:none;">
   <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
   <div class="prog-txt" id="progTxt"></div>
@@ -679,6 +691,7 @@ function elegirModo(m){
   MODO=m;
   document.getElementById('pantallaWelcome').style.display='none';
   renderDestacados();
+  renderTogoSection();
   renderCatalogo();
 }
 function entrarVip(){
@@ -828,6 +841,14 @@ var P=[{"codigo":1829,"nombre":"PANCITOS INTEGRALES HORNEADOS 12u 460GR","unidad
 {"codigo":3065,"nombre":"PAQ. DURAZNOS REBANADAS X500GR","unidadesCaja":20,"unidad":"U","precioMinorista":6690,"precioMayorista":4589,"categoria":"FRUTAS Y VERDURAS","iva":10.5},
 {"codigo":3066,"nombre":"PAQ. ANANA TROZOS X500GR","unidadesCaja":20,"unidad":"U","precioMinorista":8590,"precioMayorista":5607,"categoria":"FRUTAS Y VERDURAS","iva":10.5}];
 
+var TOGO=[
+  {"codigo":8148,"nombre":"Pizzita Especial","precioMay":3590,"precioMin":3890,"unid":1,"detalle":"prepizzeta, muzza, jamón, morrón, aceitunas"},
+  {"codigo":8149,"nombre":"Pizzita Muzza","precioMay":2990,"precioMin":3290,"unid":1,"detalle":"prepizzeta, muzza, aceitunas"},
+  {"codigo":8150,"nombre":"Pizzita Roquefort","precioMay":3790,"precioMin":3990,"unid":1,"detalle":"prepizzeta, muzza, queso roquefort"},
+  {"codigo":8151,"nombre":"Pizzita Fugazza","precioMay":3090,"precioMin":3390,"unid":1,"detalle":"prepizzeta, muzza, cebolla"},
+  {"codigo":8152,"nombre":"Pizzita Jamón","precioMay":3490,"precioMin":3690,"unid":1,"detalle":"prepizzeta, muzza, jamón"}
+];
+var pedTogo={};
 var ped = {}; // {codigo: {cantU, cantC}} cantU=unidades sueltas, cantC=cajas
 var fpago = "";
 
@@ -1043,6 +1064,36 @@ function selFpago(v){
   updTotal();
 }
 
+function renderTogoSection(){
+  var sec=document.getElementById("togoSection");
+  if(!sec) return;
+  if(!TOGO.length){sec.style.display="none";return;}
+  sec.style.display="";
+  var html='<div class="ofertas-header"><span style="font-size:20px;">🍕</span><span class="ofertas-titulo">TOGO · ELABORACIONES FRESCAS</span></div><div class="togo-grid">';
+  TOGO.forEach(function(p,i){
+    var k="togo-"+i;
+    var cant=(pedTogo[k]&&pedTogo[k].cant)||0;
+    html+='<div class="togo-card" id="tcard-'+k+'">'
+      +'<div class="togo-nombre">'+p.nombre+'</div>'
+      +'<div class="togo-det">'+p.detalle+'</div>'
+      +'<div class="togo-precio">$'+fmt(MODO==="vip"?p.precioMay:p.precioMin)+'</div>'
+      +'<div class="togo-ctrl">'
+        +'<button class="cb" onclick="cambiarTogoCliente(''+k+'',-1)">&#8722;</button>'
+        +'<span class="cn" id="tcn-'+k+'">'+cant+'</span>'
+        +'<button class="cb" onclick="cambiarTogoCliente(''+k+'',1)">+</button>'
+      +'</div>'
+    +'</div>';
+  });
+  html+='</div>';
+  sec.innerHTML=html;
+}
+function cambiarTogoCliente(k,d){
+  if(!pedTogo[k]) pedTogo[k]={cant:0};
+  pedTogo[k].cant=Math.max(0,pedTogo[k].cant+d);
+  var el=document.getElementById("tcn-"+k); if(el) el.textContent=pedTogo[k].cant;
+  var card=document.getElementById("tcard-"+k); if(card){card.className="togo-card"+(pedTogo[k].cant>0?" act":"");}
+  updTotal();
+}
 function updTotal(){
   var r=calcTotal();
   document.getElementById("totalNum").textContent=fmt(r.t);
