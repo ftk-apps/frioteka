@@ -1078,18 +1078,25 @@ function renderTogoSection(){
       +'<div class="togo-det">'+p.detalle+'</div>'
       +'<div class="togo-precio">$'+fmt(MODO==="vip"?p.precioMay:p.precioMin)+'</div>'
       +'<div class="togo-ctrl">'
-        +'<button class="cb" onclick="cambiarTogoCliente(''+k+'',-1)">&#8722;</button>'
-        +'<span class="cn" id="tcn-'+k+'">'+cant+'</span>'
-        +'<button class="cb" onclick="cambiarTogoCliente(''+k+'',1)">+</button>'
+        +'<button class="cb" onclick="cambiarTogoCliente(this)">&#8722;</button>'
+      +'<span class="cn" id="tcn-'+k+'">'+cant+'</span>'
+        +'<button class="cb" onclick="cambiarTogoCliente(this)">+</button>'
       +'</div>'
     +'</div>';
   });
   html+='</div>';
   sec.innerHTML=html;
 }
-function cambiarTogoCliente(k,d){
+function cambiarTogoCliente(btnOrK,d){
+  var k,dir;
+  if(typeof btnOrK==="string"){k=btnOrK;dir=d;}
+  else{
+    var row=btnOrK.closest(".togo-card");
+    k=row.id.replace("tcard-","");
+    dir=btnOrK.textContent.trim()==="+"?1:-1;
+  }
   if(!pedTogo[k]) pedTogo[k]={cant:0};
-  pedTogo[k].cant=Math.max(0,pedTogo[k].cant+d);
+  pedTogo[k].cant=Math.max(0,pedTogo[k].cant+dir);
   var el=document.getElementById("tcn-"+k); if(el) el.textContent=pedTogo[k].cant;
   var card=document.getElementById("tcard-"+k); if(card){card.className="togo-card"+(pedTogo[k].cant>0?" act":"");}
   updTotal();
