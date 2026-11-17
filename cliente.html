@@ -183,6 +183,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .togo-precio{font-size:16px;font-weight:900;color:#e67e22;margin-bottom:8px;}
 .togo-ctrl{display:flex;align-items:center;gap:8px;}
 
+
+/* TOGO como categoría del catálogo */
+.cat-titulo.togo-titulo{color:#e67e22;border-left:4px solid #e67e22;}
+.togo-cat-section{padding-bottom:20px;}
+.togo-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px;}
+.togo-cat-card{background:#1a1a1a;border-radius:14px;overflow:hidden;border:2px solid #333;position:relative;}
+.togo-cat-card.tcc-act{border-color:#e67e22;}
+.tcc-foto{background:#2a1a0a;height:110px;display:flex;align-items:center;justify-content:center;position:relative;}
+.tcc-foto-emoji{font-size:48px;opacity:.7;}
+.tcc-foto img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.tcc-body{padding:10px 10px 12px;}
+.tcc-nombre{font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;}
+.tcc-det{font-size:10px;color:#888;margin-bottom:6px;line-height:1.3;}
+.tcc-precio{font-size:17px;font-weight:900;color:#e67e22;margin-bottom:8px;}
+.tcc-ctrl{display:flex;align-items:center;gap:8px;}
+.tcc-btn{background:#e67e22!important;border-color:#e67e22!important;color:#fff!important;}
+/* Botón TOGO en la barra de familias — fondo naranja */
+.fam-btn[data-cat="TOGO"]{background:linear-gradient(135deg,#e67e22,#d35400)!important;color:#fff!important;border-color:#e67e22!important;}
+
 </style>
 </head>
 <body>
@@ -876,6 +895,7 @@ var CATS_ORDER = [
   "COMIDAS LISTAS","PESCADOS","CARNES","PAPAS","FINGER FOOD","PANIFICACION",
   "HELADOS Y POSTRES","SALUDABLES","SIN GLUTEN"
 ];
+CATS_ORDER.push("TOGO");
 
 var CAT_EMOJI = {
   "HAMBURGUESAS Y MEDALLONES":"🍔","MILANESAS Y REBOZADOS":"🍽️",
@@ -883,7 +903,8 @@ var CAT_EMOJI = {
   "PASTAS":"🍝","COMIDAS LISTAS":"🍱","PESCADOS":"🐟","CARNES":"🥩",
   "PAPAS":"🍟","FINGER FOOD":"🧆","PANIFICACION":"🥖",
   "HELADOS Y POSTRES":"🍦","SALUDABLES":"🥗","SIN GLUTEN":"🌾",
-  "FRUTAS Y VERDURAS":"🥦"
+  "FRUTAS Y VERDURAS":"🥦",
+  "TOGO":"🍕"
 };
 
 function fmt(n){return "$"+Math.round(n).toLocaleString("es-AR");}
@@ -903,14 +924,56 @@ var catKeys = CATS_ORDER.filter(function(c){return cats[c];});
 var catExtra = Object.keys(cats).filter(function(c){return catKeys.indexOf(c)===-1;});
 catKeys = catKeys.concat(catExtra);
 
+// Agregar TOGO al final de catKeys
+if(TOGO&&TOGO.length) catKeys.push("TOGO");
 var catActiva = catKeys[0];
+
+
+function renderCatalogoTogo(el){
+  el=el||document.getElementById("catalogo");
+  el.innerHTML="";
+  var sec=document.createElement("div");
+  sec.className="togo-cat-section";
+  var html='<div class="cat-titulo togo-titulo">🍕 TOGO &middot; Elaboraciones frescas</div>';
+  html+='<div class="togo-cat-grid">';
+  TOGO.forEach(function(p,i){
+    var k="togo-"+i;
+    var cant=(pedTogo[k]&&pedTogo[k].cant)||0;
+    var precio=MODO==="mayorista"?p.precioMay:p.precioMin;
+    html+='<div class="togo-cat-card'+(cant>0?" tcc-act":'')+'" id="tcc-'+k+'">'
+      +'<div class="tcc-foto"><span class="tcc-foto-emoji">🍕</span></div>'
+      +'<div class="tcc-body">'
+        +'<div class="tcc-nombre">'+p.nombre+'</div>'
+        +'<div class="tcc-det">'+p.detalle+'</div>'
+        +'<div class="tcc-precio">$'+fmt(precio)+'</div>'
+        +'<div class="tcc-ctrl">'
+          +'<button class="cb tcc-btn" id="tcminus-'+k+'">&#8722;</button>'
+          +'<span class="cn" id="tcn-'+k+'">'+cant+'</span>'
+          +'<button class="cb tcc-btn" id="tcplus-'+k+'">+</button>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  });
+  html+='</div>';
+  sec.innerHTML=html;
+  el.appendChild(sec);
+  // Asignar eventos sin strings problemáticos
+  TOGO.forEach(function(p,i){
+    var k="togo-"+i;
+    var bm=document.getElementById("tcminus-"+k);
+    var bp=document.getElementById("tcplus-"+k);
+    if(bm) bm.onclick=function(){cambiarTogoCliente(k,-1);};
+    if(bp) bp.onclick=function(){cambiarTogoCliente(k,1);};
+  });
+}
 
 function renderFamilias(){
   var w=document.getElementById("famWrap");
   w.innerHTML="";
   catKeys.forEach(function(c){
     var b=document.createElement("button");
-    b.className="fam-btn"+(c===catActiva?" active":"");
+    b.className="fam-btn"+(c===catActiva?" active":"")+(c==="TOGO"?" fam-togo":"");
+    b.setAttribute("data-cat",c);
     var emoji=CAT_EMOJI[c]||"📦";
     var lbl=c.split(" ").slice(0,2).join(" ");
     b.innerHTML='<span class="fam-emoji">'+emoji+'</span>'+lbl;
@@ -947,6 +1010,13 @@ function renderFamilias(){
 function renderCatalogo(scrollAlCat){
   var el=document.getElementById("catalogo");
   el.innerHTML="";
+  // Ocultar togoSection cuadradito (ya no se usa)
+  var ts=document.getElementById("togoSection"); if(ts) ts.style.display="none";
+  // TOGO como categoría especial
+  if(catActiva==="TOGO"){
+    renderCatalogoTogo(el);
+    return;
+  }
   var prods=cats[catActiva]||[];
   var sec=document.createElement("div");
   sec.innerHTML='<div class="cat-titulo">'+(CAT_EMOJI[catActiva]||"")+" "+catActiva+'</div>';
@@ -1072,6 +1142,13 @@ function calcTotal(){
     if(e.cantU>0){ t+=getPrecio(p)*e.cantU; items+=e.cantU; }
     if(e.cantC>0){ t+=getPrecio(p)*p.unidadesCaja*e.cantC; items+=e.cantC; }
   });
+  TOGO.forEach(function(p,i){
+    var k="togo-"+i;
+    var e=pedTogo[k];
+    if(!e||!e.cant) return;
+    var pr=MODO==="mayorista"?p.precioMay:p.precioMin;
+    t+=pr*e.cant; items+=e.cant;
+  });
   return {t:t,items:items};
 }
 
@@ -1109,14 +1186,16 @@ function cambiarTogoCliente(btnOrK,d){
   var k,dir;
   if(typeof btnOrK==="string"){k=btnOrK;dir=d;}
   else{
-    var row=btnOrK.closest(".togo-card");
-    k=row.id.replace("tcard-","");
-    dir=btnOrK.textContent.trim()==="+"?1:-1;
+    var row=btnOrK.closest(".togo-card")||btnOrK.closest(".togo-cat-card");
+    k=row?row.id.replace("tcard-","").replace("tcc-",""):btnOrK;
+    dir=btnOrK.textContent&&btnOrK.textContent.trim()==="+"?1:-1;
   }
   if(!pedTogo[k]) pedTogo[k]={cant:0};
   pedTogo[k].cant=Math.max(0,pedTogo[k].cant+dir);
-  var el=document.getElementById("tcn-"+k); if(el) el.textContent=pedTogo[k].cant;
-  var card=document.getElementById("tcard-"+k); if(card){card.className="togo-card"+(pedTogo[k].cant>0?" act":"");}
+  var cnt=pedTogo[k].cant;
+  var el=document.getElementById("tcn-"+k); if(el) el.textContent=cnt;
+  var card=document.getElementById("tcard-"+k); if(card){card.className="togo-card"+(cnt>0?" act":"");}
+  var card2=document.getElementById("tcc-"+k); if(card2){card2.className="togo-cat-card"+(cnt>0?" tcc-act":"");}
   updTotal();
 }
 function updTotal(){
@@ -1218,6 +1297,13 @@ function buildMsg(){
       var pCaja=getPrecio(p)*p.unidadesCaja;
       m+="• "+p.nombre+" x"+e.cantC+" caja"+(e.cantC>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(pCaja*e.cantC)+"\n";
     }
+  });
+  TOGO.forEach(function(p,i){
+    var k="togo-"+i;
+    var e=pedTogo[k];
+    if(!e||!e.cant) return;
+    var pr=MODO==="mayorista"?p.precioMay:p.precioMin;
+    m+="• 🍕 "+p.nombre+" x"+e.cant+" u = "+fmt(pr*e.cant)+"\n";
   });
   m+="\n💰 *TOTAL: "+fmt(r.t)+"*";
   if(r.t>=60000) m+="\n🚚 Envío gratis";
