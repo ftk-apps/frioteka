@@ -648,7 +648,7 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
       <div id="nvListaHistorial" style="padding-bottom:90px;display:none;"></div>
     </div>
   </div>
-  <button class="fab on" id="nvFab" onclick="irA('p7')">Ver pedido 🛒</button>
+  <button class="fab on" id="nvFab" onclick="irA('p7')" style="white-space:nowrap;">Ver pedido 🛒</button>
   <button class="fab" id="nvFabRemito" onclick="abrirVistaRemito()" style="display:none;background:#2e7d32;">Ver remito 📦</button>
 </div>
 
@@ -899,6 +899,7 @@ var TOGO=[
   {"codigo":8152,"codigoMin":9048,"nombre":"Pizzita Jamón","precioMay":3490,"precioMin":3690,"unid":1,"detalle":"prepizzeta, muzza, jamón"}
 ];
 var pedTogo={};
+var nvPedTogo={};
 var pedLac={};
 var vip=false;
 var descEsp=0;
@@ -1128,11 +1129,12 @@ function renderLac(){
 }
 
 
-function renderTogo(contenedor){
+function renderTogo(contenedor,nv){
   var lista=contenedor||$("lista-togo"); lista.innerHTML="";
+  var est=nv?nvPedTogo:pedTogo,px=nv?"nv":"";
   for(var i=0;i<TOGO.length;i++){
-    var p=TOGO[i],k="togo-"+i,cant=(pedTogo[k]&&pedTogo[k].cant)||0;
-    var div=document.createElement("div"); div.className="lac-prod"+(cant>0?" act":""); div.id="tprd-"+k;
+    var p=TOGO[i],k="togo-"+i,cant=(est[k]&&est[k].cant)||0;
+    var div=document.createElement("div"); div.className="lac-prod"+(cant>0?" act":""); div.id=px+"tprd-"+k;
     var inf=document.createElement("div"); inf.className="lac-info";
     var nom=document.createElement("div"); nom.className="lac-nom"; nom.textContent=p.nombre;
     var det=document.createElement("div"); det.className="lac-det"; det.textContent=(p.codigo?"Cód: "+p.codigo+" · ":"")+( p.detalle||"");
@@ -1141,20 +1143,20 @@ function renderTogo(contenedor){
     inf.appendChild(nom);inf.appendChild(det);inf.appendChild(pr2);inf.appendChild(bl);
     var ctr=document.createElement("div");ctr.className="ctr";
     var bm=document.createElement("button");bm.className="cb";bm.innerHTML="&#8722;";
-    var cs=document.createElement("span");cs.className="cn";cs.id="tcn-"+k;cs.textContent=cant;
+    var cs=document.createElement("span");cs.className="cn";cs.id=px+"tcn-"+k;cs.textContent=cant;
     var bp=document.createElement("button");bp.className="cb";bp.textContent="+";
-    (function(key){bm.onclick=function(){cambiarTogo(key,-1);};bp.onclick=function(){cambiarTogo(key,1);};})(k);
+    (function(key){bm.onclick=function(){cambiarTogo(key,-1,nv);};bp.onclick=function(){cambiarTogo(key,1,nv);};})(k);
     ctr.appendChild(bm);ctr.appendChild(cs);ctr.appendChild(bp);
     div.appendChild(inf);div.appendChild(ctr);lista.appendChild(div);
   }
 }
-function cambiarTogo(k,d){
-  if(!pedTogo[k]) pedTogo[k]={cant:0};
-  pedTogo[k].cant=Math.max(0,pedTogo[k].cant+d);
-  var el=$("tcn-"+k); if(el) el.textContent=pedTogo[k].cant;
-  var row=$("tprd-"+k); if(row) row.className="lac-prod"+(pedTogo[k].cant>0?" act":"");
-  updT();
-  if(typeof nvUpdT==="function") nvUpdT();
+function cambiarTogo(k,d,nv){
+  var est=nv?nvPedTogo:pedTogo,px=nv?"nv":"";
+  if(!est[k]) est[k]={cant:0};
+  est[k].cant=Math.max(0,est[k].cant+d);
+  var el=$(px+"tcn-"+k); if(el) el.textContent=est[k].cant;
+  var row=$(px+"tprd-"+k); if(row) row.className="lac-prod"+(est[k].cant>0?" act":"");
+  if(nv) nvUpdT(); else updT();
 }
 
 /* ===== AUTOCOMPLETADO ===== */
@@ -1478,7 +1480,7 @@ function procesarPendiente(pendIdx){
   if(!pend) return;
 
   // 1. Cargar items en nvPed / nvPedLac
-  nvPed={};nvPedLac={};nvVip=false;
+  nvPed={};nvPedLac={};nvPedTogo={};nvVip=false;
   nvDescEsp=pend.descuento||0;
   nvFpago=pend.fpago||"Efectivo";
 
@@ -2836,7 +2838,7 @@ function nvCalcT(){
   var t=0,n=0,tMin=0;
   for(var c in nvPed){var e=nvPed[c];if(e.cant>0){for(var i=0;i<P.length;i++){if(String(P[i].codigo)===c){var pr=precio(P[i],e.modo);t+=pr*e.cant;if(!esCaja(e.modo)) tMin+=pr*e.cant;n++;break;}}}}
   for(var lk in nvPedLac){var le=nvPedLac[lk];if(le&&le.cant>0){var idx2=parseInt(lk.replace("lac-",""));if(LAC[idx2]){var prLac=le.precioReal||LAC[idx2].precioMay*le.cant;t+=prLac;tMin+=prLac;n++;}}}
-  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0){var ti2=parseInt(tk.replace("togo-",""));if(TOGO[ti2]){var prT=TOGO[ti2].precioMay*te.cant;t+=prT;tMin+=prT;n++;}}}
+  for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(te&&te.cant>0){var ti2=parseInt(tk.replace("togo-",""));if(TOGO[ti2]){var prT=TOGO[ti2].precioMay*te.cant;t+=prT;tMin+=prT;n++;}}}
   return {t:t,n:n,tMin:tMin};
 }
 
@@ -2853,10 +2855,11 @@ function nvUpdT(){
   var total=0;
   for(var c in nvPed){var e=nvPed[c];if(e&&e.cant>0) total+=e.cant;}
   for(var lk in nvPedLac){var le=nvPedLac[lk];if(le&&le.cant>0) total+=le.cant;}
-  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0) total+=te.cant;}
+  for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(te&&te.cant>0) total+=te.cant;}
   if($("nvBdg")) $("nvBdg").textContent=total+" items";
   var f=nvCalcFinal(t,n,r.tMin);
   if($("nvTotal")) $("nvTotal").textContent=fmt(f.final);
+  if($("nvFab")) $("nvFab").textContent="Ver pedido 🛒"+(total>0?" · "+fmt(f.final):"");
 }
 
 function nvSetModo(k,m){
@@ -2905,7 +2908,7 @@ function nvSwitchTab(t){
   if($("nvFabRemito")) $("nvFabRemito").style.display=t==="remito"?"flex":"none";
   if(t==="remito") renderRemitoLista();
   if(t==="historial") renderHistorialRemitos();
-  if(t==="togo") renderTogo($("nvListaTogo"));
+  if(t==="togo") renderTogo($("nvListaTogo"),true);
 }
 
 function nvRender(f){
@@ -3131,7 +3134,7 @@ function nvAbrirResumen(){
     dv2.innerHTML='<div class="iizq"><div class="inom">'+lp.nombre+' <span class="itag tmay">May.</span></div><div class="icod">Lacteos S.M.</div></div><div class="ider"><div class="ipr">'+fmt(sub2)+'</div><div class="iqt">x'+le.cant+' · '+fmt(lp.precioMay)+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subF2)+"</div>":"")+'</div>';
     ri.appendChild(dv2);
   }
-  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue; hay=true;
+  for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(!te||!te.cant) continue; hay=true;
     var ti2=parseInt(tk.replace("togo-",""));var tp2=TOGO[ti2];var subT=tp2.precioMay*te.cant;
     var subFT=nvDescEsp>0?subT*(1-nvDescEsp/100):subT;
     var dvT=document.createElement("div");dvT.className="item";
@@ -3159,7 +3162,7 @@ function nvSetDescEsp(v){
 }
 
 function nvNuevoPedido(){
-  nvPed={};nvPedLac={};pedTogo={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";
+  nvPed={};nvPedLac={};nvPedTogo={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";
   if($("nvCli")) $("nvCli").value="";
   var selPrevReset=$("nvPreventista");if(selPrevReset)selPrevReset.value="";
   if($("nvDir")) $("nvDir").value="";
@@ -3222,7 +3225,7 @@ $("bvip").onclick=function(){vip=!vip;this.className="vipbtn"+(vip?" on":"");$("
 };
 $("fab").onclick=function(){abrirRes();irA("p2");};
 $("bvolver").onclick=function(){irA("p1");};
-function volverGestion(){nvPed={};nvPedLac={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";if($("nvCli"))$("nvCli").value="";if($("nvDir"))$("nvDir").value="";if($("nvObs"))$("nvObs").value="";if($("nvNroFactura"))$("nvNroFactura").value="";if($("nvVipBtn"))$("nvVipBtn").className="vipbtn";irA("p3");renderGestion();}
+function volverGestion(){nvPed={};nvPedLac={};nvPedTogo={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";if($("nvCli"))$("nvCli").value="";if($("nvDir"))$("nvDir").value="";if($("nvObs"))$("nvObs").value="";if($("nvNroFactura"))$("nvNroFactura").value="";if($("nvVipBtn"))$("nvVipBtn").className="vipbtn";irA("p3");renderGestion();}
 $("sbuscar").oninput=function(){render(this.value);};
 $("cliente").oninput=function(){buscarCli(this.value);updWA();};
 $("direccion").oninput=function(){updWA();};
@@ -3341,6 +3344,7 @@ document.addEventListener("DOMContentLoaded", function(){
     var items=[],subtotal=t,bultos=0,kg=0;
     for(var i=0;i<P.length;i++){var p=P[i],e=nvPed[String(p.codigo)];if(!e||!e.cant) continue;var pr=precio(p,e.modo);var subF=pr;if(esCaja(e.modo)){if(nvDescEsp>0&&nvDescEsp!==10&&!nvVip) subF*=(1-nvDescEsp/100);}else{if(f.d10) subF*=0.9;if(nvDescEsp>0) subF*=(1-nvDescEsp/100);}bultos+=e.cant;var cantLabel=esCaja(e.modo)?e.cant+" caja"+(e.cant>1?"s":"")+" ("+p.unidadesCaja+"u)":e.cant;items.push({codigo:String(p.codigo),nombre:p.nombre,peso:"",cantidad:cantLabel,cantNum:e.cant,precioUnit:subF,kg:0});}
     for(var lk in nvPedLac){var le=nvPedLac[lk];if(!le||!le.cant) continue;var idx=parseInt(lk.replace("lac-",""));var lp=LAC[idx];var subF2=lp.precioMay;if(nvDescEsp>0) subF2*=(1-nvDescEsp/100);bultos+=le.cant;items.push({codigo:"LAC",nombre:lp.nombre,peso:"Lacteos",cantidad:le.cant,precioUnit:subF2,kg:0});}
+    for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(!te||!te.cant) continue;var tp=TOGO[parseInt(tk.replace("togo-",""))];if(!tp) continue;var subFT=tp.precioMay;if(f.d10) subFT*=0.9;if(nvDescEsp>0) subFT*=(1-nvDescEsp/100);bultos+=te.cant;items.push({codigo:String(tp.codigo||"TOGO"),nombre:"TOGO "+tp.nombre,peso:"TOGO",cantidad:te.cant,cantNum:te.cant,precioUnit:subFT,kg:0});}
     var descLinea="";
     if(f.d10&&nvDescEsp>0) descLinea="10% off + "+nvDescEsp+"% especial";
     else if(f.d10) descLinea="10% de descuento";
