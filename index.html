@@ -194,6 +194,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .lac-prod{background:white;border-bottom:1px solid var(--borde);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
 .lac-prod.act{background:#FFF8F8;}
 .lac-info{flex:1;}
+.togo-hdr{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--borde);}
+.togo-hdr img{width:44px;height:44px;}
+.togo-hdr span{font-weight:700;font-size:15px;color:#333;}
+.togo-img{width:64px;height:64px;border-radius:10px;object-fit:cover;margin-right:12px;flex-shrink:0;cursor:zoom-in;background:#f3f3f3;}
+#togoZoom{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+#togoZoom img{max-width:100%;max-height:100%;border-radius:12px;}
 .lac-nom{font-size:13px;font-weight:600;}
 .lac-det{font-size:11px;color:var(--gris);margin-top:2px;}
 .lac-precio{font-size:13px;font-weight:700;color:var(--rojo);margin-top:2px;}
@@ -899,6 +905,9 @@ var TOGO=[
   {"codigo":8152,"codigoMin":9048,"nombre":"Pizzita Jamón","precioMay":3490,"precioMin":3690,"unid":1,"detalle":"prepizzeta, muzza, jamón"}
 ];
 var pedTogo={};
+var TOGO_IMG={8148:"especial",8149:"muzza",8150:"queso-azul",8151:"fugazza",8152:"jamon"};
+function togoImg(p,mini){return "img/togo/"+(TOGO_IMG[p.codigo]||"base")+(mini?"-mini":"")+".jpg";}
+function togoZoom(src){var z=$("togoZoom");if(!z){z=document.createElement("div");z.id="togoZoom";z.onclick=function(){z.style.display="none";};z.appendChild(document.createElement("img"));document.body.appendChild(z);}z.firstChild.src=src;z.style.display="flex";}
 var nvPedTogo={};
 var pedLac={};
 var vip=false;
@@ -1132,9 +1141,13 @@ function renderLac(){
 function renderTogo(contenedor,nv){
   var lista=contenedor||$("lista-togo"); lista.innerHTML="";
   var est=nv?nvPedTogo:pedTogo,px=nv?"nv":"";
+  var hd=document.createElement("div");hd.className="togo-hdr";hd.innerHTML='<img src="img/togo/logo.png" alt="TOGO"><span>Pizzitas TOGO</span>';lista.appendChild(hd);
   for(var i=0;i<TOGO.length;i++){
     var p=TOGO[i],k="togo-"+i,cant=(est[k]&&est[k].cant)||0;
     var div=document.createElement("div"); div.className="lac-prod"+(cant>0?" act":""); div.id=px+"tprd-"+k;
+    var im=document.createElement("img"); im.className="togo-img"; im.loading="lazy"; im.alt=p.nombre; im.src=togoImg(p,true);
+    (function(src){im.onclick=function(){togoZoom(src);};})(togoImg(p,false));
+    div.appendChild(im);
     var inf=document.createElement("div"); inf.className="lac-info";
     var nom=document.createElement("div"); nom.className="lac-nom"; nom.textContent=p.nombre;
     var det=document.createElement("div"); det.className="lac-det"; det.textContent=(p.codigo?"Cód: "+p.codigo+" · ":"")+( p.detalle||"");
