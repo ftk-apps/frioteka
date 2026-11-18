@@ -654,7 +654,7 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
       <div id="nvListaHistorial" style="padding-bottom:90px;display:none;"></div>
     </div>
   </div>
-  <button class="fab on" id="nvFab" onclick="irA('p7')" style="white-space:nowrap;">Ver pedido 🛒</button>
+  <button class="fab on" id="nvFab" onclick="nvAbrirResumen();irA('p7')" style="white-space:nowrap;">Ver pedido 🛒</button>
   <button class="fab" id="nvFabRemito" onclick="abrirVistaRemito()" style="display:none;background:#2e7d32;">Ver remito 📦</button>
 </div>
 
@@ -1493,20 +1493,31 @@ function procesarPendiente(pendIdx){
   if(!pend) return;
 
   // 1. Cargar items en nvPed / nvPedLac
-  nvPed={};nvPedLac={};nvPedTogo={};nvVip=false;
+  nvPed={};nvPedLac={};nvPedTogo={};
+  nvVip=pend.origen==="cliente-web-vip";
+  if($("nvVipBtn")) $("nvVipBtn").className="vipbtn"+(nvVip?" on":"");
   nvDescEsp=pend.descuento||0;
-  nvFpago=pend.fpago||"Efectivo";
+  var fpMap={efectivo:"Efectivo",transferencia:"Transferencia",debito:"Débito","débito":"Débito","cta. corriente":"Cta. Corriente"};
+  nvFpago=fpMap[String(pend.fpago||"").toLowerCase()]||pend.fpago||"Efectivo";
 
-  pend.items.forEach(function(it){
+  var noRec=[];
+  (pend.items||[]).forEach(function(it){
     var codVal=String(it.codigo||it.cod||"");
     var precioUnit=it.precioUnit||it.precio||0;
     if(codVal.indexOf("LAC-")===0){
       var li=parseInt(codVal.replace("LAC-",""));
       nvPedLac["lac-"+li]={cant:it.cant,precioReal:precioUnit*it.cant};
-    } else if(codVal){
-      nvPed[codVal]={cant:it.cant,modo:it.modo||"minorista"};
+      return;
     }
+    if(!codVal) return;
+    var ti=-1;for(var j=0;j<TOGO.length;j++){if(String(TOGO[j].codigo)===codVal||String(TOGO[j].codigoMin||"")===codVal){ti=j;break;}}
+    if(ti>=0){var tk="togo-"+ti;nvPedTogo[tk]={cant:((nvPedTogo[tk]&&nvPedTogo[tk].cant)||0)+it.cant};return;}
+    var enP=false;for(var q=0;q<P.length;q++){if(String(P[q].codigo)===codVal){enP=true;break;}}
+    if(!enP){noRec.push((it.nom||it.nombre||codVal)+" x"+it.cant);return;}
+    var modo=it.modo||(it.unid==="caja"?"caja":(nvVip?"mayorista":"minorista"));
+    nvPed[codVal]={cant:it.cant,modo:modo};
   });
+  if(noRec.length) alert("⚠️ Estos productos del pedido no están en la lista de la app y no se cargaron:\n\n• "+noRec.join("\n• ")+"\n\nCargalos a mano.");
 
   // 2. Guardar índice para marcarlo al confirmar PDF
   window._pendProcessingIdx=pendIdx;
