@@ -634,6 +634,7 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
   <div class="tabs" style="top:108px;">
     <div class="tab on" id="nvTab-cong" onclick="nvSwitchTab('cong')">❄ Congelados</div>
     <div class="tab" id="nvTab-lac" onclick="nvSwitchTab('lac')">🧀 Lácteos S.M.</div>
+    <div class="tab" id="nvTab-togo" onclick="nvSwitchTab('togo')" style="color:#e67e22;font-weight:700;">TOGO</div>
     <div class="tab" id="nvTab-remito" onclick="nvSwitchTab('remito')" style="background:rgba(255,255,255,0.18);color:#fff;font-weight:700;">📦 Remito S.M.</div>
     <div class="tab" id="nvTab-historial" onclick="nvSwitchTab('historial')" style="background:rgba(255,255,255,0.18);color:#fff;font-weight:700;">📋 Historial</div>
   </div>
@@ -642,6 +643,7 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
     <div class="nv-lista-wrap">
       <div id="nvLista" style="padding-bottom:90px;"></div>
       <div id="nvListaLac" style="padding-bottom:90px;display:none;"></div>
+      <div id="nvListaTogo" style="padding-bottom:90px;display:none;"></div>
       <div id="nvListaRemito" style="padding-bottom:90px;display:none;"></div>
       <div id="nvListaHistorial" style="padding-bottom:90px;display:none;"></div>
     </div>
@@ -1550,8 +1552,7 @@ function renderGestion(){
     ["cc","📒","Cta. Cte."+(nVencidas>0?" ⚠️":"")],
     ["prev","🛵","Preventistas"],
     ["listas","📋","Listas"],
-    ["nv","➕","Nueva venta"],
-    ["togo","","TOGO"]
+    ["nv","➕","Nueva venta"]
   ];
   $("gtabs").innerHTML=tabDefs.map(function(t){
     return '<button data-t="'+t[0]+'" class="'+(gTab===t[0]?"on":"")+(t[0]==="pendientes"&&nPend>0?" tab-alert":"")+'"><span class="gt-ico">'+t[1]+'</span><span class="gt-lbl">'+t[2]+'</span></button>';
@@ -1566,7 +1567,6 @@ function renderGestion(){
   else if(gTab==="cc") renderCC(c);
   else if(gTab==="prev") renderPreventistas(c);
   else if(gTab==="listas") renderListas(c);
-  else if(gTab==="togo") renderTogo(c);
   else renderNuevaVenta(c);
 }
 
@@ -2885,16 +2885,19 @@ function nvSwitchTab(t){
   nvTabActual=t;
   $("nvTab-cong").className="tab"+(t==="cong"?" on":"");
   $("nvTab-lac").className="tab"+(t==="lac"?" on":"");
+  if($("nvTab-togo")) $("nvTab-togo").className="tab"+(t==="togo"?" on":"");
   if($("nvTab-remito")) $("nvTab-remito").className="tab"+(t==="remito"?" on":"");
   if($("nvTab-historial")) $("nvTab-historial").className="tab"+(t==="historial"?" on":"");
   $("nvLista").style.display=t==="cong"?"block":"none";
   $("nvListaLac").style.display=t==="lac"?"block":"none";
+  if($("nvListaTogo")) $("nvListaTogo").style.display=t==="togo"?"block":"none";
   if($("nvListaRemito")) $("nvListaRemito").style.display=t==="remito"?"block":"none";
   if($("nvListaHistorial")) $("nvListaHistorial").style.display=t==="historial"?"block":"none";
   if($("nvFab")) $("nvFab").style.display=(t==="remito"||t==="historial")?"none":"";
   if($("nvFabRemito")) $("nvFabRemito").style.display=t==="remito"?"flex":"none";
   if(t==="remito") renderRemitoLista();
   if(t==="historial") renderHistorialRemitos();
+  if(t==="togo") renderTogo($("nvListaTogo"));
 }
 
 function nvRender(f){
