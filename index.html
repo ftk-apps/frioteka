@@ -161,6 +161,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .tabs{display:flex;background:white;border-bottom:2px solid var(--borde);position:sticky;top:150px;z-index:8;overflow-x:auto;}
 .tab{flex:0 0 auto;padding:10px 16px;text-align:center;font-size:13px;font-weight:600;color:var(--gris);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
 #tab-togo{color:#e67e22;}
+.gtabs button[data-t="togo"] .gt-ico{color:#e67e22;font-weight:700;font-size:13px;}
+.gtabs button[data-t="togo"] .gt-lbl{color:#e67e22;}
 .tab.on{color:var(--rojo);border-bottom-color:var(--rojo);}
 
 /* CATEGORÍAS Y PRODUCTOS */
@@ -1124,8 +1126,8 @@ function renderLac(){
 }
 
 
-function renderTogo(){
-  var lista=$("lista-togo"); lista.innerHTML="";
+function renderTogo(contenedor){
+  var lista=contenedor||$("lista-togo"); lista.innerHTML="";
   for(var i=0;i<TOGO.length;i++){
     var p=TOGO[i],k="togo-"+i,cant=(pedTogo[k]&&pedTogo[k].cant)||0;
     var div=document.createElement("div"); div.className="lac-prod"+(cant>0?" act":""); div.id="tprd-"+k;
@@ -1548,7 +1550,8 @@ function renderGestion(){
     ["cc","📒","Cta. Cte."+(nVencidas>0?" ⚠️":"")],
     ["prev","🛵","Preventistas"],
     ["listas","📋","Listas"],
-    ["nv","➕","Nueva venta"]
+    ["nv","➕","Nueva venta"],
+    ["togo","TOGO","TOGO"]
   ];
   $("gtabs").innerHTML=tabDefs.map(function(t){
     return '<button data-t="'+t[0]+'" class="'+(gTab===t[0]?"on":"")+(t[0]==="pendientes"&&nPend>0?" tab-alert":"")+'"><span class="gt-ico">'+t[1]+'</span><span class="gt-lbl">'+t[2]+'</span></button>';
@@ -1563,6 +1566,7 @@ function renderGestion(){
   else if(gTab==="cc") renderCC(c);
   else if(gTab==="prev") renderPreventistas(c);
   else if(gTab==="listas") renderListas(c);
+  else if(gTab==="togo") renderTogo(c);
   else renderNuevaVenta(c);
 }
 
