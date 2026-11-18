@@ -385,8 +385,9 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
 .nv-cat-emoji{font-size:16px;flex-shrink:0;}
 
 /* CHIPS de familias — Preventista móvil */
-.chips-scroll{display:none;}
-@media(max-width:767px){.chips-scroll{display:flex;}}
+.chips-scroll{display:flex;}
+.tabsbar{position:sticky;top:150px;z-index:8;}
+.tabsbar .tabs{position:static;}
 .chips-scroll{overflow-x:auto;padding:6px 12px;gap:6px;background:white;border-bottom:1px solid var(--borde);-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .chips-scroll::-webkit-scrollbar{display:none;}
 .chip-cat{flex-shrink:0;padding:4px 10px;border-radius:20px;background:#F0F0F0;border:none;font-size:11px;font-weight:600;color:#444;cursor:pointer;white-space:nowrap;}
@@ -444,12 +445,14 @@ input:checked+.sw-sl:before{transform:translateX(20px);}
     </div>
     <div class="dbdg" id="dbdg">¡10% OFF!</div>
   </div>
+  <div class="tabsbar">
   <div class="tabs">
     <div class="tab on" id="tab-cong" onclick="switchTab('cong')">❄ Congelados</div>
     <div class="tab" id="tab-lac" onclick="switchTab('lac')">🧀 Lácteos S.M.</div>
     <div class="tab" id="tab-togo" onclick="switchTab('togo')">TOGO</div>
   </div>
   <div class="chips-scroll" id="chipsScroll"></div>
+  </div>
   <div id="lista" style="padding-bottom:90px;"></div>
   <div id="lista-lac" style="padding-bottom:90px;display:none;"></div>
   <div id="lista-togo" style="padding-bottom:90px;display:none;"></div>
@@ -988,6 +991,7 @@ function cambiarLac(k,d){
 
 function switchTab(t){
   tabActual=t;
+  if($("chipsScroll")) $("chipsScroll").style.display=t==="cong"?"":"none";
   $("tab-cong").className="tab"+(t==="cong"?" on":"");
   $("tab-lac").className="tab"+(t==="lac"?" on":"");
   $("tab-togo").className="tab"+(t==="togo"?" on":"");
@@ -2264,8 +2268,8 @@ function nvUpdateActiveCat(panel){
   }
 }
 
-function prevBuildChips(){
-  var wrap=$("chipsScroll"); if(!wrap) return;
+function prevBuildChips(wrapId,pref){
+  var wrap=$(wrapId||"chipsScroll"); if(!wrap) return;
   wrap.innerHTML="";
   var catsEnLista={};
   for(var i=0;i<P.length;i++) catsEnLista[P[i].categoria]=true;
@@ -2277,9 +2281,10 @@ function prevBuildChips(){
       chip.className="chip-cat";
       chip.textContent=fam.emoji+" "+fam.cat;
       chip.onclick=function(){
-        var id="prev-cat-"+fam.cat.replace(/\s+/g,"-");
-        var el=document.getElementById(id);
-        if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+        var el=document.getElementById((pref||"prev-cat-")+fam.cat.replace(/\s+/g,"-"));
+        if(!el) return;
+        var bar=wrap.closest(".tabsbar")||wrap;
+        window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-bar.getBoundingClientRect().bottom-4,behavior:"smooth"});
       };
       wrap.appendChild(chip);
     })(f);
@@ -3184,6 +3189,19 @@ function ejecutarExport(){
 }
 
 
+
+/* Barras fijas: calcula la altura real de cabecera y total para que pestañas y familias no queden tapadas */
+function fixSticky(){
+  document.querySelectorAll(".pag").forEach(function(pg){
+    var h=pg.querySelector(".hdr"),t=pg.querySelector(".tot"),tb=pg.querySelector(".tabsbar");
+    if(!h||!h.offsetHeight) return;
+    var y=h.offsetHeight;
+    if(t){t.style.top=y+"px";y+=t.offsetHeight;}
+    if(tb) tb.style.top=y+"px";
+  });
+}
+if(window.ResizeObserver){var _roSt=new ResizeObserver(function(){fixSticky();});document.querySelectorAll(".pag .hdr,.pag .tot").forEach(function(e){_roSt.observe(e);});}
+window.addEventListener("resize",fixSticky);
 </script>
 </body>
 </html>
