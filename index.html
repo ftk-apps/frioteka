@@ -1154,6 +1154,7 @@ function cambiarTogo(k,d){
   var el=$("tcn-"+k); if(el) el.textContent=pedTogo[k].cant;
   var row=$("tprd-"+k); if(row) row.className="lac-prod"+(pedTogo[k].cant>0?" act":"");
   updT();
+  if(typeof nvUpdT==="function") nvUpdT();
 }
 
 /* ===== AUTOCOMPLETADO ===== */
@@ -2835,6 +2836,7 @@ function nvCalcT(){
   var t=0,n=0,tMin=0;
   for(var c in nvPed){var e=nvPed[c];if(e.cant>0){for(var i=0;i<P.length;i++){if(String(P[i].codigo)===c){var pr=precio(P[i],e.modo);t+=pr*e.cant;if(!esCaja(e.modo)) tMin+=pr*e.cant;n++;break;}}}}
   for(var lk in nvPedLac){var le=nvPedLac[lk];if(le&&le.cant>0){var idx2=parseInt(lk.replace("lac-",""));if(LAC[idx2]){var prLac=le.precioReal||LAC[idx2].precioMay*le.cant;t+=prLac;tMin+=prLac;n++;}}}
+  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0){var ti2=parseInt(tk.replace("togo-",""));if(TOGO[ti2]){var prT=TOGO[ti2].precioMay*te.cant;t+=prT;tMin+=prT;n++;}}}
   return {t:t,n:n,tMin:tMin};
 }
 
@@ -3123,6 +3125,13 @@ function nvAbrirResumen(){
     dv2.innerHTML='<div class="iizq"><div class="inom">'+lp.nombre+' <span class="itag tmay">May.</span></div><div class="icod">Lacteos S.M.</div></div><div class="ider"><div class="ipr">'+fmt(sub2)+'</div><div class="iqt">x'+le.cant+' · '+fmt(lp.precioMay)+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subF2)+"</div>":"")+'</div>';
     ri.appendChild(dv2);
   }
+  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue; hay=true;
+    var ti2=parseInt(tk.replace("togo-",""));var tp2=TOGO[ti2];var subT=tp2.precioMay*te.cant;
+    var subFT=nvDescEsp>0?subT*(1-nvDescEsp/100):subT;
+    var dvT=document.createElement("div");dvT.className="item";
+    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag tmay">TOGO</span></div><div class="icod">TOGO</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(tp2.precioMay)+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
+    ri.appendChild(dvT);
+  }
   if(!hay) ri.innerHTML='<div class="vacio">Sin productos</div>';
   $("nvSubt").textContent=fmt(t);
   var di=$("nvDinfo");
@@ -3144,7 +3153,7 @@ function nvSetDescEsp(v){
 }
 
 function nvNuevoPedido(){
-  nvPed={};nvPedLac={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";
+  nvPed={};nvPedLac={};pedTogo={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";
   if($("nvCli")) $("nvCli").value="";
   var selPrevReset=$("nvPreventista");if(selPrevReset)selPrevReset.value="";
   if($("nvDir")) $("nvDir").value="";
