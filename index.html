@@ -2850,7 +2850,13 @@ function nvCalcFinal(t,n,tMin){
 
 function nvUpdT(){
   var r=nvCalcT(),t=r.t,n=r.n;
-  if($("nvBdg")) $("nvBdg").textContent=n+" items";
+  var total=0;
+  for(var c in nvPed){var e=nvPed[c];if(e&&e.cant>0) total+=e.cant;}
+  for(var lk in nvPedLac){var le=nvPedLac[lk];if(le&&le.cant>0) total+=le.cant;}
+  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0) total+=te.cant;}
+  if($("nvBdg")) $("nvBdg").textContent=total+" items";
+  var f=nvCalcFinal(t,n,r.tMin);
+  if($("nvTotal")) $("nvTotal").textContent=fmt(f.final);
 }
 
 function nvSetModo(k,m){
