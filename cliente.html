@@ -184,6 +184,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .togo-det{font-size:11px;color:#888;margin-bottom:6px;line-height:1.3;}
 .togo-precio{font-size:16px;font-weight:900;color:#e67e22;margin-bottom:8px;}
 .togo-ctrl{display:flex;align-items:center;gap:8px;}
+.togo-ctrl .cb,.tcc-ctrl .cb{width:34px;height:34px;border-radius:10px;border:1px solid #d4830a;background:#d4830a;color:#fff;font-size:20px;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+.togo-ctrl .cb:active,.tcc-ctrl .cb:active{opacity:.7;}
+.togo-ctrl .cn,.tcc-ctrl .cn{min-width:28px;text-align:center;font-size:18px;font-weight:900;color:#fff;}
 
 
 /* TOGO como categoría del catálogo */
@@ -881,13 +884,19 @@ var P=[{"codigo":1829,"nombre":"PANCITOS INTEGRALES HORNEADOS 12u 460GR","unidad
 {"codigo":3066,"nombre":"PAQ. ANANA TROZOS X500GR","unidadesCaja":20,"unidad":"U","precioMinorista":8590,"precioMayorista":5607,"categoria":"FRUTAS Y VERDURAS","iva":10.5}];
 
 var TOGO=[
-  {"codigo":8148,"nombre":"Pizzita Especial","precioMay":3590,"precioMin":3890,"unid":1,"detalle":"prepizzeta, muzza, jamón, morrón, aceitunas"},
-  {"codigo":8149,"nombre":"Pizzita Muzza","precioMay":2990,"precioMin":3290,"unid":1,"detalle":"prepizzeta, muzza, aceitunas"},
-  {"codigo":8150,"nombre":"Pizzita Roquefort","precioMay":3790,"precioMin":3990,"unid":1,"detalle":"prepizzeta, muzza, queso roquefort"},
-  {"codigo":8151,"nombre":"Pizzita Fugazza","precioMay":3090,"precioMin":3390,"unid":1,"detalle":"prepizzeta, muzza, cebolla"},
-  {"codigo":8152,"codigoMin":9048,"nombre":"Pizzita Jamón","precioMay":3490,"precioMin":3690,"unid":1,"detalle":"prepizzeta, muzza, jamón"}
+  {"codigo":8148,"codigoMin":9047,"nombre":"Pizzita Especial","precioMay":3590,"precioMin":3890,"unid":1,"detalle":"prepizzeta, salsa, muzza, jamón y morrón"},
+  {"codigo":8149,"codigoMin":9045,"nombre":"Pizzita Muzza","precioMay":2990,"precioMin":3290,"unid":1,"detalle":"prepizzeta, salsa y muzza"},
+  {"codigo":8150,"codigoMin":9046,"nombre":"Pizzita Queso Azul","precioMay":3790,"precioMin":3990,"unid":1,"detalle":"prepizzeta, salsa, muzza y queso azul"},
+  {"codigo":8151,"codigoMin":8147,"nombre":"Pizzita Fugazza","precioMay":3090,"precioMin":3390,"unid":1,"detalle":"prepizzeta, salsa, muzza y cebolla"},
+  {"codigo":8152,"codigoMin":9048,"nombre":"Pizzita Jamón","precioMay":3490,"precioMin":3690,"unid":1,"detalle":"prepizzeta, salsa, muzza y jamón"}
 ];
 var pedTogo={};
+// Precio y código de cada pizzita según el modo (VIP y mayorista: precio mayorista).
+function togoPr(p){ return (MODO==="vip"||MODO==="mayorista")?p.precioMay:p.precioMin; }
+function togoCod(p){ return (MODO==="vip"||MODO==="mayorista")?p.codigo:(p.codigoMin||p.codigo); }
+// Recorre las pizzitas pedidas: fn(p, cantidad, precio, clave)
+function togoPedidas(fn){ TOGO.forEach(function(p,i){ var k="togo-"+i, e=pedTogo[k]; if(e&&e.cant>0) fn(p,e.cant,togoPr(p),k); }); }
+function togoLimpiar(){ pedTogo={}; TOGO.forEach(function(p,i){ var k="togo-"+i, el=document.getElementById("tcn-"+k), c=document.getElementById("tcard-"+k); if(el) el.textContent=0; if(c) c.className="togo-card"; var e2=document.getElementById("tcnc-"+k), c2=document.getElementById("tcc-"+k); if(e2) e2.textContent=0; if(c2) c2.className="togo-cat-card"; }); }
 var ped = {}; // {codigo: {cantU, cantC}} cantU=unidades sueltas, cantC=cajas
 var fpago = "";
 
@@ -941,16 +950,16 @@ function renderCatalogoTogo(el){
   TOGO.forEach(function(p,i){
     var k="togo-"+i;
     var cant=(pedTogo[k]&&pedTogo[k].cant)||0;
-    var precio=MODO==="mayorista"?p.precioMay:p.precioMin;
+    var precio=togoPr(p);
     html+='<div class="togo-cat-card'+(cant>0?" tcc-act":'')+'" id="tcc-'+k+'">'
       +'<div class="tcc-foto"><span class="tcc-foto-emoji">🍕</span></div>'
       +'<div class="tcc-body">'
         +'<div class="tcc-nombre">'+p.nombre+'</div>'
         +'<div class="tcc-det">'+p.detalle+'</div>'
-        +'<div class="tcc-precio">$'+fmt(precio)+'</div>'
+        +'<div class="tcc-precio">'+fmt(precio)+'</div>'
         +'<div class="tcc-ctrl">'
           +'<button class="cb tcc-btn" id="tcminus-'+k+'">&#8722;</button>'
-          +'<span class="cn" id="tcn-'+k+'">'+cant+'</span>'
+          +'<span class="cn" id="tcnc-'+k+'">'+cant+'</span>'
           +'<button class="cb tcc-btn" id="tcplus-'+k+'">+</button>'
         +'</div>'
       +'</div>'
@@ -1144,13 +1153,7 @@ function calcTotal(){
     if(e.cantU>0){ t+=getPrecio(p)*e.cantU; items+=e.cantU; }
     if(e.cantC>0){ t+=getPrecio(p)*p.unidadesCaja*e.cantC; items+=e.cantC; }
   });
-  TOGO.forEach(function(p,i){
-    var k="togo-"+i;
-    var e=pedTogo[k];
-    if(!e||!e.cant) return;
-    var pr=MODO==="mayorista"?p.precioMay:p.precioMin;
-    t+=pr*e.cant; items+=e.cant;
-  });
+  togoPedidas(function(p,c,pr){ t+=pr*c; items+=c; });
   return {t:t,items:items};
 }
 
@@ -1173,7 +1176,7 @@ function renderTogoSection(){
     html+='<div class="togo-card" id="tcard-'+k+'">'
       +'<div class="togo-nombre">'+p.nombre+'</div>'
       +'<div class="togo-det">'+p.detalle+'</div>'
-      +'<div class="togo-precio">$'+fmt(MODO==="vip"?p.precioMay:p.precioMin)+'</div>'
+      +'<div class="togo-precio">'+fmt(togoPr(p))+'</div>'
       +'<div class="togo-ctrl">'
         +'<button class="cb" onclick="cambiarTogoCliente(this)">&#8722;</button>'
       +'<span class="cn" id="tcn-'+k+'">'+cant+'</span>'
@@ -1196,6 +1199,7 @@ function cambiarTogoCliente(btnOrK,d){
   pedTogo[k].cant=Math.max(0,pedTogo[k].cant+dir);
   var cnt=pedTogo[k].cant;
   var el=document.getElementById("tcn-"+k); if(el) el.textContent=cnt;
+  var el2=document.getElementById("tcnc-"+k); if(el2) el2.textContent=cnt;
   var card=document.getElementById("tcard-"+k); if(card){card.className="togo-card"+(cnt>0?" act":"");}
   var card2=document.getElementById("tcc-"+k); if(card2){card2.className="togo-cat-card"+(cnt>0?" tcc-act":"");}
   updTotal();
@@ -1252,6 +1256,9 @@ function renderDrawer(){
       html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.nombre+'</div><div class="drawer-item-det">'+e.cantC+' caja'+( e.cantC>1?"s":"")+" × "+fmt(getPrecio(p)*p.unidadesCaja)+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*p.unidadesCaja*e.cantC)+'</div></div>';
     }
   });
+  togoPedidas(function(p,c,pr){
+    html+='<div class="drawer-item"><div><div class="drawer-item-nom">🍕 '+p.nombre+'</div><div class="drawer-item-det">'+c+' u. × '+fmt(pr)+'</div></div><div class="drawer-item-precio">'+fmt(pr*c)+'</div></div>';
+  });
   document.getElementById("drawerItems").innerHTML=html||'<div style="color:#aaa;font-size:13px;padding:8px 0;">No hay productos todavía.</div>';
   document.getElementById("drawerTotal").textContent=fmt(r.t);
   var de=document.getElementById("drawerEnvio");
@@ -1273,6 +1280,7 @@ function cerrarDrawer(){
 
 function limpiarPedido(){
   ped={};
+  togoLimpiar();
   P.forEach(function(p){ updateCard(p.codigo); });
   updTotal();
 }
@@ -1300,13 +1308,7 @@ function buildMsg(){
       m+="• "+p.nombre+" x"+e.cantC+" caja"+(e.cantC>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(pCaja*e.cantC)+"\n";
     }
   });
-  TOGO.forEach(function(p,i){
-    var k="togo-"+i;
-    var e=pedTogo[k];
-    if(!e||!e.cant) return;
-    var pr=MODO==="mayorista"?p.precioMay:p.precioMin;
-    m+="• 🍕 "+p.nombre+" x"+e.cant+" u = "+fmt(pr*e.cant)+"\n";
-  });
+  togoPedidas(function(p,c,pr){ m+="• 🍕 "+p.nombre+" x"+c+" u = "+fmt(pr*c)+"\n"; });
   m+="\n💰 *TOTAL: "+fmt(r.t)+"*";
   if(r.t>=60000) m+="\n🚚 Envío gratis";
   return m;
@@ -1326,6 +1328,7 @@ function enviarWA(){
     if(e.cantU>0) items.push({cod:p.codigo,nom:p.nombre,cant:e.cantU,unid:unidLbl,precio:getPrecio(p),subtotal:getPrecio(p)*e.cantU});
     if(e.cantC>0) items.push({cod:p.codigo,nom:p.nombre,cant:e.cantC,unid:"caja",precio:getPrecio(p)*p.unidadesCaja,subtotal:getPrecio(p)*p.unidadesCaja*e.cantC});
   });
+  togoPedidas(function(p,c,pr){ items.push({cod:togoCod(p),nom:p.nombre,cant:c,unid:"u",precio:pr,subtotal:pr*c}); });
   // Guardar en Firebase como pendiente
   var pend={
     id:Date.now(),
