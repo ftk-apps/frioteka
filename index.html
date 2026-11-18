@@ -2857,12 +2857,13 @@ var nvEntrega="Local";
 var nvTabActual="cong";
 
 function nvDm(){return nvVip?"mayorista":"minorista";}
+function nvTogoPr(p){return nvVip?p.precioMay:p.precioMin;}
 
 function nvCalcT(){
   var t=0,n=0,tMin=0;
   for(var c in nvPed){var e=nvPed[c];if(e.cant>0){for(var i=0;i<P.length;i++){if(String(P[i].codigo)===c){var pr=precio(P[i],e.modo);t+=pr*e.cant;if(!esCaja(e.modo)) tMin+=pr*e.cant;n++;break;}}}}
   for(var lk in nvPedLac){var le=nvPedLac[lk];if(le&&le.cant>0){var idx2=parseInt(lk.replace("lac-",""));if(LAC[idx2]){var prLac=le.precioReal||LAC[idx2].precioMay*le.cant;t+=prLac;tMin+=prLac;n++;}}}
-  for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(te&&te.cant>0){var ti2=parseInt(tk.replace("togo-",""));if(TOGO[ti2]){var prT=TOGO[ti2].precioMay*te.cant;t+=prT;tMin+=prT;n++;}}}
+  for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(te&&te.cant>0){var ti2=parseInt(tk.replace("togo-",""));if(TOGO[ti2]){var prT=nvTogoPr(TOGO[ti2])*te.cant;t+=prT;tMin+=prT;n++;}}}
   return {t:t,n:n,tMin:tMin};
 }
 
@@ -3159,10 +3160,10 @@ function nvAbrirResumen(){
     ri.appendChild(dv2);
   }
   for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(!te||!te.cant) continue; hay=true;
-    var ti2=parseInt(tk.replace("togo-",""));var tp2=TOGO[ti2];var subT=tp2.precioMay*te.cant;
+    var ti2=parseInt(tk.replace("togo-",""));var tp2=TOGO[ti2];var subT=nvTogoPr(tp2)*te.cant;
     var subFT=nvDescEsp>0?subT*(1-nvDescEsp/100):subT;
     var dvT=document.createElement("div");dvT.className="item";
-    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag tmay">TOGO</span></div><div class="icod">TOGO</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(tp2.precioMay)+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
+    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag '+(nvVip?'tmay':'tmin')+'">'+(nvVip?'VIP':'Min.')+'</span></div><div class="icod">TOGO · Cód: '+tp2.codigo+'</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(nvTogoPr(tp2))+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
     ri.appendChild(dvT);
   }
   if(!hay) ri.innerHTML='<div class="vacio">Sin productos</div>';
@@ -3368,7 +3369,7 @@ document.addEventListener("DOMContentLoaded", function(){
     var items=[],subtotal=t,bultos=0,kg=0;
     for(var i=0;i<P.length;i++){var p=P[i],e=nvPed[String(p.codigo)];if(!e||!e.cant) continue;var pr=precio(p,e.modo);var subF=pr;if(esCaja(e.modo)){if(nvDescEsp>0&&nvDescEsp!==10&&!nvVip) subF*=(1-nvDescEsp/100);}else{if(f.d10) subF*=0.9;if(nvDescEsp>0) subF*=(1-nvDescEsp/100);}bultos+=e.cant;var cantLabel=esCaja(e.modo)?e.cant+" caja"+(e.cant>1?"s":"")+" ("+p.unidadesCaja+"u)":e.cant;items.push({codigo:String(p.codigo),nombre:p.nombre,peso:"",cantidad:cantLabel,cantNum:e.cant,precioUnit:subF,kg:0});}
     for(var lk in nvPedLac){var le=nvPedLac[lk];if(!le||!le.cant) continue;var idx=parseInt(lk.replace("lac-",""));var lp=LAC[idx];var subF2=lp.precioMay;if(nvDescEsp>0) subF2*=(1-nvDescEsp/100);bultos+=le.cant;items.push({codigo:"LAC",nombre:lp.nombre,peso:"Lacteos",cantidad:le.cant,precioUnit:subF2,kg:0});}
-    for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(!te||!te.cant) continue;var tp=TOGO[parseInt(tk.replace("togo-",""))];if(!tp) continue;var subFT=tp.precioMay;if(f.d10) subFT*=0.9;if(nvDescEsp>0) subFT*=(1-nvDescEsp/100);bultos+=te.cant;items.push({codigo:String(tp.codigo||"TOGO"),nombre:"TOGO "+tp.nombre,peso:"TOGO",cantidad:te.cant,cantNum:te.cant,precioUnit:subFT,kg:0});}
+    for(var tk in nvPedTogo){var te=nvPedTogo[tk];if(!te||!te.cant) continue;var tp=TOGO[parseInt(tk.replace("togo-",""))];if(!tp) continue;var subFT=nvTogoPr(tp);if(f.d10) subFT*=0.9;if(nvDescEsp>0) subFT*=(1-nvDescEsp/100);bultos+=te.cant;items.push({codigo:String(tp.codigo||"TOGO"),nombre:"TOGO "+tp.nombre,peso:"TOGO",cantidad:te.cant,cantNum:te.cant,precioUnit:subFT,kg:0});}
     var descLinea="";
     if(f.d10&&nvDescEsp>0) descLinea="10% off + "+nvDescEsp+"% especial";
     else if(f.d10) descLinea="10% de descuento";
