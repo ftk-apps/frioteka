@@ -1551,7 +1551,7 @@ function renderGestion(){
     ["prev","🛵","Preventistas"],
     ["listas","📋","Listas"],
     ["nv","➕","Nueva venta"],
-    ["togo","TOGO","TOGO"]
+    ["togo","","TOGO"]
   ];
   $("gtabs").innerHTML=tabDefs.map(function(t){
     return '<button data-t="'+t[0]+'" class="'+(gTab===t[0]?"on":"")+(t[0]==="pendientes"&&nPend>0?" tab-alert":"")+'"><span class="gt-ico">'+t[1]+'</span><span class="gt-lbl">'+t[2]+'</span></button>';
