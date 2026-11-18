@@ -53,8 +53,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .prog-txt.ok{color:#1B7D33;}
 
 /* FAMILIAS */
-.fam-wrap{background:#b8720a;padding:16px 8px;border-bottom:3px solid #9e5f00;display:flex;overflow-x:auto;overflow-y:visible;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:8px;align-items:center;}
-.fam-wrap::-webkit-scrollbar{display:none;}
+.fam-wrap{background:#b8720a;padding:16px 8px 10px;border-bottom:3px solid #9e5f00;display:flex;overflow-x:auto;overflow-y:visible;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.5) transparent;gap:8px;align-items:center;}
+.fam-wrap::-webkit-scrollbar{height:4px;}
+.fam-wrap::-webkit-scrollbar-track{background:transparent;}
+.fam-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.5);border-radius:4px;}
 .fam-btn{flex:0 0 auto;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 18px;min-height:80px;width:110px;border-radius:16px;border:2.5px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.18);font-size:14px;font-weight:800;color:#fff;cursor:pointer;scroll-snap-align:center;transition:all .18s ease;line-height:1.3;}
 .fam-btn .fam-emoji{font-size:32px;margin-bottom:4px;}
 .fam-btn.active{background:#fff;color:#b8720a;border-color:#fff;box-shadow:0 3px 12px rgba(0,0,0,0.2);}
