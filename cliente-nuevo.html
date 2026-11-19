@@ -155,6 +155,8 @@ a{color:inherit;text-decoration:none}
 (function(){
 /* ===== Datos: todo sale de precios.json (precios.js), igual que antes ===== */
 var WA_NUM="5493541613373";
+/* Horarios de atención por local (para mostrar en Contacto) */
+var HORARIOS={car:"Lun a sáb 9 a 15 y 17 a 21:30 · Dom 10 a 14 y 17 a 21",sm:""};
 var WA_OFERTAS="https://wa.me/"+WA_NUM+"?text="+encodeURIComponent("Hola! Quiero recibir las ofertas de FRIOTEKA por WhatsApp");
 /* Listas iguales a cliente.html */
 var OFERTAS=[1521,3041,3311,3312,3313,3607,3706,3522,3620,1121,1126,3826,3820,1714,1719,
@@ -252,8 +254,8 @@ function marco(){var may=esMay();
     '<button class="mit" data-ir="top"><i>🏠</i>Inicio<span>›</span></button>'+fijos+'<button class="mit" data-ped="1"><i>🧾</i>Mi pedido<span>›</span></button><div class="mtit">Familias</div>'+
     secciones.filter(function(s){return ["ofertas","masvendidos","destmay"].indexOf(s.id)<0;}).map(function(s){return '<button class="mit" data-ir="'+s.id+'"><i>'+s.ic+'</i>'+s.t+'<span>›</span></button>';}).join("")+
     '<div class="mtit">Contacto</div>'+
-    '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. Ramón J. Cárcano 619, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>Cárcano<div class="cod" style="margin-top:0">Av. Ramón J. Cárcano 619 · Villa Carlos Paz</div></div><span>›</span></a>'+
-    '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. San Martín 1211, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>San Martín<div class="cod" style="margin-top:0">Av. San Martín 1211 · Villa Carlos Paz</div></div><span>›</span></a>'+
+    '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. Ramón J. Cárcano 619, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>Cárcano<div class="cod" style="margin-top:0">Av. Ramón J. Cárcano 619 · Villa Carlos Paz</div>'+(HORARIOS.car?'<div class="cod" style="margin-top:2px">🕘 '+HORARIOS.car+'</div>':'')+'</div><span>›</span></a>'+
+    '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. San Martín 1211, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>San Martín<div class="cod" style="margin-top:0">Av. San Martín 1211 · Villa Carlos Paz</div>'+(HORARIOS.sm?'<div class="cod" style="margin-top:2px">🕘 '+HORARIOS.sm+'</div>':'')+'</div><span>›</span></a>'+
     '<a class="mit" href="https://wa.me/'+WA_NUM+'" target="_blank" rel="noopener"><i>💬</i>WhatsApp 3541 61-3373<span>›</span></a>'+
     '<a class="mit" href="'+WA_OFERTAS+'" target="_blank" rel="noopener"><i>🔔</i>Recibí las ofertas por WhatsApp<span>›</span></a>'+
     '<a class="mit" href="https://frioteka.com.ar/" target="_blank" rel="noopener"><i>🌐</i>Compra online · frioteka.com.ar<span>›</span></a>'+
