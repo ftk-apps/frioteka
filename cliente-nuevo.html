@@ -248,7 +248,9 @@ function marco(){var may=esMay();
     '<div class="mtit">Contacto</div>'+
     '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. Ramón J. Cárcano 619, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>Cárcano<div class="cod" style="margin-top:0">Av. Ramón J. Cárcano 619 · Villa Carlos Paz</div></div><span>›</span></a>'+
     '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. San Martín 1211, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>San Martín<div class="cod" style="margin-top:0">Av. San Martín 1211 · Villa Carlos Paz</div></div><span>›</span></a>'+
-    '<a class="mit" href="https://wa.me/'+WA_NUM+'" target="_blank" rel="noopener"><i>💬</i>WhatsApp 3541 61-3373<span>›</span></a>';
+    '<a class="mit" href="https://wa.me/'+WA_NUM+'" target="_blank" rel="noopener"><i>💬</i>WhatsApp 3541 61-3373<span>›</span></a>'+
+    '<a class="mit" href="https://frioteka.com.ar/" target="_blank" rel="noopener"><i>🌐</i>Compra online · frioteka.com.ar<span>›</span></a>'+
+    '<a class="mit" href="https://www.instagram.com/FriotekaOficial" target="_blank" rel="noopener"><i>📷</i>Instagram · @FriotekaOficial<span>›</span></a>';
   setTimeout(medir,0);}
 function cambiarModo(m){MODO=m;document.body.classList.toggle("may",m==="may");ped=PED[m];q="";$("q").value="";armar();marco();render();abrir("menu",false);if($("hoja").classList.contains("on"))hoja();window.scrollTo({top:0});}
 function abrir(el,on){$(el).classList.toggle("on",on);$("velo").classList.toggle("on",$("menu").classList.contains("on")||$("hoja").classList.contains("on"));document.body.style.overflow=$("hoja").classList.contains("on")?"hidden":"";}
