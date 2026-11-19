@@ -815,7 +815,7 @@ function calcT(){
   var t=0,n=0,tMin=0;
   for(var c in ped){var e=ped[c];if(e.cant>0){for(var i=0;i<P.length;i++){if(String(P[i].codigo)===c){var pr=precio(P[i],e.modo);t+=pr*e.cant;if(!esCaja(e.modo)) tMin+=pr*e.cant;n++;break;}}}}
   for(var lk in pedLac){var le=pedLac[lk];if(le&&le.cant>0){var idx2=parseInt(lk.replace("lac-",""));if(LAC[idx2]){var prLac=LAC[idx2].precioMay*le.cant;t+=prLac;tMin+=prLac;n++;}}}
-  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0){var ti=parseInt(tk.replace("togo-",""));if(TOGO[ti]){var prTogo=TOGO[ti].precioMay*te.cant;t+=prTogo;tMin+=prTogo;n++;}}}
+  for(var tk in pedTogo){var te=pedTogo[tk];if(te&&te.cant>0){var ti=parseInt(tk.replace("togo-",""));if(TOGO[ti]){var prTogo=pTogoPr(TOGO[ti])*te.cant;t+=prTogo;tMin+=prTogo;n++;}}}
   return {t:t,n:n,tMin:tMin};
 }
 function calcFinal(t,n,tMin){
@@ -976,7 +976,7 @@ function renderLac(){
 function renderTogo(contenedor,nv){
   var lista=contenedor||$("lista-togo"); lista.innerHTML="";
   var est=nv?nvPedTogo:pedTogo,px=nv?"nv":"";
-  var hd=document.createElement("div");hd.className="togo-hdr";hd.innerHTML='<img src="img/togo/logo.png" alt="TOGO"><span>Pizzitas TOGO</span>';lista.appendChild(hd);
+  var hd=document.createElement("div");hd.className="togo-hdr";hd.innerHTML='<img src="img/togo/logo.png" alt="TOGO"><span>Pizzitas TOGO<br><small style="font-weight:500;color:#888;font-size:11px;">10 o más (sumando gustos) o VIP: precio mayorista</small></span>';lista.appendChild(hd);
   for(var i=0;i<TOGO.length;i++){
     var p=TOGO[i],k="togo-"+i,cant=(est[k]&&est[k].cant)||0;
     var div=document.createElement("div"); div.className="lac-prod"+(cant>0?" act":""); div.id=px+"tprd-"+k;
@@ -1034,7 +1034,7 @@ function buildMsg(t,n,tMin,f){
   var m="\u{1F9CA} *PEDIDO FRIOTEKA*\n"+nvFmt(nv)+"\n\uD83D\uDCCB "+cl+(vip?" \u2B50VIP":"")+(dir2?"\n\uD83D\uDCCD "+dir2:"")+"\n\uD83D\uDCB3 "+fpago+"\n\n";
   for(var i=0;i<P.length;i++){var p=P[i],e=ped[String(p.codigo)];if(!e||!e.cant) continue;var pr=precio(p,e.modo);var tg=e.modo==="caja"?" (x"+p.unidadesCaja+"u)":e.modo==="mayorista"?" (VIP)":"";var cantStr=p.unidad==="K"?e.cant+"kg":"x"+e.cant;m+="• ["+p.codigo+"] "+p.nombre+tg+" "+cantStr+" = "+fmt(pr*e.cant)+"\n";}
   for(var lk in pedLac){var le=pedLac[lk];if(!le||!le.cant) continue;var idx=parseInt(lk.replace("lac-",""));var lp=LAC[idx];m+="• "+lp.nombre+" x"+le.cant+" = "+fmt(lp.precioMay*le.cant)+"\n";}
-  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue;var ti=parseInt(tk.replace("togo-",""));var tp=TOGO[ti];m+="• 🍕 "+tp.nombre+" x"+te.cant+" = "+fmt(tp.precioMay*te.cant)+"\n";}
+  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue;var ti=parseInt(tk.replace("togo-",""));var tp=TOGO[ti];m+="• 🍕 "+tp.nombre+" x"+te.cant+" = "+fmt(pTogoPr(tp)*te.cant)+"\n";}
   m+="\n\uD83D\uDCB0 Subtotal: "+fmt(t);
   if(f.d10) m+="\n10% off: -"+fmt(tMin*0.1);
   if(descEsp>0) m+="\nDesc. "+descEsp+"%: -"+fmt((f.tMin*(f.d10?0.9:1)+f.tCaja)*(descEsp/100));
@@ -1065,6 +1065,13 @@ function abrirRes(){
     var dv2=document.createElement("div");dv2.className="item";
     dv2.innerHTML='<div class="iizq"><div class="inom">'+lp.nombre+' <span class="itag tmay">May.</span></div><div class="icod">Lacteos Santa Maria</div></div><div class="ider"><div class="ipr">'+fmt(sub2)+'</div><div class="iqt">x'+le.cant+' · '+fmt(lp.precioMay)+' c/u</div>'+(descEsp>0?"<div class='idesc'>Con desc: "+fmt(subF2)+"</div>":"")+'</div>';
     ri.appendChild(dv2);
+  }
+  var tgMay=togoMay(pedTogo,vip);
+  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue;var tp=TOGO[parseInt(tk.replace("togo-",""))];if(!tp) continue; hay=true;
+    var prT=pTogoPr(tp),subT=prT*te.cant,subFT=subT;if(f.d10) subFT*=0.9;if(descEsp>0) subFT*=(1-descEsp/100);
+    var dvT=document.createElement("div");dvT.className="item";
+    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp.nombre+' <span class="itag '+(tgMay?'tmay':'tmin')+'">'+(tgMay?'May.':'Min.')+'</span></div><div class="icod">TOGO · Cód: '+tp.codigo+'</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(prT)+' c/u</div>'+((f.d10||descEsp>0)?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
+    ri.appendChild(dvT);
   }
   if(!hay) ri.innerHTML='<div class="vacio">El pedido esta vacio</div>';
   $("tsubt").textContent=fmt(t);
@@ -1329,7 +1336,7 @@ function procesarPendiente(pendIdx){
 
   // 1. Cargar items en nvPed / nvPedLac
   nvPed={};nvPedLac={};nvPedTogo={};
-  nvVip=pend.origen==="cliente-web-vip";
+  nvVip=pend.origen==="cliente-web-vip"||pend.vip===true;
   if($("nvVipBtn")) $("nvVipBtn").className="vipbtn"+(nvVip?" on":"");
   nvDescEsp=pend.descuento||0;
   var fpMap={efectivo:"Efectivo",transferencia:"Transferencia",debito:"Débito","débito":"Débito","cta. corriente":"Cta. Corriente"};
@@ -2692,7 +2699,10 @@ var nvEntrega="Local";
 var nvTabActual="cong";
 
 function nvDm(){return nvVip?"mayorista":"minorista";}
-function nvTogoPr(p){return nvVip?p.precioMay:p.precioMin;}
+/* REGLA TOGO: cliente común = minorista; 10 o más pizzitas en el pedido (sumando gustos) o cliente VIP = mayorista */
+function togoMay(est,esVip){if(esVip) return true;var n=0;for(var k in est){if(est[k]&&est[k].cant>0) n+=est[k].cant;}return n>=10;}
+function nvTogoPr(p){return togoMay(nvPedTogo,nvVip)?p.precioMay:p.precioMin;}
+function pTogoPr(p){return togoMay(pedTogo,vip)?p.precioMay:p.precioMin;}
 
 function nvCalcT(){
   var t=0,n=0,tMin=0;
@@ -3001,7 +3011,7 @@ function nvAbrirResumen(){
     var ti2=parseInt(tk.replace("togo-",""));var tp2=TOGO[ti2];var subT=nvTogoPr(tp2)*te.cant;
     var subFT=nvDescEsp>0?subT*(1-nvDescEsp/100):subT;
     var dvT=document.createElement("div");dvT.className="item";
-    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag '+(nvVip?'tmay':'tmin')+'">'+(nvVip?'VIP':'Min.')+'</span></div><div class="icod">TOGO · Cód: '+tp2.codigo+'</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(nvTogoPr(tp2))+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
+    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag '+(togoMay(nvPedTogo,nvVip)?'tmay':'tmin')+'">'+(nvVip?'VIP':togoMay(nvPedTogo,false)?'May. (10+)':'Min.')+'</span></div><div class="icod">TOGO · Cód: '+tp2.codigo+'</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(nvTogoPr(tp2))+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
     ri.appendChild(dvT);
   }
   if(!hay) ri.innerHTML='<div class="vacio">Sin productos</div>';
@@ -3126,6 +3136,7 @@ $("bwa").addEventListener("click", function(){
       items.push({codigo:"LAC-"+idx2,nombre:LAC[idx2].nombre,cant:le.cant,modo:"mayorista",precioUnit:le.precioReal||LAC[idx2].precioMay});
     }
   }
+  for(var tk in pedTogo){var te=pedTogo[tk];if(!te||!te.cant) continue;var tp=TOGO[parseInt(tk.replace("togo-",""))];if(tp) items.push({codigo:tp.codigo,nombre:tp.nombre,cant:te.cant,precioUnit:pTogoPr(tp)});}
   if(!items.length) return;
   var pend={
     id:Date.now(),
@@ -3138,6 +3149,7 @@ $("bwa").addEventListener("click", function(){
     total:f.final,
     descuento:descEsp,
     items:items,
+    vip:vip,
     estado:"pendiente"
   };
   pendientes.unshift(pend);

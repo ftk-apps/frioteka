@@ -28,6 +28,20 @@ Si una app no coincide con el sistema, la que está mal es la app.
 5. Con la aprobación, se actualizan `precios.json` (fecha, fuente, cargó, aprobó) y `precios-historial.json`. Después se publica.
 6. En 1 o 2 minutos las 4 apps muestran la lista nueva y el cartel "Precios al dd/mm".
 
+## Reglas de precio por app (confirmadas por el administrador)
+
+### App 1 · Gestión (Preventista y Nueva Venta) — confirmado 19/11/2026
+| Qué | Precio |
+|---|---|
+| Congelados por unidad | Minorista. Cliente VIP: mayorista |
+| Congelados por caja | Mayorista × unidades de la caja |
+| Lácteos Santa María | Siempre mayorista (no tienen minorista) |
+| Pizzitas TOGO | Cliente común: minorista. **10 o más pizzitas en el pedido (sumando gustos)** o cliente VIP: mayorista para todas |
+| 10% automático | Lo que no es caja suma $100.000 o más **y** hay 20 productos distintos o más **y** el cliente no es VIP. No se aplica a las cajas |
+| Descuento especial 5% / 10% | Sobre todo lo que no es caja. A las cajas solo el 5%, y nunca con VIP |
+
+Las dos pantallas (Preventista y Nueva Venta) cobran exactamente igual.
+
 ## Control
 - Cada app muestra la fecha de la lista que está usando. Si una app muestra otra fecha, hay que recargarla (Ctrl + F5).
 - Si la lista tiene más de 15 días, se pide una actualización.
