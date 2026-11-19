@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>❄ FRIOTEKA — Hacé tu pedido</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="precios.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyC5voDKO_imN8QqRRpjMQdwV7QILrJw40g",
+  authDomain: "frioteka-preventista.firebaseapp.com",
+  projectId: "frioteka-preventista",
+  storageBucket: "frioteka-preventista.firebasestorage.app",
+  messagingSenderId: "212598423220",
+  appId: "1:212598423220:web:aee51bc39626b3c08621e1"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._guardarPendienteCliente = async function(pend){
+  try {
+    const snap = await getDoc(doc(db,"datos","pendientes"));
+    var lista = snap.exists() ? snap.data().lista : [];
+    lista.unshift(pend);
+    if(lista.length>200) lista=lista.slice(0,200);
+    await setDoc(doc(db,"datos","pendientes"),{lista:lista});
+  } catch(e){ console.warn("Firebase error:",e); }
+};
+</script>
+<style>
+:root{--rojo:#D90812;--rojo2:#A8060E;--rosa:#FDEBEC;--bg:#F4F2EF;--card:#fff;--txt:#1F1F1F;--gris:#6F6F6F;--linea:#E7E3DE;}
+body.may{--rojo:#1565C0;--rojo2:#0D47A1;--rosa:#E3EEFB}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Nunito,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt);max-width:520px;margin:0 auto;padding-bottom:120px;min-height:100vh;transition:background .2s}
+button{font:inherit;border:0;background:none;cursor:pointer;color:inherit}
+a{color:inherit;text-decoration:none}
+.hdr{position:sticky;top:0;z-index:30;background:var(--rojo);color:#fff;padding:10px 14px 12px;border-radius:0 0 18px 18px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.ico{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:22px;position:relative}
+.ico:active{background:rgba(255,255,255,.15)}
+.logo{font-family:"Fredoka One",sans-serif;font-size:24px;letter-spacing:.5px;line-height:1.1}
+.badge{position:absolute;top:2px;right:0;background:#fff;color:var(--rojo);font-size:11px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px}
+.modo{display:inline-block;margin-top:4px;background:#fff;color:var(--rojo2);font-size:12px;font-weight:800;border-radius:10px;padding:2px 10px}
+.buscar{margin-top:8px;background:#fff;border-radius:12px;display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--gris)}
+.buscar input{flex:1;border:0;outline:0;font:inherit;font-size:16px;padding:10px 0;background:none;color:var(--txt);min-width:0}
+.tabs{position:sticky;top:112px;z-index:25;background:var(--bg);display:flex;gap:8px;overflow-x:auto;padding:10px 14px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:7px 14px;border-radius:20px;background:#fff;border:1px solid var(--linea);font-size:14px;font-weight:700;color:#444;white-space:nowrap}
+.tab.on{background:var(--rojo);border-color:var(--rojo);color:#fff}
+.promo{margin:4px 14px 6px;background:var(--rojo);color:#fff;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.promo b{font-family:"Fredoka One",sans-serif;font-size:20px;font-weight:400;display:block}
+.promo small{font-size:13px;opacity:.95}
+.promo .pc{font-size:30px;line-height:1}
+.sec{padding:14px 14px 4px;scroll-margin-top:170px}
+.sec h2{font-family:"Fredoka One",sans-serif;font-weight:400;font-size:19px;color:var(--rojo2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.sec h2 span{font-family:Nunito,sans-serif;font-size:12px;color:var(--gris);font-weight:600}
+.row{background:var(--card);border-radius:14px;padding:9px;display:flex;gap:11px;align-items:center;margin-bottom:8px}
+.ph{width:64px;height:64px;border-radius:10px;background:var(--rosa);flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--rojo);font-size:24px}
+.ph img{width:100%;height:100%;object-fit:contain;background:#fff}
+.ph img.togo{object-fit:cover;cursor:zoom-in}
+.info{flex:1;min-width:0}
+.nom{font-size:14px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cod{font-size:12px;color:var(--gris);margin-top:2px}
+.tag{display:inline-block;background:var(--rosa);color:var(--rojo2);font-weight:800;font-size:11px;border-radius:6px;padding:1px 6px;margin-left:4px}
+.tag.mv{background:#FFF1CC;color:#7A5200}
+.pre{font-size:17px;font-weight:800;margin-top:3px}
+.pre.of{color:var(--rojo2)}
+.pre small{font-size:12px;color:var(--gris);font-weight:600}
+.ctl{display:flex;align-items:center;gap:6px;flex:none}
+.b{width:38px;height:38px;border-radius:10px;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.b.mas{background:var(--rojo);color:#fff}
+.b.men{border:1.5px solid var(--rojo);color:var(--rojo)}
+.cant{min-width:20px;text-align:center;font-weight:800}
+.vacio{text-align:center;color:var(--gris);padding:30px 10px}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:520px;z-index:30;background:#fff;border-top:1px solid var(--linea);padding:8px 14px calc(22px + env(safe-area-inset-bottom))}
+.aviso{font-size:12px;font-weight:700;color:#555;text-align:center;margin-bottom:6px;display:none}
+.aviso.ok{color:#1B7D33}
+.verped{width:100%;background:var(--rojo);color:#fff;border-radius:14px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:16px}
+.verped.off{background:#D8D3CD}
+.velo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.velo.on{opacity:1;pointer-events:auto}
+.menu{position:fixed;top:0;bottom:0;left:0;width:82%;max-width:330px;background:#fff;z-index:50;transform:translateX(-105%);transition:transform .25s;overflow-y:auto;padding:16px 14px 30px}
+.menu.on{transform:none}
+.mcab{background:var(--rojo);border-radius:18px;color:#fff;text-align:center;padding:18px 12px}
+.mlogo{width:64px;height:64px;border-radius:50%;background:#fff;color:var(--rojo);font-family:"Fredoka One",sans-serif;font-size:17px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.mcab b{font-size:16px;display:block}.mcab small{opacity:.9;font-size:13px}
+.mit{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 8px;border-bottom:1px solid var(--linea);font-size:15px;font-weight:700}
+.mit i{width:30px;height:30px;border-radius:9px;background:var(--rosa);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:16px;flex:none}
+.mit span{margin-left:auto;color:#bbb}
+.mit.dest{background:var(--rosa);border-radius:12px;border:0;margin-top:8px;color:var(--rojo2)}
+.mtit{font-size:12px;font-weight:800;color:var(--gris);margin:16px 8px 4px;text-transform:uppercase;letter-spacing:.5px}
+.hoja{position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);width:100%;max-width:520px;max-height:90vh;background:var(--bg);z-index:50;border-radius:22px 22px 0 0;transition:transform .25s;display:flex;flex-direction:column}
+.hoja.on{transform:translate(-50%,0)}
+.hcab{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#fff;border-radius:22px 22px 0 0;border-bottom:1px solid var(--linea)}
+.hcab h3{font-family:"Fredoka One",sans-serif;font-weight:400;font-size:20px;color:var(--rojo2)}
+.hcuerpo{overflow-y:auto;padding:12px 14px 24px}
+.tot{display:flex;justify-content:space-between;font-weight:800;font-size:18px;padding:10px 4px}
+.campo{margin-top:10px}
+.campo label{font-size:13px;font-weight:700;color:#555;display:block;margin-bottom:4px}
+.campo input{width:100%;border:1px solid var(--linea);border-radius:12px;padding:12px;font:inherit;font-size:16px;background:#fff}
+.pagos{display:flex;gap:8px;flex-wrap:wrap}
+.pago{padding:10px 14px;border-radius:12px;background:#fff;border:1px solid var(--linea);font-weight:700;font-size:14px}
+.pago.on{border-color:var(--rojo);background:var(--rosa);color:var(--rojo2)}
+.wa{width:100%;margin-top:14px;background:#1F9D55;color:#fff;border-radius:14px;padding:14px;font-weight:800;font-size:16px}
+.err{color:#B3261E;font-size:13px;font-weight:700;margin-top:8px;display:none}
+.listo{position:fixed;inset:0;z-index:60;background:var(--rojo);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.listo.on{display:flex}
+.listo .big{font-size:64px;margin-bottom:12px}
+.listo h3{font-family:"Fredoka One",sans-serif;font-weight:400;font-size:28px;margin-bottom:8px}
+.listo p{font-size:15px;opacity:.95;margin-bottom:6px;max-width:320px;line-height:1.5}
+.listo button{margin-top:22px;background:#fff;color:var(--rojo);border-radius:14px;padding:14px 30px;font-weight:800;font-size:16px}
+#togoZoom{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:500;padding:20px}
+#togoZoom img{max-width:100%;max-height:100%;border-radius:12px}
+@media (prefers-reduced-motion:reduce){.menu,.hoja,.velo{transition:none}}
+</style>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <div class="top">
+    <button class="ico" id="bMenu" aria-label="Abrir menú">☰</button>
+    <div style="text-align:center"><div class="logo">FRIOTEKA</div><div class="modo" id="modoTxt" style="display:none">Mayorista · por caja</div></div>
+    <button class="ico" id="bCarro" aria-label="Ver pedido">🛒<span class="badge" id="badge">0</span></button>
+  </div>
+  <label class="buscar"><span aria-hidden="true">🔍</span><input id="q" type="search" placeholder="Buscar producto o código" aria-label="Buscar producto o código"></label>
+</header>
+<nav class="tabs" id="tabs" aria-label="Familias"></nav>
+<div class="promo" id="promo"></div>
+<main id="lista"></main>
+<div class="bar"><div class="aviso" id="aviso"></div><button class="verped off" id="bVer"><span id="cantTxt">Tu pedido está vacío</span><span id="totTxt">$0</span></button></div>
+<div class="velo" id="velo"></div>
+<aside class="menu" id="menu" aria-label="Menú">
+  <div class="mcab"><div class="mlogo">FTK</div><b>¡Hola!</b><small>Hacemos simples tus comidas</small></div>
+  <div id="mItems"></div>
+</aside>
+<section class="hoja" id="hoja" aria-label="Tu pedido">
+  <div class="hcab"><h3>Tu pedido</h3><button class="ico" id="bCerrar" style="color:#555" aria-label="Cerrar">✕</button></div>
+  <div class="hcuerpo" id="hCuerpo"></div>
+</section>
+<div class="listo" id="listo">
+  <div class="big">🎉</div>
+  <h3>¡Pedido enviado!</h3>
+  <p id="listoNom" style="font-weight:800"></p>
+  <p id="listoTot"></p>
+  <p>📦 Enseguida un asesor de <b>FRIOTEKA</b> se va a poner en contacto con vos para coordinar la entrega.</p>
+  <p>¡Gracias por elegirnos! ❄️</p>
+  <button id="bListo">Volver al catálogo</button>
+</div>
+<script>
+(function(){
+/* ===== Datos: todo sale de precios.json (precios.js), igual que antes ===== */
+var WA_NUM="5493541613373";
+/* Listas iguales a cliente.html */
+var OFERTAS=[1521,3041,3311,3312,3313,3607,3706,3522,3620,1121,1126,3826,3820,1714,1719,
+  1807,1802,1809,1811,1812,1810,3411,3419,3412,1829,1506,1564,3512,3520,2433,
+  3314,3315,3316,3391,3392,3319,3320,3052,3049,3525];
+var DESTACADOS_MAY=[3047,1557,3525,3044];
+var MAS_VENDIDOS=[1150,1557,1158,3523,1156,1521,3605,1154,3440,1548];
+/* ENVÍO GRATIS (confirmado 19/11/2026): minorista solo los miércoles en compras de más de $60.000; mayorista (por caja) desde $150.000 */
+var ENVIO_CAJA=150000, ENVIO_MIN_MIERC=60000;
+function esMiercoles(){return new Date(new Date().toLocaleString("en-US",{timeZone:"America/Argentina/Buenos_Aires"})).getDay()===3;}
+function envioMinOk(t){return esMiercoles()&&t>ENVIO_MIN_MIERC;}
+
+var CAT={"HAMBURGUESAS Y MEDALLONES":["🍔","Hamburguesas"],"MILANESAS Y REBOZADOS":["🍗","Milanesas"],"EMPANADAS":["🥟","Empanadas"],"PIZZAS":["🍕","Pizzas"],"TARTAS Y TORTILLAS":["🥧","Tartas"],"PASTAS":["🍝","Pastas"],"COMIDAS LISTAS":["🍱","Comidas listas"],"PESCADOS":["🐟","Pescados"],"CARNES":["🥩","Carnes y pollo"],"PAPAS":["🍟","Papas"],"FINGER FOOD":["🧆","Finger food"],"PANIFICACION":["🥐","Panificación"],"HELADOS Y POSTRES":["🍦","Helados y postres"],"SALUDABLES":["🥗","Saludables"],"SIN GLUTEN":["🌾","Sin gluten"],"FRUTAS Y VERDURAS":["🥦","Frutas y verduras"]};
+/* Sin la familia "al por mayor" (a propósito) */
+var ORDEN=["HAMBURGUESAS Y MEDALLONES","MILANESAS Y REBOZADOS","EMPANADAS","PIZZAS","TARTAS Y TORTILLAS","PASTAS","COMIDAS LISTAS","PESCADOS","CARNES","PAPAS","FINGER FOOD","PANIFICACION","HELADOS Y POSTRES","SALUDABLES","SIN GLUTEN","FRUTAS Y VERDURAS"];
+var P=(PRECIOS.P||[]).filter(function(p){return ORDEN.indexOf(p.categoria)>=0;});
+var TOGO=PRECIOS.TOGO||[];
+var TOGO_IMG={8148:"especial",8149:"muzza",8150:"queso-azul",8151:"fugazza",8152:"jamon"};
+
+/* Nombre lindo: solo para mostrar (WhatsApp y pendientes llevan el nombre original) */
+function lindo(s){s=s.replace(/^PAQ\.?\s*/i,"").replace(/\s+/g," ").trim().toLowerCase();
+  s=s.replace(/\bx\s*(\d)/g,"x $1").replace(/(\d)\s*(gr|g|kg|u|un|uni|l)\b/g,function(m,a,b){return a+" "+({gr:"g",uni:"u",un:"u"}[b]||b);}).replace(/\bjyq\b/g,"jamón y queso").replace(/\bs\/gluten\b/g,"sin gluten").replace(/\bdoña\b/g,"Doña");
+  ["mccain","swift","friar","carribar","natufans","sape","burguis","cool mind","biomac","mydibel","d.neve","lw","langwestone","pampa green","queen","acapulco","lmtvda"].forEach(function(m){
+    s=s.replace(new RegExp("\\b"+m.replace(".","\\.")+"\\b","g"),m==="mccain"?"McCain":m.split(" ").map(function(w){return w[0].toUpperCase()+w.slice(1);}).join(" "));});
+  return s.charAt(0).toUpperCase()+s.slice(1);}
+function fmt(n){return "$"+Math.round(n).toLocaleString("es-AR");}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+/* prods: congelados por código; pizzitas TOGO con clave "T"+código */
+var prods={};
+P.forEach(function(p){prods[p.codigo]={k:String(p.codigo),c:p.codigo,raw:p.nombre,n:lindo(p.nombre),p:p.precioMinorista,pm:p.precioMayorista,caja:p.unidadesCaja,kg:p.unidad==="K",cat:p.categoria,img:"https://files-fenovo.sfo3.cdn.digitaloceanspaces.com/imagenes-web/"+p.codigo+"/"+p.codigo+"-o1.jpg"};});
+TOGO.forEach(function(t){prods["T"+t.codigo]={k:"T"+t.codigo,togo:true,c:(t.codigoMin||t.codigo),raw:t.nombre,n:t.nombre,det:t.detalle,p:t.precioMin,cat:"TOGO",img:"img/togo/"+(TOGO_IMG[t.codigo]||"base")+"-mini.jpg",big:"img/togo/"+(TOGO_IMG[t.codigo]||"base")+".jpg"};});
+function vendeMay(k){var p=prods[k];return p&&!p.togo&&p.pm>0&&p.caja>0;}
+function existe(k){return !!prods[k];}
+
+var MODO="min";var PED={min:{},may:{}};var ped=PED.min;var PAGO={min:"",may:""};var q="";var secciones=[];
+function esMay(){return MODO==="may";}
+function precio(p){return esMay()?p.pm*p.caja:p.p;}
+function cajaTxt(p){return "Caja x "+p.caja+(p.kg?" kg":" u")+" · "+fmt(p.pm)+(p.kg?" el kg":" c/u");}
+
+function armar(){
+  if(!esMay()){
+    secciones=[{id:"ofertas",ic:"🔥",t:"Ofertas del mes",tab:"Ofertas",items:OFERTAS.map(String).filter(existe)},
+      {id:"masvendidos",ic:"⭐",t:"Más vendidos",tab:"Más vendidos",items:MAS_VENDIDOS.map(String).filter(existe)},
+      {id:"togo",ic:"👩‍🍳",t:"TOGO · elaboraciones",tab:"TOGO",items:TOGO.map(function(t){return "T"+t.codigo;})}]
+      .concat(ORDEN.map(function(c,i){return {id:"c"+i,ic:CAT[c][0],t:CAT[c][1],tab:CAT[c][1],items:P.filter(function(p){return p.categoria===c;}).map(function(p){return String(p.codigo);})};}))
+      .filter(function(s){return s.items.length;});
+  } else {
+    secciones=[{id:"destmay",ic:"⭐",t:"Destacados mayoristas",tab:"Destacados",items:DESTACADOS_MAY.map(String).filter(vendeMay)}]
+      .concat(ORDEN.map(function(c,i){return {id:"m"+i,ic:CAT[c][0],t:CAT[c][1],tab:CAT[c][1],items:P.filter(function(p){return p.categoria===c&&vendeMay(String(p.codigo));}).map(function(p){return String(p.codigo);})};}))
+      .filter(function(s){return s.items.length;});
+  }
+}
+function $(id){return document.getElementById(id);}
+
+function fila(k){var p=prods[k];if(!p)return "";var n=ped[k]||0;var may=esMay();var cod=Number(p.c);var of=!may&&!p.togo&&OFERTAS.indexOf(cod)>=0;var mv=!may&&!p.togo&&MAS_VENDIDOS.indexOf(cod)>=0;
+  var foto=p.togo?'<img class="togo" loading="lazy" src="'+p.img+'" alt="" data-zoom="'+p.big+'">':'<img loading="lazy" src="'+p.img+'" alt="" onerror="this.parentNode.innerHTML=\'❄\'">';
+  return '<div class="row"><div class="ph">'+foto+'</div><div class="info"><div class="nom">'+esc(p.n)+'</div>'+
+    '<div class="cod">Cód. '+p.c+(of?'<span class="tag">Oferta</span>':mv?'<span class="tag mv">Top</span>':"")+'</div>'+
+    (p.det&&!may?'<div class="cod">'+esc(p.det)+'</div>':"")+
+    (may?'<div class="cod">'+cajaTxt(p)+'</div>':"")+
+    '<div class="pre'+(of?" of":"")+'">'+fmt(precio(p))+(may?" <small>/ caja</small>":p.kg?" <small>/ kg</small>":"")+'</div></div>'+
+    '<div class="ctl">'+(n?'<button class="b men" data-m="'+k+'" aria-label="Quitar uno">−</button><span class="cant">'+n+'</span>':"")+'<button class="b mas" data-a="'+k+'" aria-label="Agregar">+</button></div></div>';}
+
+function render(){var t=q.trim().toLowerCase();var h="";
+  if(t){var r=Object.keys(prods).filter(function(k){var p=prods[k];if(esMay()?!vendeMay(k):false)return false;return p.n.toLowerCase().indexOf(t)>=0||p.raw.toLowerCase().indexOf(t)>=0||String(p.c).indexOf(t)>=0;});
+    h='<section class="sec"><h2>Resultados <span>'+r.length+'</span></h2>'+(r.map(fila).join("")||'<div class="vacio">No encontramos ese producto. Probá con otra palabra o el código.</div>')+'</section>';}
+  else h=secciones.map(function(s){return '<section class="sec" id="'+s.id+'"><h2>'+s.ic+" "+s.t+' <span>'+s.items.length+'</span></h2>'+s.items.map(fila).join("")+'</section>';}).join("");
+  $("lista").innerHTML=h;totales();}
+
+function calc(){var u=0,t=0;Object.keys(ped).forEach(function(k){var p=prods[k];if(!p)return;u+=ped[k];t+=ped[k]*precio(p);});return {u:u,t:t};}
+function avisoEnvio(t,u){
+  if(!u)return null;
+  if(esMay()) return t>=ENVIO_CAJA?{ok:1,tx:"🚚 ¡Envío gratis desbloqueado!"}:{tx:"Te faltan "+fmt(ENVIO_CAJA-t)+" para el envío gratis ("+fmt(ENVIO_CAJA)+")"};
+  if(!esMiercoles()) return {tx:"🚚 Envío gratis solo los miércoles, en compras de más de "+fmt(ENVIO_MIN_MIERC)};
+  return envioMinOk(t)?{ok:1,tx:"🚚 ¡Envío gratis desbloqueado! (miércoles)"}:{tx:"Te faltan "+fmt(ENVIO_MIN_MIERC-t)+" para el envío gratis de hoy"};
+}
+function totales(){var r=calc();var may=esMay();var b=$("badge");b.textContent=r.u;b.style.display=r.u?"flex":"none";
+  $("cantTxt").textContent=r.u?(r.u+(may?(r.u>1?" cajas":" caja"):(r.u>1?" productos":" producto"))+" · Ver pedido →"):"Tu pedido está vacío";
+  $("totTxt").textContent=fmt(r.t);$("bVer").classList.toggle("off",!r.u);
+  var a=avisoEnvio(r.t,r.u),av=$("aviso");if(a){av.textContent=a.tx;av.className="aviso"+(a.ok?" ok":"");av.style.display="block";}else av.style.display="none";
+  return r;}
+function cambia(k,d){ped[k]=(ped[k]||0)+d;if(ped[k]<=0)delete ped[k];}
+
+function marco(){var may=esMay();
+  $("tabs").innerHTML=secciones.map(function(s,i){return '<button class="tab'+(i?"":" on")+'" data-ir="'+s.id+'">'+s.tab+'</button>';}).join("");
+  $("promo").innerHTML=may?'<div><b>Compra mayorista</b><small>Por caja cerrada · envío gratis desde $150.000</small></div><div class="pc" aria-hidden="true">📦</div>':'<div><b>Envío gratis los miércoles</b><small>En compras mayores a $60.000</small></div><div class="pc" aria-hidden="true">🚚</div>';
+  $("modoTxt").style.display=may?"inline-block":"none";
+  var fijos=may?'<button class="mit" data-ir="destmay"><i>⭐</i>Destacados mayoristas<span>›</span></button>':'<button class="mit" data-ir="ofertas"><i>🔥</i>Ofertas del mes<span>›</span></button><button class="mit" data-ir="masvendidos"><i>⭐</i>Más vendidos<span>›</span></button>';
+  $("mItems").innerHTML='<button class="mit dest" data-modo="'+(may?"min":"may")+'"><i>'+(may?"🛒":"📦")+'</i>'+(may?"Volver a compra minorista":"Compra mayorista (por caja)")+'<span>›</span></button>'+
+    '<button class="mit" data-ir="top"><i>🏠</i>Inicio<span>›</span></button>'+fijos+'<button class="mit" data-ped="1"><i>🧾</i>Mi pedido<span>›</span></button><div class="mtit">Familias</div>'+
+    secciones.filter(function(s){return ["ofertas","masvendidos","destmay"].indexOf(s.id)<0;}).map(function(s){return '<button class="mit" data-ir="'+s.id+'"><i>'+s.ic+'</i>'+s.t+'<span>›</span></button>';}).join("")+
+    '<div class="mtit">Contacto</div><div class="mit"><i>📍</i>051 · Cárcano y 045 · San Martín</div><a class="mit" href="https://wa.me/'+WA_NUM+'" target="_blank" rel="noopener"><i>💬</i>WhatsApp 3541 61-3373<span>›</span></a>';
+  setTimeout(medir,0);}
+function cambiarModo(m){MODO=m;document.body.classList.toggle("may",m==="may");ped=PED[m];q="";$("q").value="";armar();marco();render();abrir("menu",false);if($("hoja").classList.contains("on"))hoja();window.scrollTo({top:0});}
+function abrir(el,on){$(el).classList.toggle("on",on);$("velo").classList.toggle("on",$("menu").classList.contains("on")||$("hoja").classList.contains("on"));document.body.style.overflow=$("hoja").classList.contains("on")?"hidden":"";}
+function marcarTab(id){var on=null;document.querySelectorAll(".tab").forEach(function(b){var s=b.dataset.ir===id;b.classList.toggle("on",s);if(s)on=b;});if(on){var tb=$("tabs");tb.scrollTo({left:on.offsetLeft-tb.clientWidth/2+on.offsetWidth/2,behavior:"smooth"});}}
+var bloqueo=0;
+function ir(id){abrir("menu",false);if(q){q="";$("q").value="";render();}if(id==="top"){window.scrollTo({top:0,behavior:"smooth"});marcarTab(secciones[0]&&secciones[0].id);return;}
+  bloqueo=Date.now();setTimeout(function(){var e=$(id);if(e)e.scrollIntoView({behavior:"smooth"});},30);marcarTab(id);}
+/* Pestañas fijas debajo del encabezado y pestaña activa según lo que se ve */
+var altoHdr=112;
+function medir(){altoHdr=$("hdr").offsetHeight;$("tabs").style.top=altoHdr+"px";var off=altoHdr+$("tabs").offsetHeight+6;document.querySelectorAll(".sec").forEach(function(s){s.style.scrollMarginTop=off+"px";});}
+window.addEventListener("resize",medir);
+window.addEventListener("scroll",function(){if(q||Date.now()-bloqueo<900)return;var lim=altoHdr+$("tabs").offsetHeight+20,act=null;
+  secciones.forEach(function(s){var e=$(s.id);if(e&&e.getBoundingClientRect().top<=lim)act=s.id;});
+  if(!act&&secciones[0])act=secciones[0].id;var cur=document.querySelector(".tab.on");if(act&&(!cur||cur.dataset.ir!==act))marcarTab(act);},{passive:true});
+
+/* ===== Hoja del pedido ===== */
+function hoja(){var ks=Object.keys(ped);var r=totales();var may=esMay();var prev={};["fNom","fNeg","fDir","fTel"].forEach(function(i){if($(i))prev[i]=$(i).value;});
+  var pago=PAGO[MODO];var a=avisoEnvio(r.t,r.u);
+  $("hCuerpo").innerHTML=ks.length?ks.map(fila).join("")+
+    '<div class="tot"><span>Total'+(may?" mayorista":"")+'</span><span>'+fmt(r.t)+'</span></div>'+
+    (a?'<div class="cod" style="padding:0 4px;font-weight:700;color:'+(a.ok?"#1B7D33":"#555")+'">'+a.tx+'</div>':"")+
+    '<div class="campo"><label for="fNom">Nombre *</label><input id="fNom" autocomplete="name" placeholder="Tu nombre completo"></div>'+
+    (may?'<div class="campo"><label for="fNeg">Negocio</label><input id="fNeg" placeholder="Nombre del negocio (opcional)"></div>':"")+
+    '<div class="campo"><label for="fDir">Dirección *</label><input id="fDir" autocomplete="street-address" placeholder="Calle y número"></div>'+
+    '<div class="campo"><label for="fTel">Teléfono *</label><input id="fTel" type="tel" autocomplete="tel" placeholder="Tu número de WhatsApp"></div>'+
+    '<div class="campo"><label>Forma de pago *</label><div class="pagos">'+[["efectivo","💵 Efectivo"],["transferencia","🏦 Transferencia"]].map(function(x){return '<button class="pago'+(pago===x[0]?" on":"")+'" data-pago="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div></div>'+
+    '<div class="err" id="err">Completá '+(may?"nombre, dirección, teléfono":"nombre, dirección")+' y forma de pago.</div>'+
+    '<button class="wa" id="bWa">Enviar pedido por WhatsApp</button>'
+    :'<div class="vacio">Todavía no agregaste productos.<br>Tocá + en lo que quieras llevar.</div>';
+  Object.keys(prev).forEach(function(i){if($(i))$(i).value=prev[i];});}
+function verPed(){hoja();abrir("hoja",true);}
+
+/* ===== Envío: mismo mensaje, mismo número y mismo pendiente en Firebase que cliente.html ===== */
+function fecha(){var d=new Date();return {fecha:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}),hora:d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})};}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function enviarMin(nombre,dir,tel,fpago){var r=calc();var m="❄️ *PEDIDO FRIOTEKA*\n";m+="📋 "+nombre+"\n";m+="📍 "+dir+"\n";if(tel)m+="📱 "+tel+"\n";m+="💳 "+cap(fpago)+"\n\n";
+  var items=[];
+  P.forEach(function(p){var c=ped[String(p.codigo)];if(!c)return;var u=p.unidad==="K"?"kg":"u";
+    m+="• ["+p.codigo+"] "+p.nombre+" x"+c+u+" = "+fmt(p.precioMinorista*c)+"\n";
+    items.push({cod:p.codigo,nom:p.nombre,cant:c,unid:u,precio:p.precioMinorista,subtotal:p.precioMinorista*c});});
+  TOGO.forEach(function(t){var c=ped["T"+t.codigo];if(!c)return;var cod=t.codigoMin||t.codigo;
+    m+="• 🍕 ["+cod+"] "+t.nombre+" x"+c+" u = "+fmt(t.precioMin*c)+"\n";
+    items.push({cod:cod,nom:t.nombre,cant:c,unid:"u",precio:t.precioMin,subtotal:t.precioMin*c});});
+  m+="\n💰 *TOTAL: "+fmt(r.t)+"*";if(envioMinOk(r.t))m+="\n🚚 Envío gratis (miércoles)";
+  var f=fecha();var pend={id:Date.now(),origen:"cliente-web",fecha:f.fecha,hora:f.hora,cliente:nombre,dir:dir,fpago:fpago,total:r.t,items:items,estado:"pendiente"};
+  return {m:m,pend:pend,t:r.t};}
+function enviarMay(nombre,negocio,dir,tel,fpago){var r=calc();var m="📦 *PEDIDO MAYORISTA FRIOTEKA*\n";m+="👤 "+nombre+"\n";if(negocio)m+="🏪 "+negocio+"\n";m+="📍 "+dir+"\n";m+="📱 "+tel+"\n";m+="💳 "+cap(fpago)+"\n\n";
+  var items=[];
+  P.forEach(function(p){var c=ped[String(p.codigo)];if(!c)return;var u=p.unidad==="K"?"kg":"u";var pc=p.precioMayorista*p.unidadesCaja;
+    m+="• ["+p.codigo+"] "+p.nombre+" x"+c+" caja"+(c>1?"s":"")+" ("+p.unidadesCaja+u+"/caja) = "+fmt(pc*c)+"\n";
+    items.push({cod:p.codigo,nom:p.nombre,cant:c,unid:"caja",precio:pc,subtotal:pc*c});});
+  m+="\n💰 *TOTAL: "+fmt(r.t)+"*";if(r.t>=ENVIO_CAJA)m+="\n🚚 Envío gratis";
+  var f=fecha();var pend={id:Date.now(),origen:"cliente-web-mayorista",fecha:f.fecha,hora:f.hora,cliente:nombre,negocio:negocio,dir:dir,tel:tel,fpago:fpago,total:r.t,items:items,estado:"pendiente"};
+  return {m:m,pend:pend,t:r.t};}
+function enviar(){var may=esMay();function v(i){return $(i)?$(i).value.trim():"";}
+  var nombre=v("fNom"),dir=v("fDir"),tel=v("fTel"),neg=v("fNeg"),fpago=PAGO[MODO];
+  if(!calc().t||!nombre||!dir||!fpago||(may&&!tel)){$("err").style.display="block";return;}
+  var o=may?enviarMay(nombre,neg,dir,tel,fpago):enviarMin(nombre,dir,tel,fpago);
+  if(window._guardarPendienteCliente)window._guardarPendienteCliente(o.pend);
+  window.open("https://wa.me/"+WA_NUM+"?text="+encodeURIComponent(o.m),"_blank");
+  abrir("hoja",false);PED[MODO]={};ped=PED[MODO];PAGO[MODO]="";$("hCuerpo").innerHTML="";render();
+  $("listoNom").textContent="Hola, "+nombre+" 👋";$("listoTot").textContent="Total del pedido: "+fmt(o.t);$("listo").classList.add("on");}
+
+/* ===== Eventos ===== */
+document.addEventListener("click",function(e){
+  var z=e.target.closest("[data-zoom]");if(z){var tz=$("togoZoom");if(!tz){tz=document.createElement("div");tz.id="togoZoom";tz.onclick=function(){tz.style.display="none";};tz.appendChild(document.createElement("img"));document.body.appendChild(tz);}tz.firstChild.src=z.dataset.zoom;tz.style.display="flex";return;}
+  var a=e.target.closest("[data-a],[data-m],[data-ir],[data-ped],[data-pago],[data-modo],#bWa");if(!a)return;
+  if(a.dataset.a){cambia(a.dataset.a,1);render();if($("hoja").classList.contains("on"))hoja();}
+  else if(a.dataset.m){cambia(a.dataset.m,-1);render();if($("hoja").classList.contains("on"))hoja();}
+  else if(a.dataset.modo)cambiarModo(a.dataset.modo);
+  else if(a.dataset.ir)ir(a.dataset.ir);
+  else if(a.dataset.ped){abrir("menu",false);verPed();}
+  else if(a.dataset.pago){PAGO[MODO]=a.dataset.pago;document.querySelectorAll(".pago").forEach(function(b){b.classList.toggle("on",b.dataset.pago===PAGO[MODO]);});if($("err"))$("err").style.display="none";}
+  else if(a.id==="bWa")enviar();});
+document.addEventListener("input",function(e){if(e.target.id==="q"){q=e.target.value;render();}else if($("err"))$("err").style.display="none";});
+$("bMenu").onclick=function(){abrir("menu",true);};
+$("velo").onclick=function(){abrir("menu",false);abrir("hoja",false);};
+$("bCerrar").onclick=function(){abrir("hoja",false);};
+$("bVer").onclick=verPed;$("bCarro").onclick=verPed;
+$("bListo").onclick=function(){$("listo").classList.remove("on");window.scrollTo({top:0});};
+armar();marco();render();
+})();
+</script>
+</body>
+</html>
