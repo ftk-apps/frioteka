@@ -58,6 +58,17 @@ Las dos pantallas (Preventista y Nueva Venta) cobran exactamente igual.
 
 Cuando la Gestión procesa un pedido que vino de "Soy cliente", cobra con estas reglas: TOGO a minorista y sin 10%. Así el cliente paga lo mismo que vio en la app.
 
+### App 4 · Catálogo VIP — confirmado 19/11/2026
+| Qué | Precio |
+|---|---|
+| Congelados | Por unidad, a **mayorista** (no hay cajas) |
+| Pizzitas TOGO | Siempre **mayorista** |
+| 10% automático | No se aplica (la Gestión tampoco se lo aplica a los VIP) |
+| Envío gratis | **Miércoles y viernes**, sin monto mínimo |
+| Promo helados 5x4 | Dada de baja |
+
+Cuando la Gestión procesa un pedido VIP, entra con el VIP activado y cobra lo mismo.
+
 ## Control
 - Cada app muestra la fecha de la lista que está usando. Si una app muestra otra fecha, hay que recargarla (Ctrl + F5).
 - Si la lista tiene más de 15 días, se pide una actualización.
