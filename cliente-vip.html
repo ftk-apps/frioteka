@@ -470,7 +470,7 @@ function buildCardMay(p, suffix){
       '<div id="maybadgefoto'+suffix+'-'+p.codigo+'" style="display:'+(cnt>0?'flex':'none')+';position:absolute;top:6px;right:6px;background:#1a4a8a;color:#fff;font-size:12px;font-weight:900;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;">'+cnt+'</div>'+
     '</div>'+
     '<div style="padding:10px 10px 12px;display:flex;flex-direction:column;gap:5px;flex:1;">'+
-      '<div style="font-size:14px;font-weight:800;color:#fff;line-height:1.3;">'+p.nombre+'</div>'+
+      '<div style="font-size:14px;font-weight:800;color:#fff;line-height:1.3;">'+p.nombre+'</div>'+'<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);">Cód. '+p.codigo+'</div>'+
       '<div style="background:rgba(255,255,255,.12);border-radius:8px;padding:7px 9px;margin-top:2px;">'+
         '<div style="font-size:17px;font-weight:900;color:#fff;">'+fmt(pCaja)+'</div>'+
         '<div style="font-size:10px;color:rgba(255,255,255,.55);margin-top:1px;">caja x'+p.unidadesCaja+unidLbl+' · '+fmt(pUnit)+'/'+unidLbl+'</div>'+
@@ -626,7 +626,7 @@ function renderDrawerMay(){
     if(!c) return;
     var unidLbl=p.unidad==="K"?"kg":"u";
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0f0f0;">'+
-      '<div><div style="font-size:13px;font-weight:700;color:#222;">'+p.nombre+'</div>'+
+      '<div><div style="font-size:13px;font-weight:700;color:#222;">'+p.codigo+' · '+p.nombre+'</div>'+
       '<div style="font-size:12px;color:#888;margin-top:2px;">'+c+' caja'+(c>1?"s":"")+" × "+fmt(p.precioMayorista*p.unidadesCaja)+' ('+p.unidadesCaja+unidLbl+'/caja)</div></div>'+
       '<div style="font-size:14px;font-weight:900;color:#0a1628;">'+fmt(p.precioMayorista*p.unidadesCaja*c)+'</div></div>';
   });
@@ -664,7 +664,7 @@ function buildMsgMay(){
     var c=pedM[p.codigo]||0;
     if(!c) return;
     var unidLbl=p.unidad==="K"?"kg":"u";
-    m+="• "+p.nombre+" x"+c+" caja"+(c>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(p.precioMayorista*p.unidadesCaja*c)+"\n";
+    m+="• ["+p.codigo+"] "+p.nombre+" x"+c+" caja"+(c>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(p.precioMayorista*p.unidadesCaja*c)+"\n";
   });
   m+="\n💰 *TOTAL: "+fmt(r.t)+"*";
   if(r.t>=100000) m+="\n🚚 Envío gratis";
@@ -736,7 +736,7 @@ function renderDestacados(){
       '<div class="oferta-flame" style="background:#d4830a;">⭐ VIP</div>'+
       '<div class="oferta-precio">'+fmt(getPrecio(p))+'</div>'+
       '<div class="oferta-unid">por unidad</div>'+
-      '<div class="oferta-nombre">'+p.nombre+'</div>'+
+      '<div class="oferta-nombre">'+p.nombre+'</div>'+'<div class="oferta-unid">Cód. '+p.codigo+'</div>'+
     '</div>';
   });
   html+='</div>';
@@ -757,7 +757,7 @@ function renderMasVendidos(){
       '<div class="oferta-flame" style="background:#f5a623;">⭐ TOP</div>'+
       '<div class="oferta-precio">'+fmt(getPrecio(p))+'</div>'+
       '<div class="oferta-unid">'+unidLbl+'</div>'+
-      '<div class="oferta-nombre">'+p.nombre+'</div>'+
+      '<div class="oferta-nombre">'+p.nombre+'</div>'+'<div class="oferta-unid">Cód. '+p.codigo+'</div>'+
     '</div>';
   });
   html+='</div>';
@@ -780,7 +780,7 @@ function renderPromo5x4(){
       '<div class="promo5x4-precio-orig"><s>'+fmt(precioNormal)+'</s> x1</div>'+
       '<div class="oferta-precio">'+fmt(precioPromo)+'</div>'+
       '<div class="oferta-unid">llevando 5 unidades</div>'+
-      '<div class="oferta-nombre">'+p.nombre+'</div>'+
+      '<div class="oferta-nombre">'+p.nombre+'</div>'+'<div class="oferta-unid">Cód. '+p.codigo+'</div>'+
     '</div>';
   });
   html+='</div>';
@@ -800,7 +800,7 @@ function renderOfertas(){
       '<div class="oferta-flame">🔥 OFERTA</div>'+
       '<div class="oferta-precio">'+fmt(getPrecio(p))+'</div>'+
       '<div class="oferta-unid">'+unidLbl+'</div>'+
-      '<div class="oferta-nombre">'+p.nombre+'</div>'+
+      '<div class="oferta-nombre">'+p.nombre+'</div>'+'<div class="oferta-unid">Cód. '+p.codigo+'</div>'+
     '</div>';
   });
   html+='</div>';
@@ -1063,7 +1063,7 @@ function renderTogoSection(){
     var cant=(pedTogo[k]&&pedTogo[k].cant)||0;
     html+='<div class="togo-card" id="tcard-'+k+'">'
       +'<img class="togo-foto" loading="lazy" alt="" src="'+togoImg(p,false)+'" onclick="togoZoom(this.src)">'
-      +'<div class="togo-nombre">'+p.nombre+'</div>'
+      +'<div class="togo-nombre">'+p.nombre+'</div>'+'<div class="togo-det">Cód. '+togoCod(p)+'</div>'
       +'<div class="togo-det">'+p.detalle+'</div>'
       +'<div class="togo-precio">'+fmt(togoPr(p))+'</div>'
       +'<div class="togo-ctrl">'
@@ -1127,14 +1127,14 @@ function renderDrawer(){
     var e=ped[p.codigo];
     if(!e) return;
     if(e.cantU>0){
-      html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.nombre+'</div><div class="drawer-item-det">'+e.cantU+' u. × '+fmt(getPrecio(p))+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*e.cantU)+'</div></div>';
+      html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.codigo+' · '+p.nombre+'</div><div class="drawer-item-det">'+e.cantU+' u. × '+fmt(getPrecio(p))+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*e.cantU)+'</div></div>';
     }
     if(e.cantC>0){
-      html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.nombre+'</div><div class="drawer-item-det">'+e.cantC+' caja'+( e.cantC>1?"s":"")+" × "+fmt(getPrecio(p)*p.unidadesCaja)+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*p.unidadesCaja*e.cantC)+'</div></div>';
+      html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.codigo+' · '+p.nombre+'</div><div class="drawer-item-det">'+e.cantC+' caja'+( e.cantC>1?"s":"")+" × "+fmt(getPrecio(p)*p.unidadesCaja)+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*p.unidadesCaja*e.cantC)+'</div></div>';
     }
   });
   togoPedidas(function(p,c,pr){
-    html+='<div class="drawer-item"><div><div class="drawer-item-nom">🍕 '+p.nombre+'</div><div class="drawer-item-det">'+c+' u. × '+fmt(pr)+'</div></div><div class="drawer-item-precio">'+fmt(pr*c)+'</div></div>';
+    html+='<div class="drawer-item"><div><div class="drawer-item-nom">🍕 '+togoCod(p)+' · '+p.nombre+'</div><div class="drawer-item-det">'+c+' u. × '+fmt(pr)+'</div></div><div class="drawer-item-precio">'+fmt(pr*c)+'</div></div>';
   });
   document.getElementById("drawerItems").innerHTML=html||'<div style="color:#aaa;font-size:13px;padding:8px 0;">No hay productos todavía.</div>';
   document.getElementById("drawerTotal").textContent=fmt(r.t);
@@ -1178,14 +1178,14 @@ function buildMsg(){
     var esK=(p.unidad==="K");
     var unidLbl=esK?"kg":"u";
     if(e.cantU>0){
-      m+="• "+p.nombre+" x"+e.cantU+unidLbl+" = "+fmt(getPrecio(p)*e.cantU)+"\n";
+      m+="• ["+p.codigo+"] "+p.nombre+" x"+e.cantU+unidLbl+" = "+fmt(getPrecio(p)*e.cantU)+"\n";
     }
     if(e.cantC>0){
       var pCaja=getPrecio(p)*p.unidadesCaja;
-      m+="• "+p.nombre+" x"+e.cantC+" caja"+(e.cantC>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(pCaja*e.cantC)+"\n";
+      m+="• ["+p.codigo+"] "+p.nombre+" x"+e.cantC+" caja"+(e.cantC>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(pCaja*e.cantC)+"\n";
     }
   });
-  togoPedidas(function(p,c,pr){ m+="• 🍕 "+p.nombre+" x"+c+" u = "+fmt(pr*c)+"\n"; });
+  togoPedidas(function(p,c,pr){ m+="• 🍕 ["+togoCod(p)+"] "+p.nombre+" x"+c+" u = "+fmt(pr*c)+"\n"; });
   m+="\n💰 *TOTAL: "+fmt(r.t)+"*";
   if(envioVipHoy()) m+="\n🚚 Envío gratis (miércoles/viernes)";
   return m;
