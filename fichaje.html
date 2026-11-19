@@ -124,10 +124,14 @@ async function pantallaInicio() {
     ? `<div class="estado on"><b>Estás trabajando</b><span>Entraste a las ${partes(e.ts.toDate()).hm}${e.local && LOCALES[e.local] ? " en " + LOCALES[e.local] : ""}</span><span>Llevás ${durac(Date.now() - e.ts.toMillis())}</span></div>`
     : `<div class="estado off"><b>Hola ${emp}</b><span>No tenés un ingreso abierto</span></div>`;
   $("#app").innerHTML = cabecera() + card +
-    (estado.abierta ? `<button class="big sal xl" id="ir">Registrar SALIDA</button>` : `<button class="big pri xl" id="ir">Registrar INGRESO</button>`) +
+    `<p class="note" style="margin:6px 0 10px">Elegí qué vas a registrar:</p>` +
+    `<div class="two"><button class="big ${estado.abierta ? "" : "pri"} xl" id="ing">ENTRADA</button><button class="big ${estado.abierta ? "sal" : ""} xl" id="sal">SALIDA</button></div>` +
     `<p class="note">Local: ${LOCALES[local]} · <a href="#" id="cambiar">cambiar</a></p>`;
   $("#app").onclick = null;
-  $("#ir").onclick = () => { modo = estado.abierta ? "salida" : "entrada"; pin = ""; pantallaPin.err = ""; buscarUbicacion(); };
+  // Banchi 19/11: el empleado elige ENTRADA o SALIDA. Si una marca no se tomó, las siguientes no quedan corridas.
+  const ir = m => { modo = m; pin = ""; pantallaPin.err = ""; buscarUbicacion(); };
+  $("#ing").onclick = () => ir("entrada");
+  $("#sal").onclick = () => ir("salida");
   $("#cambiar").onclick = ev => { ev.preventDefault(); local = null; pantallaLocal(); };
 }
 
@@ -174,7 +178,7 @@ async function fichar() {
   $("#app").innerHTML = cabecera() + `<p class="note">Guardando…</p>`;
   try {
     const { abierta, est, ultimas } = await leerEstado();
-    const tipo = abierta ? "salida" : "entrada";
+    const tipo = modo === "salida" || modo === "entrada" ? modo : (abierta ? "salida" : "entrada");
     const gpsDato = gps.estado === "ok" || gps.estado === "lejos" ? { lat: gps.lat, lng: gps.lng, precision: Math.round(gps.acc), distancia: Math.round(gps.dist) } : null;
     const ref = await addDoc(collection(fs, C.marcas), {
       usuario: USUARIO, emp, local, tipo, ts: serverTimestamp(),
@@ -212,16 +216,16 @@ function resultado(tipo, hm, fecha, horario, est) {
       det = `Tu horario: ${t[1]} a ${t[2]}` + (d < 0 ? `<br>Se cuenta desde las ${t[1]}` : ""); }
     else if (horario) { chips.push(["Hoy no tenés turno acá", "c-warn"]); det = "Queda anotado para que lo revise el encargado."; }
   } else {
-    const ent = est && est.ts ? min(partes(est.ts.toDate()).hm) : null;
+    const ent = est && est.tipo === "entrada" && est.ts ? min(partes(est.ts.toDate()).hm) : null;
     const t = ts.slice().sort((a, b) => Math.abs(min(a[2]) - m) - Math.abs(min(b[2]) - m))[0];
     if (t) { const d = m - min(t[2]);
       chips.push(d < -5 ? [`Salió ${-d} min antes`, "c-warn"] : d > 5 ? [`${d} min después`, "c-info"] : ["Turno completo", "c-ok"]);
-      det = `Tu horario terminaba ${t[2]}` + (d > 5 ? "<br>Lo de más se cuenta solo si lo aprueban" : ""); }
+      det = `Tu horario terminaba ${t[2]}` + (d > 5 ? "<br>Lo de más queda anotado (no se paga)" : ""); }
     if (ent != null) det += (det ? "<br>" : "") + `Entraste ${partes(est.ts.toDate()).hm}`;
   }
   if (gps.estado !== "ok") chips.push([gps.estado === "sin-config" ? "Local sin ubicación cargada" : "Sin ubicación", "c-info"]);
   const ent = tipo === "entrada";
-  const trabajado = !ent && est && est.ts ? `<b style="font-size:18px">Trabajaste ${durac(Date.now() - est.ts.toMillis())}</b>` : "";
+  const trabajado = !ent && est && est.tipo === "entrada" && est.ts && (Date.now() - est.ts.toMillis()) < HORAS_ABIERTA * 3600e3 ? `<b style="font-size:18px">Trabajaste ${durac(Date.now() - est.ts.toMillis())}</b>` : "";
   $("#app").innerHTML = cabecera() + `<div class="res">
     <div class="check ${ent ? "ok" : "sal"}">✓</div>
     <p class="titulo-ok">${ent ? "¡Tu ingreso fue registrado!" : "¡Tu salida fue registrada!"}</p>
