@@ -4166,6 +4166,19 @@ function fixSticky(){
 }
 if(window.ResizeObserver){var _roSt=new ResizeObserver(function(){fixSticky();});document.querySelectorAll(".pag .hdr,.pag .tot").forEach(function(e){_roSt.observe(e);});}
 window.addEventListener("resize",fixSticky);
+
+/* DOS APPS, UN SOLO MOTOR DE PRECIOS:
+   ftk-apps.github.io/frioteka/                     → App Gestión (PIN)
+   ftk-apps.github.io/frioteka/?app=preventista     → App Preventista (frioteka_preventista.html redirige acá) */
+var APP_MODO=(new URLSearchParams(location.search).get("app")==="preventista")?"preventista":"gestion";
+if(APP_MODO==="preventista"){
+  document.title="FRIOTEKA · Preventista";
+  if($("btnIrGestion")) $("btnIrGestion").style.display="none";
+  irA("p1");
+}else{
+  document.title="FRIOTEKA · Gestión";
+  if($("btnIrPreventista")) $("btnIrPreventista").style.display="none";
+}
 </script>
 </body>
 </html>

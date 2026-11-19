@@ -2,7 +2,7 @@
 
 ## Regla de oro
 **Los precios están en un solo lugar: `precios.json`.**
-Las 4 apps (Gestión, Preventista suelta, Catálogo clientes y Catálogo VIP) lo leen al abrirse.
+Las 4 apps (Gestión, Preventista, Catálogo clientes y Catálogo VIP) lo leen al abrirse.
 Nunca se escriben precios adentro de los `.html`.
 
 | Archivo | Para qué |
@@ -41,6 +41,11 @@ Si una app no coincide con el sistema, la que está mal es la app.
 | Descuento especial 5% / 10% | Sobre todo lo que no es caja. A las cajas solo el 5%, y nunca con VIP |
 
 Las dos pantallas (Preventista y Nueva Venta) cobran exactamente igual.
+
+### App 2 · Preventista — confirmado 19/11/2026
+- Es una app separada, con su propio link: `ftk-apps.github.io/frioteka/frioteka_preventista.html` (abre `?app=preventista`). No tiene acceso a la gestión.
+- Usa **el mismo motor y las mismas reglas que la app 1**. No hay una copia aparte, así que nunca puede cobrar distinto.
+- La App Gestión (`ftk-apps.github.io/frioteka/`) entra solo con PIN y no tiene el botón del preventista.
 
 ## Control
 - Cada app muestra la fecha de la lista que está usando. Si una app muestra otra fecha, hay que recargarla (Ctrl + F5).
