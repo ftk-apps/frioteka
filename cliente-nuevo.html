@@ -105,6 +105,9 @@ a{color:inherit;text-decoration:none}
 .pago{padding:10px 14px;border-radius:12px;background:#fff;border:1px solid var(--linea);font-weight:700;font-size:14px}
 .pago.on{border-color:var(--rojo);background:var(--rosa);color:var(--rojo2)}
 .wa{width:100%;margin-top:14px;background:#1F9D55;color:#fff;border-radius:14px;padding:14px;font-weight:800;font-size:16px}
+.pie{margin:18px 14px 8px;background:#fff;border-radius:16px;padding:18px 16px;text-align:center}
+.pie p{font-size:14px;line-height:1.45;color:#444}
+.waof{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:#1F9D55;color:#fff;border-radius:14px;padding:13px 18px;font-weight:800;font-size:15px;width:100%}
 .err{color:#B3261E;font-size:13px;font-weight:700;margin-top:8px;display:none}
 .listo{position:fixed;inset:0;z-index:60;background:var(--rojo);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
 .listo.on{display:flex}
@@ -152,6 +155,7 @@ a{color:inherit;text-decoration:none}
 (function(){
 /* ===== Datos: todo sale de precios.json (precios.js), igual que antes ===== */
 var WA_NUM="5493541613373";
+var WA_OFERTAS="https://wa.me/"+WA_NUM+"?text="+encodeURIComponent("Hola! Quiero recibir las ofertas de FRIOTEKA por WhatsApp");
 /* Listas iguales a cliente.html */
 var OFERTAS=[1521,3041,3311,3312,3313,3607,3706,3522,3620,1121,1126,3826,3820,1714,1719,
   1807,1802,1809,1811,1812,1810,3411,3419,3412,1829,1506,1564,3512,3520,2433,
@@ -220,7 +224,9 @@ function fila(k){var p=prods[k];if(!p)return "";var n=ped[k]||0;var may=esMay();
 function render(){var t=q.trim().toLowerCase();var h="";
   if(t){var r=Object.keys(prods).filter(function(k){var p=prods[k];if(esMay()?!vendeMay(k):false)return false;return p.n.toLowerCase().indexOf(t)>=0||p.raw.toLowerCase().indexOf(t)>=0||String(p.c).indexOf(t)>=0;});
     h='<section class="sec"><h2>Resultados <span>'+r.length+'</span></h2>'+(r.map(fila).join("")||'<div class="vacio">No encontramos ese producto. Probá con otra palabra o el código.</div>')+'</section>';}
-  else h=secciones.map(function(s){return '<section class="sec" id="'+s.id+'"><h2>'+s.ic+" "+s.t+' <span>'+s.items.length+'</span></h2>'+s.items.map(fila).join("")+'</section>';}).join("");
+  else h=secciones.map(function(s){return '<section class="sec" id="'+s.id+'"><h2>'+s.ic+" "+s.t+' <span>'+s.items.length+'</span></h2>'+s.items.map(fila).join("")+'</section>';}).join("")+
+    '<div class="pie"><p><b>FRIOTEKA</b> es una tienda de descuentos especialista en alimentos congelados, con la mayor variedad del mercado argentino.</p>'+
+    '<a class="waof" href="'+WA_OFERTAS+'" target="_blank" rel="noopener">💬 Recibí las ofertas por WhatsApp</a></div>';
   $("lista").innerHTML=h;totales();}
 
 function calc(){var u=0,t=0;Object.keys(ped).forEach(function(k){var p=prods[k];if(!p)return;u+=ped[k];t+=ped[k]*precio(p);});return {u:u,t:t};}
@@ -249,6 +255,7 @@ function marco(){var may=esMay();
     '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. Ramón J. Cárcano 619, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>Cárcano<div class="cod" style="margin-top:0">Av. Ramón J. Cárcano 619 · Villa Carlos Paz</div></div><span>›</span></a>'+
     '<a class="mit" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent("Av. San Martín 1211, Villa Carlos Paz, Córdoba")+'" target="_blank" rel="noopener"><i>📍</i><div>San Martín<div class="cod" style="margin-top:0">Av. San Martín 1211 · Villa Carlos Paz</div></div><span>›</span></a>'+
     '<a class="mit" href="https://wa.me/'+WA_NUM+'" target="_blank" rel="noopener"><i>💬</i>WhatsApp 3541 61-3373<span>›</span></a>'+
+    '<a class="mit" href="'+WA_OFERTAS+'" target="_blank" rel="noopener"><i>🔔</i>Recibí las ofertas por WhatsApp<span>›</span></a>'+
     '<a class="mit" href="https://frioteka.com.ar/" target="_blank" rel="noopener"><i>🌐</i>Compra online · frioteka.com.ar<span>›</span></a>'+
     '<a class="mit" href="https://www.instagram.com/FriotekaOficial" target="_blank" rel="noopener"><i>📷</i>Instagram · @FriotekaOficial<span>›</span></a>';
   setTimeout(medir,0);}
