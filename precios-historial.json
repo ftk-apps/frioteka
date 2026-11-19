@@ -3385,5 +3385,184 @@
 "despues": "PAQ. ESPINACA  X 600GR"
 }
 ]
+},
+{
+"fecha": "19/11/2026",
+"hora": "18:40",
+"tipo": "Control contra el sistema",
+"fuente": "t051.frioteka.ar/admin/productos (RETAIL + FOOD SERVIS)",
+"cargo": "Claude",
+"aprobo": "Banchi",
+"resumen": "Primer control: 221 congelados, 203 iguales, 18 actualizados (24 valores). Regla: las apps llevan el precio del sistema, incluidas ofertas",
+"cambios": [
+{
+"cod": 3515,
+"producto": "RABAS X300 GR",
+"campo": "precioMayorista",
+"antes": 8231,
+"despues": 8478
+},
+{
+"cod": 3516,
+"producto": "PAELLA X400GR",
+"campo": "precioMayorista",
+"antes": 7423,
+"despues": 7794
+},
+{
+"cod": 3068,
+"producto": "PAPAS BASTON COOL MIND x2,5kg 12mm",
+"campo": "precioMinorista",
+"antes": 10490,
+"despues": 11099
+},
+{
+"cod": 3068,
+"producto": "PAPAS BASTON COOL MIND x2,5kg 12mm",
+"campo": "precioMayorista",
+"antes": 7625,
+"despues": 9532
+},
+{
+"cod": 3822,
+"producto": "PAQ. BIZCOCHOS SALADOS X500gr",
+"campo": "precioMayorista",
+"antes": 3147,
+"despues": 3130
+},
+{
+"cod": 3826,
+"producto": "PAQ. CHIPA X500GR",
+"campo": "precioMayorista",
+"antes": 6669,
+"despues": 6737
+},
+{
+"cod": 3827,
+"producto": "PAQ. BIZCOCHO CON QUESO X 500GR",
+"campo": "precioMayorista",
+"antes": 6084,
+"despues": 5964
+},
+{
+"cod": 3522,
+"producto": "PAQ. MILANESA DE MERLUZA X 500GR",
+"campo": "precioMayorista",
+"antes": 8452,
+"despues": 8441
+},
+{
+"cod": 3520,
+"producto": "CROQUETAS DE ESPINACA Y QUESO X 400GR",
+"campo": "precioMayorista",
+"antes": 3899,
+"despues": 3886
+},
+{
+"cod": 2443,
+"producto": "CARNE X4 U EMPANADAS",
+"campo": "precioMinorista",
+"antes": 5399,
+"despues": 5899
+},
+{
+"cod": 2443,
+"producto": "CARNE X4 U EMPANADAS",
+"campo": "precioMayorista",
+"antes": 4722,
+"despues": 5138
+},
+{
+"cod": 2444,
+"producto": "JAMON Y QUESO X4U EMP.",
+"campo": "precioMinorista",
+"antes": 5399,
+"despues": 5899
+},
+{
+"cod": 2444,
+"producto": "JAMON Y QUESO X4U EMP.",
+"campo": "precioMayorista",
+"antes": 4722,
+"despues": 5053
+},
+{
+"cod": 2445,
+"producto": "VERDURA X4U EMP",
+"campo": "precioMinorista",
+"antes": 5399,
+"despues": 5899
+},
+{
+"cod": 2445,
+"producto": "VERDURA X4U EMP",
+"campo": "precioMayorista",
+"antes": 4722,
+"despues": 5053
+},
+{
+"cod": 2446,
+"producto": "POLLO X4U EMP",
+"campo": "precioMinorista",
+"antes": 5399,
+"despues": 5899
+},
+{
+"cod": 2446,
+"producto": "POLLO X4U EMP",
+"campo": "precioMayorista",
+"antes": 4722,
+"despues": 5053
+},
+{
+"cod": 2439,
+"producto": "TARTA DE VERDURA",
+"campo": "precioMayorista",
+"antes": 4171,
+"despues": 4549
+},
+{
+"cod": 2440,
+"producto": "TARTA DE CALABAZA",
+"campo": "precioMayorista",
+"antes": 4171,
+"despues": 4549
+},
+{
+"cod": 2441,
+"producto": "TARTA DE ZAPALLITO",
+"campo": "precioMayorista",
+"antes": 4171,
+"despues": 4549
+},
+{
+"cod": 2442,
+"producto": "TARTA DE JAMON YQUESO",
+"campo": "precioMayorista",
+"antes": 4171,
+"despues": 4549
+},
+{
+"cod": 1150,
+"producto": "PATA MUSLO X 3KG",
+"campo": "precioMayorista",
+"antes": 9747,
+"despues": 9535
+},
+{
+"cod": 1157,
+"producto": "CAJA CUARTOS TRASEROS X 15KG",
+"campo": "precioMinorista",
+"antes": 47451,
+"despues": 46201
+},
+{
+"cod": 1157,
+"producto": "CAJA CUARTOS TRASEROS X 15KG",
+"campo": "precioMayorista",
+"antes": 47451,
+"despues": 46201
+}
+]
 }
 ]

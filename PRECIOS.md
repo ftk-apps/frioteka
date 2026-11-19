@@ -15,6 +15,19 @@ Nunca se escriben precios adentro de los `.html`.
 El **sistema de Fenovo / FRIOTEKA**, que tiene los precios minoristas y mayoristas.
 Si una app no coincide con el sistema, la que está mal es la app.
 
+Dónde se buscan los congelados en el sistema (`t051.frioteka.ar/admin`):
+1. **Productos (RETAIL)** — `/admin/productos`
+2. **Food Service** — `/admin/productos?tipo=FOOD SERVIS`. Si un producto no está en RETAIL, está acá.
+
+Reglas:
+- Las apps llevan **el mismo precio que muestra el sistema**, incluidas las ofertas. Cuando cambian las ofertas (fin de mes), se actualizan las apps.
+- Se busca siempre por **código**, nunca por nombre.
+- Solo cuentan los productos que están en las apps. Lo que está en el sistema y no en las apps no se carga, salvo que el administrador lo dé de alta.
+- Producto con **\*\*\*** adelante del nombre = ya no viene más: se ignora.
+- Lácteos Santa María y pizzitas TOGO **no** se controlan acá: sus precios los informan la app de Elaboraciones y la de Santa María.
+
+El control queda en la planilla **MAESTRO_PRECIOS_APPS.xlsx** (carpeta TODO CLAUDE › APP PREVENTISTA): código, descripción, precio de la app, precio del sistema, dónde está y estado (OK / Difiere), con alertas automáticas (mayorista mayor que minorista, cambio de más de 20%, precio en cero).
+
 ## Roles
 - **Encargado (carga):** Claude, cuando el administrador se lo pide ("actualizá los precios").
 - **Responsable (aprueba):** el administrador. Nada se publica sin su OK.
