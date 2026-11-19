@@ -3564,5 +3564,44 @@
 "despues": 46201
 }
 ]
+},
+{
+"fecha": "19/11/2026",
+"hora": "18:55",
+"tipo": "Altas",
+"fuente": "t051.frioteka.ar/admin/productos (RETAIL)",
+"cargo": "Claude",
+"aprobo": "Banchi",
+"resumen": "Alta de 4 congelados que estaban en el sistema y no en las apps (aprobados uno por uno)",
+"cambios": [
+{
+"cod": 1130,
+"producto": "CARNE PICADA X 500GR",
+"campo": "alta",
+"antes": null,
+"despues": "9999 / 8153"
+},
+{
+"cod": 2674,
+"producto": "RAVIOLES CON BOLOGNESA X600GR",
+"campo": "alta",
+"antes": null,
+"despues": "4990 / 4046"
+},
+{
+"cod": 2675,
+"producto": "TALLARINES CON BOLOGNESA X600GR",
+"campo": "alta",
+"antes": null,
+"despues": "4990 / 4188"
+},
+{
+"cod": 2713,
+"producto": "PAN HAMB.CONG X 6",
+"campo": "alta",
+"antes": null,
+"despues": "3990 / 3329"
+}
+]
 }
 ]
