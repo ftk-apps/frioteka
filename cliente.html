@@ -289,7 +289,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
     <div style="font-size:16px;font-weight:800;color:#5de87a;margin-top:6px;">Ahorrás comprando en volumen</div>
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
       <span style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;">❄️ Congelados premium</span>
-      <span style="background:rgba(93,232,122,.15);border:1px solid rgba(93,232,122,.4);color:#5de87a;font-size:12px;font-weight:800;padding:6px 14px;border-radius:20px;">🚚 Envío gratis desde $100.000</span>
+      <span style="background:rgba(93,232,122,.15);border:1px solid rgba(93,232,122,.4);color:#5de87a;font-size:12px;font-weight:800;padding:6px 14px;border-radius:20px;">🚚 Envío gratis desde $150.000</span>
     </div>
   </div>
 
@@ -613,7 +613,7 @@ function calcTotalMay(){
 
 function updTotalMay(){
   var r=calcTotalMay();
-  var ENV_MIN=100000;
+  var ENV_MIN=ENVIO_CAJA;
   document.getElementById("totalMay").textContent=fmt(r.t);
   document.getElementById("envioLblMay").style.display=r.t>=ENV_MIN?"block":"none";
   var badge=document.getElementById("badgeMay");
@@ -668,7 +668,7 @@ function renderDrawerMay(){
   });
   document.getElementById("drawerItemsMay").innerHTML=html||'<div style="color:#aaa;font-size:13px;padding:8px 0;">No hay productos.</div>';
   document.getElementById("drawerTotalMay").textContent=fmt(r.t);
-  document.getElementById("drawerEnvioMay").style.display=r.t>=100000?"block":"none";
+  document.getElementById("drawerEnvioMay").style.display=r.t>=ENVIO_CAJA?"block":"none";
 }
 
 function abrirDrawerMay(){
@@ -703,7 +703,7 @@ function buildMsgMay(){
     m+="• "+p.nombre+" x"+c+" caja"+(c>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(p.precioMayorista*p.unidadesCaja*c)+"\n";
   });
   m+="\n💰 *TOTAL: "+fmt(r.t)+"*";
-  if(r.t>=100000) m+="\n🚚 Envío gratis";
+  if(r.t>=ENVIO_CAJA) m+="\n🚚 Envío gratis";
   return m;
 }
 
@@ -754,6 +754,11 @@ var DESTACADOS_MAY=[3047,1557,3525,3044];
 
 var MAS_VENDIDOS=[1150,1557,1158,3523,1156,1521,3605,1154,3440,1548];
 
+/* ENVÍO GRATIS (confirmado 19/11/2026): "Soy cliente" solo los miércoles en compras de más de $60.000; "Compro por caja" desde $150.000 */
+var ENVIO_CAJA=150000, ENVIO_MIN_MIERC=60000;
+function esMiercoles(){return new Date(new Date().toLocaleString("en-US",{timeZone:"America/Argentina/Buenos_Aires"})).getDay()===3;}
+function envioMinOk(t){return esMiercoles()&&t>ENVIO_MIN_MIERC;}
+/* Promo helados 5x4: dada de baja el 19/11/2026 */
 var PROMO_5X4=[3353,3354,3355,3356,3357,3358,3359,3360,3304,3305,3306,3309,3301,3302,3303,3307];
 
 function renderDestacados(){
@@ -801,6 +806,7 @@ function renderMasVendidos(){
 function renderPromo5x4(){
   var sec=document.getElementById("promo5x4Section");
   if(!sec) return;
+  sec.style.display="none";sec.innerHTML="";return; /* promo dada de baja */
   if(MODO!=="minorista"){sec.style.display="none";sec.innerHTML="";return;}
   var prods=PROMO_5X4.map(function(cod){return P.find(function(p){return p.codigo===cod;});}).filter(Boolean);
   if(!prods.length){sec.style.display="none";return;}
@@ -1182,21 +1188,24 @@ function updTotal(){
   var r=calcTotal();
   document.getElementById("totalNum").textContent=fmt(r.t);
   var envioEl=document.getElementById("envioLbl");
-  envioEl.style.display=r.t>=60000?"block":"none";
+  envioEl.style.display=envioMinOk(r.t)?"block":"none";
   var badge=document.getElementById("badgePed");
   badge.textContent=r.items+" item"+(r.items!==1?"s":"");
   badge.className="badge-ped"+(r.items>0?" on":"");
   // Barra de progreso hacia envío gratis
-  var ENV_MIN=60000;
+  var ENV_MIN=ENVIO_MIN_MIERC;
   var pw=document.getElementById("progWrap");
   var pf=document.getElementById("progFill");
   var pt=document.getElementById("progTxt");
-  if(r.items>0){
+  if(r.items>0&&!esMiercoles()){
+    pw.style.display="block";pf.style.width="0%";
+    pt.textContent="🚚 Envío gratis solo los miércoles, en compras de más de "+fmt(ENVIO_MIN_MIERC);pt.className="prog-txt";
+  } else if(r.items>0){
     pw.style.display="block";
     var pct=Math.min(100,Math.round(r.t/ENV_MIN*100));
     pf.style.width=pct+"%";
-    if(r.t>=ENV_MIN){
-      pt.textContent="🚚 ¡Envío gratis desbloqueado!";
+    if(envioMinOk(r.t)){
+      pt.textContent="🚚 ¡Envío gratis desbloqueado! (miércoles)";
       pt.className="prog-txt ok";
     } else {
       var falta=ENV_MIN-r.t;
@@ -1236,7 +1245,7 @@ function renderDrawer(){
   document.getElementById("drawerItems").innerHTML=html||'<div style="color:#aaa;font-size:13px;padding:8px 0;">No hay productos todavía.</div>';
   document.getElementById("drawerTotal").textContent=fmt(r.t);
   var de=document.getElementById("drawerEnvio");
-  de.style.display=r.t>=60000?"block":"none";
+  de.style.display=envioMinOk(r.t)?"block":"none";
 }
 
 function abrirDrawer(){
@@ -1284,7 +1293,7 @@ function buildMsg(){
   });
   togoPedidas(function(p,c,pr){ m+="• 🍕 "+p.nombre+" x"+c+" u = "+fmt(pr*c)+"\n"; });
   m+="\n💰 *TOTAL: "+fmt(r.t)+"*";
-  if(r.t>=60000) m+="\n🚚 Envío gratis";
+  if(envioMinOk(r.t)) m+="\n🚚 Envío gratis (miércoles)";
   return m;
 }
 

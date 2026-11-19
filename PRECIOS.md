@@ -47,6 +47,17 @@ Las dos pantallas (Preventista y Nueva Venta) cobran exactamente igual.
 - Usa **el mismo motor y las mismas reglas que la app 1**. No hay una copia aparte, así que nunca puede cobrar distinto.
 - La App Gestión (`ftk-apps.github.io/frioteka/`) entra solo con PIN y no tiene el botón del preventista.
 
+### App 3 · Catálogo de clientes — confirmado 19/11/2026
+| Qué | "🛒 Soy cliente" | "📦 Compro por caja" |
+|---|---|---|
+| Congelados | Por unidad, a minorista | Solo cajas: mayorista × unidades de la caja |
+| Pizzitas TOGO | **Siempre minorista**, aunque lleve 10 o más | No se venden |
+| 10% automático | **No se aplica** (tampoco cuando la Gestión procesa el pedido) | No se aplica |
+| Envío gratis | **Solo los miércoles**, en compras de más de $60.000 | Desde **$150.000** |
+| Promo helados 5x4 | **Dada de baja** el 19/11/2026 | — |
+
+Cuando la Gestión procesa un pedido que vino de "Soy cliente", cobra con estas reglas: TOGO a minorista y sin 10%. Así el cliente paga lo mismo que vio en la app.
+
 ## Control
 - Cada app muestra la fecha de la lista que está usando. Si una app muestra otra fecha, hay que recargarla (Ctrl + F5).
 - Si la lista tiene más de 15 días, se pide una actualización.

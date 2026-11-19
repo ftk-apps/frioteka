@@ -1337,6 +1337,7 @@ function procesarPendiente(pendIdx){
   // 1. Cargar items en nvPed / nvPedLac
   nvPed={};nvPedLac={};nvPedTogo={};
   nvVip=pend.origen==="cliente-web-vip"||pend.vip===true;
+  nvDeClienteWeb=pend.origen==="cliente-web";
   if($("nvVipBtn")) $("nvVipBtn").className="vipbtn"+(nvVip?" on":"");
   nvDescEsp=pend.descuento||0;
   var fpMap={efectivo:"Efectivo",transferencia:"Transferencia",debito:"Débito","débito":"Débito","cta. corriente":"Cta. Corriente"};
@@ -2701,7 +2702,9 @@ var nvTabActual="cong";
 function nvDm(){return nvVip?"mayorista":"minorista";}
 /* REGLA TOGO: cliente común = minorista; 10 o más pizzitas en el pedido (sumando gustos) o cliente VIP = mayorista */
 function togoMay(est,esVip){if(esVip) return true;var n=0;for(var k in est){if(est[k]&&est[k].cant>0) n+=est[k].cant;}return n>=10;}
-function nvTogoPr(p){return togoMay(nvPedTogo,nvVip)?p.precioMay:p.precioMin;}
+/* Pedido que vino de la app de clientes ("Soy cliente"): TOGO siempre minorista y sin 10% automático (confirmado 19/11/2026) */
+var nvDeClienteWeb=false;
+function nvTogoPr(p){if(nvDeClienteWeb&&!nvVip) return p.precioMin;return togoMay(nvPedTogo,nvVip)?p.precioMay:p.precioMin;}
 function pTogoPr(p){return togoMay(pedTogo,vip)?p.precioMay:p.precioMin;}
 
 function nvCalcT(){
@@ -2713,7 +2716,7 @@ function nvCalcT(){
 }
 
 function nvCalcFinal(t,n,tMin){
-  var tCaja=t-tMin,d10=tMin>=100000&&n>=20&&!nvVip;
+  var tCaja=t-tMin,d10=tMin>=100000&&n>=20&&!nvVip&&!nvDeClienteWeb;
   var bMin=d10?tMin*0.9:tMin;
   if(nvDescEsp>0) bMin=bMin*(1-nvDescEsp/100);
   var bCaja=(nvDescEsp>0&&nvDescEsp!==10&&!nvVip)?tCaja*(1-nvDescEsp/100):tCaja;
@@ -3011,7 +3014,7 @@ function nvAbrirResumen(){
     var ti2=parseInt(tk.replace("togo-",""));var tp2=TOGO[ti2];var subT=nvTogoPr(tp2)*te.cant;
     var subFT=nvDescEsp>0?subT*(1-nvDescEsp/100):subT;
     var dvT=document.createElement("div");dvT.className="item";
-    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag '+(togoMay(nvPedTogo,nvVip)?'tmay':'tmin')+'">'+(nvVip?'VIP':togoMay(nvPedTogo,false)?'May. (10+)':'Min.')+'</span></div><div class="icod">TOGO · Cód: '+tp2.codigo+'</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(nvTogoPr(tp2))+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
+    dvT.innerHTML='<div class="iizq"><div class="inom">'+tp2.nombre+' <span class="itag '+(nvTogoPr(tp2)===tp2.precioMay&&tp2.precioMay!==tp2.precioMin?'tmay':'tmin')+'">'+(nvVip?'VIP':(!nvDeClienteWeb&&togoMay(nvPedTogo,false))?'May. (10+)':'Min.')+'</span></div><div class="icod">TOGO · Cód: '+tp2.codigo+'</div></div><div class="ider"><div class="ipr">'+fmt(subT)+'</div><div class="iqt">x'+te.cant+' · '+fmt(nvTogoPr(tp2))+' c/u</div>'+(nvDescEsp>0?"<div class='idesc'>Con desc: "+fmt(subFT)+"</div>":"")+'</div>';
     ri.appendChild(dvT);
   }
   if(!hay) ri.innerHTML='<div class="vacio">Sin productos</div>';
@@ -3035,7 +3038,7 @@ function nvSetDescEsp(v){
 }
 
 function nvNuevoPedido(){
-  nvPed={};nvPedLac={};nvPedTogo={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";
+  nvPed={};nvPedLac={};nvPedTogo={};nvDescEsp=0;nvDeClienteWeb=false;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";
   if($("nvCli")) $("nvCli").value="";
   var selPrevReset=$("nvPreventista");if(selPrevReset)selPrevReset.value="";
   if($("nvDir")) $("nvDir").value="";
@@ -3098,7 +3101,7 @@ $("bvip").onclick=function(){vip=!vip;this.className="vipbtn"+(vip?" on":"");$("
 };
 $("fab").onclick=function(){abrirRes();irA("p2");};
 $("bvolver").onclick=function(){irA("p1");};
-function volverGestion(){nvPed={};nvPedLac={};nvPedTogo={};nvDescEsp=0;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";if($("nvCli"))$("nvCli").value="";if($("nvDir"))$("nvDir").value="";if($("nvObs"))$("nvObs").value="";if($("nvNroFactura"))$("nvNroFactura").value="";if($("nvVipBtn"))$("nvVipBtn").className="vipbtn";irA("p3");renderGestion();}
+function volverGestion(){nvPed={};nvPedLac={};nvPedTogo={};nvDeClienteWeb=false;nvDescEsp=0;nvDeClienteWeb=false;nvFpago="Efectivo";nvVip=false;nvEntrega="Local";nvPreventistaVal="";if($("nvCli"))$("nvCli").value="";if($("nvDir"))$("nvDir").value="";if($("nvObs"))$("nvObs").value="";if($("nvNroFactura"))$("nvNroFactura").value="";if($("nvVipBtn"))$("nvVipBtn").className="vipbtn";irA("p3");renderGestion();}
 $("sbuscar").oninput=function(){render(this.value);};
 $("cliente").oninput=function(){buscarCli(this.value);updWA();};
 $("direccion").oninput=function(){updWA();};
