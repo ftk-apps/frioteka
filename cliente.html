@@ -745,6 +745,8 @@ function elegirModo(m){
   renderCatalogo();
 }
 function getPrecio(p){return MODO==="mayorista"?p.precioMayorista:p.precioMinorista;}
+/* Caja: siempre mayorista × unidades de la caja (igual en Soy cliente, Compro por caja y Gestión) */
+function getPrecioCaja(p){return p.precioMayorista*p.unidadesCaja;}
 
 var OFERTAS=[1521,3041,3311,3312,3313,3607,3706,3522,3620,1121,1126,3826,3820,1714,1719,
   1807,1802,1809,1811,1812,1810,3411,3419,3412,1829,1506,1564,3512,3520,2433,
@@ -770,7 +772,7 @@ function renderDestacados(){
   if(!prods.length){sec.style.display="none";return;}
   var html='<div class="ofertas-header"><span style="font-size:20px;">🥔</span><span class="ofertas-titulo">NUEVAS PAPAS · DESTACADOS</span></div><div class="ofertas-scroll">';
   prods.forEach(function(p){
-    var pCaja=getPrecio(p)*p.unidadesCaja;
+    var pCaja=getPrecioCaja(p);
     html+='<div class="oferta-card" onclick="irAProducto('+p.codigo+')">'+
       '<div class="oferta-flame" style="background:#E65100;">📦 CAJA</div>'+
       '<div class="oferta-precio">'+fmt(pCaja)+'</div>'+
@@ -1015,7 +1017,7 @@ function renderCatalogo(scrollAlCat){
     var esK=(p.unidad==="K");
     var unidLbl=esK?"kg":"c/u";
     var cajasLbl=esK?(p.unidadesCaja)+"kg":"x"+p.unidadesCaja+"u";
-    var pCaja=getPrecio(p)*p.unidadesCaja;
+    var pCaja=getPrecioCaja(p);
 
     var card=document.createElement("div");
     card.className="prod-card";
@@ -1130,7 +1132,7 @@ function calcTotal(){
     var e=ped[p.codigo];
     if(!e) return;
     if(e.cantU>0){ t+=getPrecio(p)*e.cantU; items+=e.cantU; }
-    if(e.cantC>0){ t+=getPrecio(p)*p.unidadesCaja*e.cantC; items+=e.cantC; }
+    if(e.cantC>0){ t+=getPrecioCaja(p)*e.cantC; items+=e.cantC; }
   });
   togoPedidas(function(p,c,pr){ t+=pr*c; items+=c; });
   return {t:t,items:items};
@@ -1236,7 +1238,7 @@ function renderDrawer(){
       html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.codigo+' · '+p.nombre+'</div><div class="drawer-item-det">'+e.cantU+' u. × '+fmt(getPrecio(p))+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*e.cantU)+'</div></div>';
     }
     if(e.cantC>0){
-      html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.codigo+' · '+p.nombre+'</div><div class="drawer-item-det">'+e.cantC+' caja'+( e.cantC>1?"s":"")+" × "+fmt(getPrecio(p)*p.unidadesCaja)+'</div></div><div class="drawer-item-precio">'+fmt(getPrecio(p)*p.unidadesCaja*e.cantC)+'</div></div>';
+      html+='<div class="drawer-item"><div><div class="drawer-item-nom">'+p.codigo+' · '+p.nombre+'</div><div class="drawer-item-det">'+e.cantC+' caja'+( e.cantC>1?"s":"")+" × "+fmt(getPrecioCaja(p))+'</div></div><div class="drawer-item-precio">'+fmt(getPrecioCaja(p)*e.cantC)+'</div></div>';
     }
   });
   togoPedidas(function(p,c,pr){
@@ -1287,7 +1289,7 @@ function buildMsg(){
       m+="• ["+p.codigo+"] "+p.nombre+" x"+e.cantU+unidLbl+" = "+fmt(getPrecio(p)*e.cantU)+"\n";
     }
     if(e.cantC>0){
-      var pCaja=getPrecio(p)*p.unidadesCaja;
+      var pCaja=getPrecioCaja(p);
       m+="• ["+p.codigo+"] "+p.nombre+" x"+e.cantC+" caja"+(e.cantC>1?"s":"")+" ("+p.unidadesCaja+unidLbl+"/caja) = "+fmt(pCaja*e.cantC)+"\n";
     }
   });
@@ -1309,7 +1311,7 @@ function enviarWA(){
     var esK=(p.unidad==="K");
     var unidLbl=esK?"kg":"u";
     if(e.cantU>0) items.push({cod:p.codigo,nom:p.nombre,cant:e.cantU,unid:unidLbl,precio:getPrecio(p),subtotal:getPrecio(p)*e.cantU});
-    if(e.cantC>0) items.push({cod:p.codigo,nom:p.nombre,cant:e.cantC,unid:"caja",precio:getPrecio(p)*p.unidadesCaja,subtotal:getPrecio(p)*p.unidadesCaja*e.cantC});
+    if(e.cantC>0) items.push({cod:p.codigo,nom:p.nombre,cant:e.cantC,unid:"caja",precio:getPrecioCaja(p),subtotal:getPrecioCaja(p)*e.cantC});
   });
   togoPedidas(function(p,c,pr){ items.push({cod:togoCod(p),nom:p.nombre,cant:c,unid:"u",precio:pr,subtotal:pr*c}); });
   // Guardar en Firebase como pendiente
