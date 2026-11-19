@@ -156,7 +156,7 @@ var WA_NUM="5493541613373";
 var OFERTAS=[1521,3041,3311,3312,3313,3607,3706,3522,3620,1121,1126,3826,3820,1714,1719,
   1807,1802,1809,1811,1812,1810,3411,3419,3412,1829,1506,1564,3512,3520,2433,
   3314,3315,3316,3391,3392,3319,3320,3052,3049,3525];
-var DESTACADOS_MAY=[3047,1557,3525,3044];
+var DESTACADOS_MAY=[3047,1557,3068,3525,3044];
 var MAS_VENDIDOS=[1150,1557,1158,3523,1156,1521,3605,1154,3440,1548];
 /* ENVÍO GRATIS (confirmado 19/11/2026): minorista solo los miércoles en compras de más de $60.000; mayorista (por caja) desde $150.000 */
 var ENVIO_CAJA=150000, ENVIO_MIN_MIERC=60000;
@@ -181,7 +181,9 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp
 
 /* prods: congelados por código; pizzitas TOGO con clave "T"+código */
 var prods={};
-P.forEach(function(p){prods[p.codigo]={k:String(p.codigo),c:p.codigo,raw:p.nombre,n:lindo(p.nombre),p:p.precioMinorista,pm:p.precioMayorista,caja:p.unidadesCaja,kg:p.unidad==="K",cat:p.categoria,img:"https://files-fenovo.sfo3.cdn.digitaloceanspaces.com/imagenes-web/"+p.codigo+"/"+p.codigo+"-o1.jpg"};});
+/* Nombres para mostrar que aclaran el corte (WhatsApp y pendientes siguen con el nombre del sistema) */
+var NOMBRE={1557:"Papas bastón Cool Mind x 2 kg · 9 mm",3068:"Papas bastón Cool Mind x 2,5 kg · 12 mm"};
+P.forEach(function(p){prods[p.codigo]={k:String(p.codigo),c:p.codigo,raw:p.nombre,n:NOMBRE[p.codigo]||lindo(p.nombre),p:p.precioMinorista,pm:p.precioMayorista,caja:p.unidadesCaja,kg:p.unidad==="K",cat:p.categoria,img:"https://files-fenovo.sfo3.cdn.digitaloceanspaces.com/imagenes-web/"+p.codigo+"/"+p.codigo+"-o1.jpg"};});
 TOGO.forEach(function(t){prods["T"+t.codigo]={k:"T"+t.codigo,togo:true,c:(t.codigoMin||t.codigo),raw:t.nombre,n:t.nombre,det:t.detalle,p:t.precioMin,cat:"TOGO",img:"img/togo/"+(TOGO_IMG[t.codigo]||"base")+"-mini.jpg",big:"img/togo/"+(TOGO_IMG[t.codigo]||"base")+".jpg"};});
 function vendeMay(k){var p=prods[k];return p&&!p.togo&&p.pm>0&&p.caja>0;}
 function existe(k){return !!prods[k];}
