@@ -1,0 +1,3389 @@
+[
+{
+"fecha": "19/11/2026",
+"hora": "17:45",
+"tipo": "Unificación",
+"fuente": "Lista de la Gestión (las 4 apps pasan a leer precios.json)",
+"cargo": "Claude",
+"aprobo": "Banchi",
+"resumen": "422 valores corregidos en Preventista suelta, Catálogo clientes y Catálogo VIP",
+"cambios": [
+{
+"app": "Preventista suelta",
+"cod": 3001,
+"producto": "PAQ. ACELGA X 600 GR",
+"campo": "precioMinorista",
+"antes": 4650,
+"despues": 3790
+},
+{
+"app": "Preventista suelta",
+"cod": 3001,
+"producto": "PAQ. ACELGA X 600 GR",
+"campo": "precioMayorista",
+"antes": 3278,
+"despues": 3267
+},
+{
+"app": "Preventista suelta",
+"cod": 3005,
+"producto": "PAQ. CHAMPIGNONES X 400GR",
+"campo": "precioMinorista",
+"antes": 6570,
+"despues": 8290
+},
+{
+"app": "Preventista suelta",
+"cod": 3005,
+"producto": "PAQ. CHAMPIGNONES X 400GR",
+"campo": "precioMayorista",
+"antes": 5550,
+"despues": 5584
+},
+{
+"app": "Preventista suelta",
+"cod": 3006,
+"producto": "PAQ. CHAUCHAS TROZADAS X600 GR",
+"campo": "precioMinorista",
+"antes": 6390,
+"despues": 5299
+},
+{
+"app": "Preventista suelta",
+"cod": 3006,
+"producto": "PAQ. CHAUCHAS TROZADAS X600 GR",
+"campo": "precioMayorista",
+"antes": 4489,
+"despues": 4482
+},
+{
+"app": "Preventista suelta",
+"cod": 3007,
+"producto": "PAQ. ESPINACA  X 600GR",
+"campo": "precioMinorista",
+"antes": 4590,
+"despues": 4990
+},
+{
+"app": "Preventista suelta",
+"cod": 3007,
+"producto": "PAQ. ESPINACA  X 600GR",
+"campo": "precioMayorista",
+"antes": 3761,
+"despues": 3702
+},
+{
+"app": "Preventista suelta",
+"cod": 3009,
+"producto": "PAQ. MIX FRUTOS ROJOS X 400GR",
+"campo": "precioMinorista",
+"antes": 5999,
+"despues": 4690
+},
+{
+"app": "Preventista suelta",
+"cod": 3009,
+"producto": "PAQ. MIX FRUTOS ROJOS X 400GR",
+"campo": "precioMayorista",
+"antes": 4249,
+"despues": 4177
+},
+{
+"app": "Preventista suelta",
+"cod": 3010,
+"producto": "PAQ. ENSALADA JARDINERA X 600GR",
+"campo": "precioMinorista",
+"antes": 3799,
+"despues": 4899
+},
+{
+"app": "Preventista suelta",
+"cod": 3010,
+"producto": "PAQ. ENSALADA JARDINERA X 600GR",
+"campo": "precioMayorista",
+"antes": 3218,
+"despues": 3246
+},
+{
+"app": "Preventista suelta",
+"cod": 3011,
+"producto": "PAQ. ENSALADA PRIMAVERA X 600GR",
+"campo": "precioMinorista",
+"antes": 6099,
+"despues": 5790
+},
+{
+"app": "Preventista suelta",
+"cod": 3011,
+"producto": "PAQ. ENSALADA PRIMAVERA X 600GR",
+"campo": "precioMayorista",
+"antes": 4483,
+"despues": 4258
+},
+{
+"app": "Preventista suelta",
+"cod": 3012,
+"producto": "PAQ. RELLENO TARTA VERDURA X 600GR",
+"campo": "precioMinorista",
+"antes": 6199,
+"despues": 4999
+},
+{
+"app": "Preventista suelta",
+"cod": 3012,
+"producto": "PAQ. RELLENO TARTA VERDURA X 600GR",
+"campo": "precioMayorista",
+"antes": 4270,
+"despues": 4259
+},
+{
+"app": "Preventista suelta",
+"cod": 3014,
+"producto": "PAQ. MIX SALSA DE TOMATE X 600GR",
+"campo": "precioMinorista",
+"antes": 4199,
+"despues": 5399
+},
+{
+"app": "Preventista suelta",
+"cod": 3014,
+"producto": "PAQ. MIX SALSA DE TOMATE X 600GR",
+"campo": "precioMayorista",
+"antes": 3547,
+"despues": 3613
+},
+{
+"app": "Preventista suelta",
+"cod": 3018,
+"producto": "PAQ. ZANAHORIA CUBOS X 600GR",
+"campo": "precioMinorista",
+"antes": 3380,
+"despues": 2790
+},
+{
+"app": "Preventista suelta",
+"cod": 3018,
+"producto": "PAQ. ZANAHORIA CUBOS X 600GR",
+"campo": "precioMayorista",
+"antes": 2462,
+"despues": 2376
+},
+{
+"app": "Preventista suelta",
+"cod": 3023,
+"producto": "PAQ. MIX PARA TACOS X600GR",
+"campo": "precioMinorista",
+"antes": 8290,
+"despues": 6390
+},
+{
+"app": "Preventista suelta",
+"cod": 3023,
+"producto": "PAQ. MIX PARA TACOS X600GR",
+"campo": "precioMayorista",
+"antes": 5413,
+"despues": 5400
+},
+{
+"app": "Preventista suelta",
+"cod": 3025,
+"producto": "PAQ. MANGO EN CUBOS X400GR",
+"campo": "precioMinorista",
+"antes": 2999,
+"despues": 3690
+},
+{
+"app": "Preventista suelta",
+"cod": 3025,
+"producto": "PAQ. MANGO EN CUBOS X400GR",
+"campo": "precioMayorista",
+"antes": 2742.76,
+"despues": 2789
+},
+{
+"app": "Preventista suelta",
+"cod": 3033,
+"producto": "PAQ. PULPA DE PALTA BIOMAC X500GR",
+"campo": "precioMayorista",
+"antes": 5739,
+"despues": 5626
+},
+{
+"app": "Preventista suelta",
+"cod": 3034,
+"producto": "PAQ. PALTA EN MITADES BIOMAC X500GR",
+"campo": "precioMinorista",
+"antes": 9199,
+"despues": 10990
+},
+{
+"app": "Preventista suelta",
+"cod": 3034,
+"producto": "PAQ. PALTA EN MITADES BIOMAC X500GR",
+"campo": "precioMayorista",
+"antes": 7784,
+"despues": 7404
+},
+{
+"app": "Preventista suelta",
+"cod": 3060,
+"producto": "PAQ. MANGO EN CUBOS X 500GR BIOMAC",
+"campo": "precioMayorista",
+"antes": 4214,
+"despues": 3877
+},
+{
+"app": "Preventista suelta",
+"cod": 3064,
+"producto": "PAQ. MORA X 500GR",
+"campo": "precioMayorista",
+"antes": 6038,
+"despues": 5718
+},
+{
+"app": "Preventista suelta",
+"cod": 3065,
+"producto": "PAQ. DURAZNOS REBANADAS X500GR",
+"campo": "precioMayorista",
+"antes": 4727,
+"despues": 4589
+},
+{
+"app": "Preventista suelta",
+"cod": 3066,
+"producto": "PAQ. ANANA TROZOS X500GR",
+"campo": "precioMayorista",
+"antes": 5996,
+"despues": 5607
+},
+{
+"app": "Preventista suelta",
+"cod": 1829,
+"producto": "PANCITOS INTEGRALES HORNEADOS 12u 460GR",
+"campo": "precioMinorista",
+"antes": 3990,
+"despues": 4290
+},
+{
+"app": "Preventista suelta",
+"cod": 1829,
+"producto": "PANCITOS INTEGRALES HORNEADOS 12u 460GR",
+"campo": "precioMayorista",
+"antes": 3604,
+"despues": 3767
+},
+{
+"app": "Preventista suelta",
+"cod": 3705,
+"producto": "PAQ. MIL. SOJA CLAS. X6 450G",
+"campo": "precioMinorista",
+"antes": 2850,
+"despues": 3499
+},
+{
+"app": "Preventista suelta",
+"cod": 3705,
+"producto": "PAQ. MIL. SOJA CLAS. X6 450G",
+"campo": "precioMayorista",
+"antes": 2427,
+"despues": 2554
+},
+{
+"app": "Preventista suelta",
+"cod": 3706,
+"producto": "PAQ. MED. SOJA C/ESPIN X6 375G",
+"campo": "precioMinorista",
+"antes": 3690,
+"despues": 2870
+},
+{
+"app": "Preventista suelta",
+"cod": 3706,
+"producto": "PAQ. MED. SOJA C/ESPIN X6 375G",
+"campo": "precioMayorista",
+"antes": 2548,
+"despues": 2424
+},
+{
+"app": "Preventista suelta",
+"cod": 3707,
+"producto": "PAQ. MED. SOJA CAPRESE X4 350G",
+"campo": "precioMinorista",
+"antes": 4550,
+"despues": 4299
+},
+{
+"app": "Preventista suelta",
+"cod": 3707,
+"producto": "PAQ. MED. SOJA CAPRESE X4 350G",
+"campo": "precioMayorista",
+"antes": 3411,
+"despues": 3247
+},
+{
+"app": "Preventista suelta",
+"cod": 1802,
+"producto": "NATUFANS REB ACEL Y ARROZ YAMANI x380GR",
+"campo": "precioMinorista",
+"antes": 3890,
+"despues": 3099
+},
+{
+"app": "Preventista suelta",
+"cod": 1802,
+"producto": "NATUFANS REB ACEL Y ARROZ YAMANI x380GR",
+"campo": "precioMayorista",
+"antes": 2581,
+"despues": 2645
+},
+{
+"app": "Preventista suelta",
+"cod": 1805,
+"producto": "NATUFANS CALAB. ZANAH. Y CHOCLO (S/R) x340GR",
+"campo": "precioMinorista",
+"antes": 3590,
+"despues": 4690
+},
+{
+"app": "Preventista suelta",
+"cod": 1805,
+"producto": "NATUFANS CALAB. ZANAH. Y CHOCLO (S/R) x340GR",
+"campo": "precioMayorista",
+"antes": 2942,
+"despues": 3325
+},
+{
+"app": "Preventista suelta",
+"cod": 1806,
+"producto": "NATUFANS S/R ACEL Y ARROZ YAMANI x340GR",
+"campo": "precioMayorista",
+"antes": 2314,
+"despues": 2411
+},
+{
+"app": "Preventista suelta",
+"cod": 1806,
+"producto": "NATUFANS S/R ACEL Y ARROZ YAMANI x340GR",
+"campo": "unidadesCaja",
+"antes": 24,
+"despues": 30
+},
+{
+"app": "Preventista suelta",
+"cod": 1807,
+"producto": "NATUFANS MED. ESPINACA S/R X340GR",
+"campo": "precioMinorista",
+"antes": 3880,
+"despues": 2999
+},
+{
+"app": "Preventista suelta",
+"cod": 1807,
+"producto": "NATUFANS MED. ESPINACA S/R X340GR",
+"campo": "precioMayorista",
+"antes": 2500,
+"despues": 2541
+},
+{
+"app": "Preventista suelta",
+"cod": 1808,
+"producto": "NATUFANS MEDALLONES DE LENTEJA X 340GR",
+"campo": "precioMinorista",
+"antes": 2790,
+"despues": 3650
+},
+{
+"app": "Preventista suelta",
+"cod": 1808,
+"producto": "NATUFANS MEDALLONES DE LENTEJA X 340GR",
+"campo": "precioMayorista",
+"antes": 2284,
+"despues": 2418
+},
+{
+"app": "Preventista suelta",
+"cod": 1809,
+"producto": "PIZZA DE ARROZ RUCULA NATUFANS X370G",
+"campo": "precioMinorista",
+"antes": 6690,
+"despues": 7490
+},
+{
+"app": "Preventista suelta",
+"cod": 1809,
+"producto": "PIZZA DE ARROZ RUCULA NATUFANS X370G",
+"campo": "precioMayorista",
+"antes": 5428,
+"despues": 5749
+},
+{
+"app": "Preventista suelta",
+"cod": 1810,
+"producto": "PIZZA DE ARROZ MOZZARELLA NATUFANS X360G",
+"campo": "precioMinorista",
+"antes": 7490,
+"despues": 6690
+},
+{
+"app": "Preventista suelta",
+"cod": 1810,
+"producto": "PIZZA DE ARROZ MOZZARELLA NATUFANS X360G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5697
+},
+{
+"app": "Preventista suelta",
+"cod": 1811,
+"producto": "PIZZA  DE ARROZ JAMON Y QUESO NATUFANS X390G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5749
+},
+{
+"app": "Preventista suelta",
+"cod": 1812,
+"producto": "PIZZA  DE ARROZ CAPRESE NATUFANS X400G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5749
+},
+{
+"app": "Preventista suelta",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Preventista suelta",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9546,
+"despues": 10119
+},
+{
+"app": "Preventista suelta",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Preventista suelta",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9546,
+"despues": 10119
+},
+{
+"app": "Preventista suelta",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9790,
+"despues": 9990
+},
+{
+"app": "Preventista suelta",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8974,
+"despues": 9510
+},
+{
+"app": "Preventista suelta",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9750,
+"despues": 9950
+},
+{
+"app": "Preventista suelta",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9032,
+"despues": 9408
+},
+{
+"app": "Preventista suelta",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1817,
+"producto": "ÑOQUIS DE PAPA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7981,
+"despues": 8314
+},
+{
+"app": "Preventista suelta",
+"cod": 1817,
+"producto": "ÑOQUIS DE PAPA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1818,
+"producto": "RAVIOLES DE RICOTA Y MOZZARELLA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8713,
+"despues": 9076
+},
+{
+"app": "Preventista suelta",
+"cod": 1818,
+"producto": "RAVIOLES DE RICOTA Y MOZZARELLA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 10190,
+"despues": 10350
+},
+{
+"app": "Preventista suelta",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9374,
+"despues": 9936
+},
+{
+"app": "Preventista suelta",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1820,
+"producto": "BASTONCITO DE MOZZARELLA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8090,
+"despues": 8250
+},
+{
+"app": "Preventista suelta",
+"cod": 1820,
+"producto": "BASTONCITO DE MOZZARELLA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7461,
+"despues": 7908
+},
+{
+"app": "Preventista suelta",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Preventista suelta",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9109,
+"despues": 9489
+},
+{
+"app": "Preventista suelta",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Preventista suelta",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8760,
+"despues": 9282
+},
+{
+"app": "Preventista suelta",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1823,
+"producto": "TARTA INDIVIDUAL ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8350,
+"despues": 8550
+},
+{
+"app": "Preventista suelta",
+"cod": 1823,
+"producto": "TARTA INDIVIDUAL ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7792,
+"despues": 8117
+},
+{
+"app": "Preventista suelta",
+"cod": 1824,
+"producto": "TARTA INDIVIDUAL DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8750,
+"despues": 8950
+},
+{
+"app": "Preventista suelta",
+"cod": 1824,
+"producto": "TARTA INDIVIDUAL DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7961,
+"despues": 8437
+},
+{
+"app": "Preventista suelta",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 10150,
+"despues": 10350
+},
+{
+"app": "Preventista suelta",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9070,
+"despues": 9613
+},
+{
+"app": "Preventista suelta",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Preventista suelta",
+"cod": 1831,
+"producto": "EMPANADAS DE ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Preventista suelta",
+"cod": 1831,
+"producto": "EMPANADAS DE ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8861,
+"despues": 9384
+},
+{
+"app": "Preventista suelta",
+"cod": 2610,
+"producto": "PREPIZZA DE ARROZ Y ESPINACA X 2",
+"campo": "precioMinorista",
+"antes": 4590,
+"despues": 5499
+},
+{
+"app": "Preventista suelta",
+"cod": 2610,
+"producto": "PREPIZZA DE ARROZ Y ESPINACA X 2",
+"campo": "precioMayorista",
+"antes": 3557,
+"despues": 4163
+},
+{
+"app": "Preventista suelta",
+"cod": 2611,
+"producto": "PREPIZZA DE ARROZ Y TOMATE X 2",
+"campo": "precioMinorista",
+"antes": 4590,
+"despues": 5499
+},
+{
+"app": "Preventista suelta",
+"cod": 2611,
+"producto": "PREPIZZA DE ARROZ Y TOMATE X 2",
+"campo": "precioMayorista",
+"antes": 3557,
+"despues": 4163
+},
+{
+"app": "Preventista suelta",
+"cod": 1703,
+"producto": "FILET DE SABALO",
+"campo": "precioMinorista",
+"antes": 16901,
+"despues": 18199
+},
+{
+"app": "Preventista suelta",
+"cod": 1703,
+"producto": "FILET DE SABALO",
+"campo": "precioMayorista",
+"antes": 15218,
+"despues": 16125
+},
+{
+"app": "Preventista suelta",
+"cod": 1704,
+"producto": "TARARIRA DESPINADA",
+"campo": "precioMayorista",
+"antes": 12679,
+"despues": 13207
+},
+{
+"app": "Preventista suelta",
+"cod": 1714,
+"producto": "MEDIO PACU DESPINADO (C/COSTILLA)",
+"campo": "precioMinorista",
+"antes": 21390,
+"despues": 19110
+},
+{
+"app": "Preventista suelta",
+"cod": 1714,
+"producto": "MEDIO PACU DESPINADO (C/COSTILLA)",
+"campo": "precioMayorista",
+"antes": 16777,
+"despues": 17566
+},
+{
+"app": "Preventista suelta",
+"cod": 1717,
+"producto": "FILET DE CARPA",
+"campo": "precioMayorista",
+"antes": 6127,
+"despues": 6382
+},
+{
+"app": "Preventista suelta",
+"cod": 1719,
+"producto": "LANGOSTINO PELADO X 250GR",
+"campo": "precioMinorista",
+"antes": 11190,
+"despues": 9250
+},
+{
+"app": "Preventista suelta",
+"cod": 1719,
+"producto": "LANGOSTINO PELADO X 250GR",
+"campo": "precioMayorista",
+"antes": 8186,
+"despues": 8513
+},
+{
+"app": "Preventista suelta",
+"cod": 1720,
+"producto": "CAMARON X250GR",
+"campo": "precioMinorista",
+"antes": 10900,
+"despues": 13990
+},
+{
+"app": "Preventista suelta",
+"cod": 1720,
+"producto": "CAMARON X250GR",
+"campo": "precioMayorista",
+"antes": 10116,
+"despues": 10538
+},
+{
+"app": "Preventista suelta",
+"cod": 1721,
+"producto": "MEJILLON X250GR",
+"campo": "precioMayorista",
+"antes": 5880,
+"despues": 6125
+},
+{
+"app": "Preventista suelta",
+"cod": 1724,
+"producto": "BOGA DESPINADA",
+"campo": "precioMayorista",
+"antes": 18080,
+"despues": 18834
+},
+{
+"app": "Preventista suelta",
+"cod": 1725,
+"producto": "SABALO DESPINADO XKG",
+"campo": "precioMayorista",
+"antes": 16497,
+"despues": 17184
+},
+{
+"app": "Preventista suelta",
+"cod": 1728,
+"producto": "FILET DE PACU DESPINADO SIN COSTILLA",
+"campo": "precioMinorista",
+"antes": 23900,
+"despues": 29490
+},
+{
+"app": "Preventista suelta",
+"cod": 1728,
+"producto": "FILET DE PACU DESPINADO SIN COSTILLA",
+"campo": "precioMayorista",
+"antes": 22048,
+"despues": 23974
+},
+{
+"app": "Preventista suelta",
+"cod": 1729,
+"producto": "CAZUELA MARISCO X500",
+"campo": "precioMayorista",
+"antes": 12570,
+"despues": 13094
+},
+{
+"app": "Preventista suelta",
+"cod": 1729,
+"producto": "CAZUELA MARISCO X500",
+"campo": "unidadesCaja",
+"antes": 20,
+"despues": 10
+},
+{
+"app": "Preventista suelta",
+"cod": 3513,
+"producto": "MEDALLON DE MERLUZA X400G",
+"campo": "precioMinorista",
+"antes": 3690,
+"despues": 4690
+},
+{
+"app": "Preventista suelta",
+"cod": 3515,
+"producto": "RABAS X300 GR",
+"campo": "precioMinorista",
+"antes": 9750,
+"despues": 10899
+},
+{
+"app": "Preventista suelta",
+"cod": 3515,
+"producto": "RABAS X300 GR",
+"campo": "precioMayorista",
+"antes": 8266,
+"despues": 8231
+},
+{
+"app": "Preventista suelta",
+"cod": 3521,
+"producto": "PAQ. ANILLAS DE CALAMAR X 400GR",
+"campo": "precioMinorista",
+"antes": 17899,
+"despues": 17900
+},
+{
+"app": "Preventista suelta",
+"cod": 3550,
+"producto": "MEDALLON DE BOGA X4 340GR",
+"campo": "precioMinorista",
+"antes": 3199,
+"despues": 4050
+},
+{
+"app": "Preventista suelta",
+"cod": 3550,
+"producto": "MEDALLON DE BOGA X4 340GR",
+"campo": "precioMayorista",
+"antes": 2870,
+"despues": 2918
+},
+{
+"app": "Preventista suelta",
+"cod": 3555,
+"producto": "FILET DE MERLUZA X 1KG DOÑA FRANCISCA",
+"campo": "precioMinorista",
+"antes": 16590,
+"despues": 17490
+},
+{
+"app": "Preventista suelta",
+"cod": 3555,
+"producto": "FILET DE MERLUZA X 1KG DOÑA FRANCISCA",
+"campo": "precioMayorista",
+"antes": 14016,
+"despues": 14297
+},
+{
+"app": "Preventista suelta",
+"cod": 3410,
+"producto": "RAVIOLES RICOTA X500GR",
+"campo": "precioMinorista",
+"antes": 2569,
+"despues": 2999
+},
+{
+"app": "Preventista suelta",
+"cod": 3410,
+"producto": "RAVIOLES RICOTA X500GR",
+"campo": "precioMayorista",
+"antes": 2170,
+"despues": 2207
+},
+{
+"app": "Preventista suelta",
+"cod": 3411,
+"producto": "RAVIOLES VERDURA X500G",
+"campo": "precioMinorista",
+"antes": 2999,
+"despues": 2490
+},
+{
+"app": "Preventista suelta",
+"cod": 3411,
+"producto": "RAVIOLES VERDURA X500G",
+"campo": "precioMayorista",
+"antes": 2207,
+"despues": 1986
+},
+{
+"app": "Preventista suelta",
+"cod": 3412,
+"producto": "RAVIOLON 4 QUESOS X500GR",
+"campo": "precioMinorista",
+"antes": 3790,
+"despues": 2990
+},
+{
+"app": "Preventista suelta",
+"cod": 3412,
+"producto": "RAVIOLON 4 QUESOS X500GR",
+"campo": "precioMayorista",
+"antes": 2644,
+"despues": 2600
+},
+{
+"app": "Preventista suelta",
+"cod": 3417,
+"producto": "ÑOQUIS X500GR",
+"campo": "precioMinorista",
+"antes": 2490,
+"despues": 3090
+},
+{
+"app": "Preventista suelta",
+"cod": 3417,
+"producto": "ÑOQUIS X500GR",
+"campo": "precioMayorista",
+"antes": 2178,
+"despues": 2214
+},
+{
+"app": "Preventista suelta",
+"cod": 3418,
+"producto": "FIDEOS AL HUEVO X500GR",
+"campo": "precioMinorista",
+"antes": 1199,
+"despues": 1890
+},
+{
+"app": "Preventista suelta",
+"cod": 3418,
+"producto": "FIDEOS AL HUEVO X500GR",
+"campo": "precioMayorista",
+"antes": 1063,
+"despues": 1272
+},
+{
+"app": "Preventista suelta",
+"cod": 3419,
+"producto": "ÑOQUIS TRICOLOR X 500GR",
+"campo": "precioMinorista",
+"antes": 2990,
+"despues": 2490
+},
+{
+"app": "Preventista suelta",
+"cod": 3419,
+"producto": "ÑOQUIS TRICOLOR X 500GR",
+"campo": "precioMayorista",
+"antes": 2214,
+"despues": 1993
+},
+{
+"app": "Preventista suelta",
+"cod": 3423,
+"producto": "FIDEOS CON ESPINACA X500 GR",
+"campo": "precioMinorista",
+"antes": 1199,
+"despues": 1890
+},
+{
+"app": "Preventista suelta",
+"cod": 3423,
+"producto": "FIDEOS CON ESPINACA X500 GR",
+"campo": "precioMayorista",
+"antes": 1063,
+"despues": 1272
+},
+{
+"app": "Preventista suelta",
+"cod": 3424,
+"producto": "FIDEOS CON MORRON X500GR",
+"campo": "precioMinorista",
+"antes": 1199,
+"despues": 1890
+},
+{
+"app": "Preventista suelta",
+"cod": 3424,
+"producto": "FIDEOS CON MORRON X500GR",
+"campo": "precioMayorista",
+"antes": 1063,
+"despues": 1272
+},
+{
+"app": "Preventista suelta",
+"cod": 1557,
+"producto": "PAPAS BASTON COOL MIND x2kg",
+"campo": "precioMinorista",
+"antes": 7990,
+"despues": 10490
+},
+{
+"app": "Preventista suelta",
+"cod": 1557,
+"producto": "PAPAS BASTON COOL MIND x2kg",
+"campo": "precioMayorista",
+"antes": 7340,
+"despues": 7625
+},
+{
+"app": "Preventista suelta",
+"cod": 3040,
+"producto": "PAQ. PAPA NOISETTE MCCAIN x600GR",
+"campo": "precioMinorista",
+"antes": 7890,
+"despues": 8990
+},
+{
+"app": "Preventista suelta",
+"cod": 3040,
+"producto": "PAQ. PAPA NOISETTE MCCAIN x600GR",
+"campo": "precioMayorista",
+"antes": 6679,
+"despues": 6903
+},
+{
+"app": "Preventista suelta",
+"cod": 3041,
+"producto": "PAQ. PAPA SMILE MCCAIN X 700GR",
+"campo": "precioMinorista",
+"antes": 10590,
+"despues": 8990
+},
+{
+"app": "Preventista suelta",
+"cod": 3041,
+"producto": "PAQ. PAPA SMILE MCCAIN X 700GR",
+"campo": "precioMayorista",
+"antes": 8347,
+"despues": 8207
+},
+{
+"app": "Preventista suelta",
+"cod": 3044,
+"producto": "PAQ. PAPAS BASTON 9MM LW X 2.5KG",
+"campo": "precioMinorista",
+"antes": 13900,
+"despues": 15500
+},
+{
+"app": "Preventista suelta",
+"cod": 3044,
+"producto": "PAQ. PAPAS BASTON 9MM LW X 2.5KG",
+"campo": "precioMayorista",
+"antes": 10232,
+"despues": 11141
+},
+{
+"app": "Preventista suelta",
+"cod": 3046,
+"producto": "PAQ. PAPA RESTAURANTE 12X12 X 2,5 KG LANGWESTONE",
+"campo": "unidadesCaja",
+"antes": 6,
+"despues": 4
+},
+{
+"app": "Preventista suelta",
+"cod": 3049,
+"producto": "PAQ. PAPAS MCCAIN AIR FRYER FINITAS X700GR",
+"campo": "precioMinorista",
+"antes": 9299,
+"despues": 8990
+},
+{
+"app": "Preventista suelta",
+"cod": 3049,
+"producto": "PAQ. PAPAS MCCAIN AIR FRYER FINITAS X700GR",
+"campo": "precioMayorista",
+"antes": 7249,
+"despues": 7830
+},
+{
+"app": "Preventista suelta",
+"cod": 3052,
+"producto": "PAQ. PAPAS BASTON MCCAIN TRADICIONAL X400GR",
+"campo": "precioMinorista",
+"antes": 4799,
+"despues": 4499
+},
+{
+"app": "Preventista suelta",
+"cod": 3052,
+"producto": "PAQ. PAPAS BASTON MCCAIN TRADICIONAL X400GR",
+"campo": "precioMayorista",
+"antes": 3628,
+"despues": 3919
+},
+{
+"app": "Preventista suelta",
+"cod": 3053,
+"producto": "PAQ. PAPAS BASTON MCCAIN TRADICIONAL X700GR",
+"campo": "precioMinorista",
+"antes": 6349,
+"despues": 7390
+},
+{
+"app": "Preventista suelta",
+"cod": 3053,
+"producto": "PAQ. PAPAS BASTON MCCAIN TRADICIONAL X700GR",
+"campo": "precioMayorista",
+"antes": 5368,
+"despues": 5435
+},
+{
+"app": "Preventista suelta",
+"cod": 3058,
+"producto": "PAQ. PAPAS NOISETTE MCCAIN X1.2KG",
+"campo": "precioMinorista",
+"antes": 13790,
+"despues": 14490
+},
+{
+"app": "Preventista suelta",
+"cod": 3058,
+"producto": "PAQ. PAPAS NOISETTE MCCAIN X1.2KG",
+"campo": "precioMayorista",
+"antes": 11013,
+"despues": 11196
+},
+{
+"app": "Preventista suelta",
+"cod": 3059,
+"producto": "PAQ PAPAS ZIGGY FRIES X2.5KG",
+"campo": "precioMinorista",
+"antes": 19990,
+"despues": 22990
+},
+{
+"app": "Preventista suelta",
+"cod": 3059,
+"producto": "PAQ PAPAS ZIGGY FRIES X2.5KG",
+"campo": "precioMayorista",
+"antes": 17629,
+"despues": 18074
+},
+{
+"app": "Preventista suelta",
+"cod": 3067,
+"producto": "PAPAS MCCAIN GOLAZO X700GR",
+"campo": "precioMinorista",
+"antes": 9290,
+"despues": 10490
+},
+{
+"app": "Preventista suelta",
+"cod": 3067,
+"producto": "PAPAS MCCAIN GOLAZO X700GR",
+"campo": "precioMayorista",
+"antes": 7741,
+"despues": 7870
+},
+{
+"app": "Preventista suelta",
+"cod": 3525,
+"producto": "PAQ. PAPAS NOISETTE MYDIBEL X2.5KG",
+"campo": "precioMinorista",
+"antes": 23901,
+"despues": 22450
+},
+{
+"app": "Preventista suelta",
+"cod": 3525,
+"producto": "PAQ. PAPAS NOISETTE MYDIBEL X2.5KG",
+"campo": "precioMayorista",
+"antes": 18543,
+"despues": 18226
+},
+{
+"app": "Preventista suelta",
+"cod": 3820,
+"producto": "MEDIALUNAS SALADAS X12UNI",
+"campo": "precioMinorista",
+"antes": 7990,
+"despues": 6990
+},
+{
+"app": "Preventista suelta",
+"cod": 3820,
+"producto": "MEDIALUNAS SALADAS X12UNI",
+"campo": "precioMayorista",
+"antes": 5919,
+"despues": 5909
+},
+{
+"app": "Preventista suelta",
+"cod": 3821,
+"producto": "CROISSANT AGRIDULCE X12UN",
+"campo": "precioMinorista",
+"antes": 6990,
+"despues": 8090
+},
+{
+"app": "Preventista suelta",
+"cod": 3821,
+"producto": "CROISSANT AGRIDULCE X12UN",
+"campo": "precioMayorista",
+"antes": 5870,
+"despues": 5919
+},
+{
+"app": "Preventista suelta",
+"cod": 3822,
+"producto": "PAQ. BIZCOCHOS SALADOS X500gr",
+"campo": "precioMinorista",
+"antes": 3850,
+"despues": 4850
+},
+{
+"app": "Preventista suelta",
+"cod": 3822,
+"producto": "PAQ. BIZCOCHOS SALADOS X500gr",
+"campo": "precioMayorista",
+"antes": 4053,
+"despues": 3147
+},
+{
+"app": "Preventista suelta",
+"cod": 3826,
+"producto": "PAQ. CHIPA X500GR",
+"campo": "precioMinorista",
+"antes": 9150,
+"despues": 7690
+},
+{
+"app": "Preventista suelta",
+"cod": 1512,
+"producto": "PATITA DE CARNE X380 GR",
+"campo": "precioMayorista",
+"antes": 6757,
+"despues": 7039
+},
+{
+"app": "Preventista suelta",
+"cod": 3522,
+"producto": "PAQ. MILANESA DE MERLUZA X 500GR",
+"campo": "precioMinorista",
+"antes": 12190,
+"despues": 9990
+},
+{
+"app": "Preventista suelta",
+"cod": 3522,
+"producto": "PAQ. MILANESA DE MERLUZA X 500GR",
+"campo": "precioMayorista",
+"antes": 8815,
+"despues": 8452
+},
+{
+"app": "Preventista suelta",
+"cod": 3605,
+"producto": "MILANESA DE POLLO X800",
+"campo": "precioMinorista",
+"antes": 11690,
+"despues": 12290
+},
+{
+"app": "Preventista suelta",
+"cod": 3605,
+"producto": "MILANESA DE POLLO X800",
+"campo": "precioMayorista",
+"antes": 9682,
+"despues": 9875
+},
+{
+"app": "Preventista suelta",
+"cod": 3620,
+"producto": "PAQ. MILANESA DE CARNE X750GR",
+"campo": "precioMinorista",
+"antes": 17390,
+"despues": 16990
+},
+{
+"app": "Preventista suelta",
+"cod": 3620,
+"producto": "PAQ. MILANESA DE CARNE X750GR",
+"campo": "unidadesCaja",
+"antes": 14,
+"despues": 15
+},
+{
+"app": "Preventista suelta",
+"cod": 3621,
+"producto": "PAQ. MILANESAS DE CERDO X750GR",
+"campo": "precioMinorista",
+"antes": 8990,
+"despues": 9990
+},
+{
+"app": "Preventista suelta",
+"cod": 3621,
+"producto": "PAQ. MILANESAS DE CERDO X750GR",
+"campo": "precioMayorista",
+"antes": 7798,
+"despues": 8208
+},
+{
+"app": "Preventista suelta",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "precioMinorista",
+"antes": 6790,
+"despues": 8490
+},
+{
+"app": "Preventista suelta",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "precioMayorista",
+"antes": 5772,
+"despues": 5868
+},
+{
+"app": "Preventista suelta",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "unidadesCaja",
+"antes": 20,
+"despues": 16
+},
+{
+"app": "Preventista suelta",
+"cod": 3512,
+"producto": "CROQ. PAPA JAM/QUE X400GR",
+"campo": "precioMinorista",
+"antes": 4999,
+"despues": 3990
+},
+{
+"app": "Preventista suelta",
+"cod": 3512,
+"producto": "CROQ. PAPA JAM/QUE X400GR",
+"campo": "precioMayorista",
+"antes": 3426,
+"despues": 3398
+},
+{
+"app": "Preventista suelta",
+"cod": 3520,
+"producto": "CROQUETAS DE ESPINACA Y QUESO X 400GR",
+"campo": "precioMinorista",
+"antes": 5990,
+"despues": 4590
+},
+{
+"app": "Preventista suelta",
+"cod": 3523,
+"producto": "FORMITA DE POLLO X400GR",
+"campo": "precioMinorista",
+"antes": 4690,
+"despues": 5250
+},
+{
+"app": "Preventista suelta",
+"cod": 3297,
+"producto": "TORTA HELADA CHOCOTORTA",
+"campo": "precioMinorista",
+"antes": 19989,
+"despues": 19990
+},
+{
+"app": "Preventista suelta",
+"cod": 3297,
+"producto": "TORTA HELADA CHOCOTORTA",
+"campo": "precioMayorista",
+"antes": 16160,
+"despues": 17776
+},
+{
+"app": "Preventista suelta",
+"cod": 3297,
+"producto": "TORTA HELADA CHOCOTORTA",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 3298,
+"producto": "TORTA HELADA SELVA NEGRA",
+"campo": "precioMinorista",
+"antes": 19989,
+"despues": 19990
+},
+{
+"app": "Preventista suelta",
+"cod": 3298,
+"producto": "TORTA HELADA SELVA NEGRA",
+"campo": "precioMayorista",
+"antes": 16160,
+"despues": 17776
+},
+{
+"app": "Preventista suelta",
+"cod": 3298,
+"producto": "TORTA HELADA SELVA NEGRA",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 3299,
+"producto": "TORTA HELADA TIRAMISU",
+"campo": "precioMinorista",
+"antes": 19989,
+"despues": 19990
+},
+{
+"app": "Preventista suelta",
+"cod": 3299,
+"producto": "TORTA HELADA TIRAMISU",
+"campo": "precioMayorista",
+"antes": 16160,
+"despues": 17776
+},
+{
+"app": "Preventista suelta",
+"cod": 3299,
+"producto": "TORTA HELADA TIRAMISU",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 3300,
+"producto": "TORTA HELADA FRUTILLA",
+"campo": "precioMinorista",
+"antes": 19989,
+"despues": 19990
+},
+{
+"app": "Preventista suelta",
+"cod": 3300,
+"producto": "TORTA HELADA FRUTILLA",
+"campo": "precioMayorista",
+"antes": 16160,
+"despues": 17776
+},
+{
+"app": "Preventista suelta",
+"cod": 3300,
+"producto": "TORTA HELADA FRUTILLA",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 3301,
+"producto": "CONO ECCO 1 D.NEVE",
+"campo": "precioMayorista",
+"antes": 1618,
+"despues": 1682
+},
+{
+"app": "Preventista suelta",
+"cod": 3302,
+"producto": "CONO ECCO 2 D.NEVE",
+"campo": "precioMayorista",
+"antes": 1618,
+"despues": 1682
+},
+{
+"app": "Preventista suelta",
+"cod": 3303,
+"producto": "CONO ECCO 3 D.NEVE",
+"campo": "precioMayorista",
+"antes": 1618,
+"despues": 1682
+},
+{
+"app": "Preventista suelta",
+"cod": 3304,
+"producto": "IMPULSO DE AGUA",
+"campo": "precioMayorista",
+"antes": 340,
+"despues": 354
+},
+{
+"app": "Preventista suelta",
+"cod": 3305,
+"producto": "BOMBON HELADO",
+"campo": "precioMayorista",
+"antes": 816,
+"despues": 848
+},
+{
+"app": "Preventista suelta",
+"cod": 3306,
+"producto": "CROCANTE HELADO",
+"campo": "precioMayorista",
+"antes": 1228,
+"despues": 1277
+},
+{
+"app": "Preventista suelta",
+"cod": 3307,
+"producto": "CONO ECCO 4 D.NEVE",
+"campo": "precioMayorista",
+"antes": 1618,
+"despues": 1682
+},
+{
+"app": "Preventista suelta",
+"cod": 3309,
+"producto": "ALFAJOR HELADO D.NEVE",
+"campo": "precioMayorista",
+"antes": 1372,
+"despues": 1427
+},
+{
+"app": "Preventista suelta",
+"cod": 3311,
+"producto": "BOMBON ESCOCES N X8 784GR",
+"campo": "precioMinorista",
+"antes": 16290,
+"despues": 14690
+},
+{
+"app": "Preventista suelta",
+"cod": 3311,
+"producto": "BOMBON ESCOCES N X8 784GR",
+"campo": "precioMayorista",
+"antes": 13822,
+"despues": 13591
+},
+{
+"app": "Preventista suelta",
+"cod": 3312,
+"producto": "BOMBON ESCOCES B X8 784GR",
+"campo": "precioMinorista",
+"antes": 16290,
+"despues": 14690
+},
+{
+"app": "Preventista suelta",
+"cod": 3312,
+"producto": "BOMBON ESCOCES B X8 784GR",
+"campo": "precioMayorista",
+"antes": 13822,
+"despues": 13591
+},
+{
+"app": "Preventista suelta",
+"cod": 3313,
+"producto": "BOMBON SUIZO X8UN 776G",
+"campo": "precioMinorista",
+"antes": 16290,
+"despues": 14690
+},
+{
+"app": "Preventista suelta",
+"cod": 3313,
+"producto": "BOMBON SUIZO X8UN 776G",
+"campo": "precioMayorista",
+"antes": 13822,
+"despues": 13591
+},
+{
+"app": "Preventista suelta",
+"cod": 3314,
+"producto": "POTE HELADO SAPE LIMON 500GR",
+"campo": "precioMinorista",
+"antes": 8899,
+"despues": 7490
+},
+{
+"app": "Preventista suelta",
+"cod": 3314,
+"producto": "POTE HELADO SAPE LIMON 500GR",
+"campo": "precioMayorista",
+"antes": 6587,
+"despues": 6532
+},
+{
+"app": "Preventista suelta",
+"cod": 3315,
+"producto": "POTE HELADO SAPE FRUTILLA GRANIZADO 500GR",
+"campo": "precioMinorista",
+"antes": 8899,
+"despues": 7490
+},
+{
+"app": "Preventista suelta",
+"cod": 3315,
+"producto": "POTE HELADO SAPE FRUTILLA GRANIZADO 500GR",
+"campo": "precioMayorista",
+"antes": 6587,
+"despues": 6532
+},
+{
+"app": "Preventista suelta",
+"cod": 3316,
+"producto": "POTE HELADO SAPE CHOCOLATE Y DDL GRANIZADO 500GR",
+"campo": "precioMinorista",
+"antes": 8899,
+"despues": 7490
+},
+{
+"app": "Preventista suelta",
+"cod": 3316,
+"producto": "POTE HELADO SAPE CHOCOLATE Y DDL GRANIZADO 500GR",
+"campo": "precioMayorista",
+"antes": 6587,
+"despues": 6532
+},
+{
+"app": "Preventista suelta",
+"cod": 3319,
+"producto": "POTE HELADO SAPE 3 CHOCOLATES X 500GR",
+"campo": "precioMinorista",
+"antes": 9499,
+"despues": 8390
+},
+{
+"app": "Preventista suelta",
+"cod": 3319,
+"producto": "POTE HELADO SAPE 3 CHOCOLATES X 500GR",
+"campo": "precioMayorista",
+"antes": 7408,
+"despues": 7053
+},
+{
+"app": "Preventista suelta",
+"cod": 3320,
+"producto": "POTE HELADO SAPE SUPER DDL X 500GR",
+"campo": "precioMinorista",
+"antes": 9499,
+"despues": 8390
+},
+{
+"app": "Preventista suelta",
+"cod": 3320,
+"producto": "POTE HELADO SAPE SUPER DDL X 500GR",
+"campo": "precioMayorista",
+"antes": 7408,
+"despues": 7053
+},
+{
+"app": "Preventista suelta",
+"cod": 3328,
+"producto": "ARANDANOS BAÑADOS CON CHOC Y DDL",
+"campo": "precioMinorista",
+"antes": 5990,
+"despues": 6990
+},
+{
+"app": "Preventista suelta",
+"cod": 3328,
+"producto": "ARANDANOS BAÑADOS CON CHOC Y DDL",
+"campo": "precioMayorista",
+"antes": 4647,
+"despues": 4800
+},
+{
+"app": "Preventista suelta",
+"cod": 3329,
+"producto": "FRUTILLAS MITADES BAÑADAS C/CHOC BLANCO",
+"campo": "precioMinorista",
+"antes": 5990,
+"despues": 6990
+},
+{
+"app": "Preventista suelta",
+"cod": 3329,
+"producto": "FRUTILLAS MITADES BAÑADAS C/CHOC BLANCO",
+"campo": "precioMayorista",
+"antes": 4533,
+"despues": 4681
+},
+{
+"app": "Preventista suelta",
+"cod": 3330,
+"producto": "FRAMBUESAS BAÑADAS C/CHOC BLANCO",
+"campo": "precioMinorista",
+"antes": 5990,
+"despues": 6990
+},
+{
+"app": "Preventista suelta",
+"cod": 3330,
+"producto": "FRAMBUESAS BAÑADAS C/CHOC BLANCO",
+"campo": "precioMayorista",
+"antes": 5104,
+"despues": 5363
+},
+{
+"app": "Preventista suelta",
+"cod": 3377,
+"producto": "POTE LMTVDA S.FLAN X300GR",
+"campo": "precioMinorista",
+"antes": 4590,
+"despues": 5490
+},
+{
+"app": "Preventista suelta",
+"cod": 3377,
+"producto": "POTE LMTVDA S.FLAN X300GR",
+"campo": "precioMayorista",
+"antes": 3987,
+"despues": 4055
+},
+{
+"app": "Preventista suelta",
+"cod": 3378,
+"producto": "POTE LMTVDA D.LECH X300GR",
+"campo": "precioMinorista",
+"antes": 4590,
+"despues": 5490
+},
+{
+"app": "Preventista suelta",
+"cod": 3378,
+"producto": "POTE LMTVDA D.LECH X300GR",
+"campo": "precioMayorista",
+"antes": 3987,
+"despues": 4055
+},
+{
+"app": "Preventista suelta",
+"cod": 3379,
+"producto": "POTE LMTVDA ALPINO X300GR",
+"campo": "precioMinorista",
+"antes": 4590,
+"despues": 5490
+},
+{
+"app": "Preventista suelta",
+"cod": 3379,
+"producto": "POTE LMTVDA ALPINO X300GR",
+"campo": "precioMayorista",
+"antes": 3987,
+"despues": 4055
+},
+{
+"app": "Preventista suelta",
+"cod": 3381,
+"producto": "POTE LMTVD CHOCOL. S/AZUCAR 210GR",
+"campo": "precioMinorista",
+"antes": 5790,
+"despues": 6450
+},
+{
+"app": "Preventista suelta",
+"cod": 3381,
+"producto": "POTE LMTVD CHOCOL. S/AZUCAR 210GR",
+"campo": "precioMayorista",
+"antes": 5088,
+"despues": 5174
+},
+{
+"app": "Preventista suelta",
+"cod": 3383,
+"producto": "POTE LMTVDA D.LECH B.SPLIT S/AZUCAR 210GR",
+"campo": "precioMinorista",
+"antes": 5790,
+"despues": 6450
+},
+{
+"app": "Preventista suelta",
+"cod": 3383,
+"producto": "POTE LMTVDA D.LECH B.SPLIT S/AZUCAR 210GR",
+"campo": "precioMayorista",
+"antes": 5088,
+"despues": 5174
+},
+{
+"app": "Preventista suelta",
+"cod": 3391,
+"producto": "HELADO QUEEN AM FR DL FLA",
+"campo": "precioMinorista",
+"antes": 16991,
+"despues": 15490
+},
+{
+"app": "Preventista suelta",
+"cod": 3391,
+"producto": "HELADO QUEEN AM FR DL FLA",
+"campo": "precioMayorista",
+"antes": 13568,
+"despues": 13455
+},
+{
+"app": "Preventista suelta",
+"cod": 3391,
+"producto": "HELADO QUEEN AM FR DL FLA",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 3392,
+"producto": "HELADO QUEEN CH DL BA GR",
+"campo": "precioMinorista",
+"antes": 16991,
+"despues": 15490
+},
+{
+"app": "Preventista suelta",
+"cod": 3392,
+"producto": "HELADO QUEEN CH DL BA GR",
+"campo": "precioMayorista",
+"antes": 13568,
+"despues": 13455
+},
+{
+"app": "Preventista suelta",
+"cod": 3392,
+"producto": "HELADO QUEEN CH DL BA GR",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 3393,
+"producto": "HELADO ACAPULCO 3L 4 GUS",
+"campo": "precioMinorista",
+"antes": 11990,
+"despues": 13990
+},
+{
+"app": "Preventista suelta",
+"cod": 3393,
+"producto": "HELADO ACAPULCO 3L 4 GUS",
+"campo": "precioMayorista",
+"antes": 10848,
+"despues": 11032
+},
+{
+"app": "Preventista suelta",
+"cod": 3393,
+"producto": "HELADO ACAPULCO 3L 4 GUS",
+"campo": "unidadesCaja",
+"antes": 1,
+"despues": 3
+},
+{
+"app": "Preventista suelta",
+"cod": 1505,
+"producto": "MEDALLONES FRIAR 2X110G",
+"campo": "precioMinorista",
+"antes": 2290,
+"despues": 2999
+},
+{
+"app": "Preventista suelta",
+"cod": 1505,
+"producto": "MEDALLONES FRIAR 2X110G",
+"campo": "precioMayorista",
+"antes": 2094,
+"despues": 2307
+},
+{
+"app": "Preventista suelta",
+"cod": 1506,
+"producto": "HAMB. FRIAR GIGANTE 2X110",
+"campo": "precioMinorista",
+"antes": 4559,
+"despues": 4369
+},
+{
+"app": "Preventista suelta",
+"cod": 1506,
+"producto": "HAMB. FRIAR GIGANTE 2X110",
+"campo": "precioMayorista",
+"antes": 3750,
+"despues": 4100
+},
+{
+"app": "Preventista suelta",
+"cod": 1520,
+"producto": "MEDALLONES CARRIBAR 2X55G",
+"campo": "precioMinorista",
+"antes": 1299,
+"despues": 1359
+},
+{
+"app": "Preventista suelta",
+"cod": 1520,
+"producto": "MEDALLONES CARRIBAR 2X55G",
+"campo": "precioMayorista",
+"antes": 1057,
+"despues": 1132
+},
+{
+"app": "Preventista suelta",
+"cod": 1521,
+"producto": "MEDALLONES CARRIBAR 2X80G",
+"campo": "precioMinorista",
+"antes": 1949,
+"despues": 1799
+},
+{
+"app": "Preventista suelta",
+"cod": 1521,
+"producto": "MEDALLONES CARRIBAR 2X80G",
+"campo": "precioMayorista",
+"antes": 1518,
+"despues": 1601
+},
+{
+"app": "Preventista suelta",
+"cod": 1548,
+"producto": "HAMBURGUESA SWIFT 2X80G",
+"campo": "precioMinorista",
+"antes": 3390,
+"despues": 3799
+},
+{
+"app": "Preventista suelta",
+"cod": 1548,
+"producto": "HAMBURGUESA SWIFT 2X80G",
+"campo": "precioMayorista",
+"antes": 2851,
+"despues": 3032
+},
+{
+"app": "Preventista suelta",
+"cod": 1550,
+"producto": "HAMB. TIPO CASERA 2X120G",
+"campo": "precioMinorista",
+"antes": 6490,
+"despues": 6650
+},
+{
+"app": "Preventista suelta",
+"cod": 1550,
+"producto": "HAMB. TIPO CASERA 2X120G",
+"campo": "precioMayorista",
+"antes": 5452,
+"despues": 5679
+},
+{
+"app": "Preventista suelta",
+"cod": 1564,
+"producto": "CAJA HAMB. SWIFT 12X80G",
+"campo": "precioMinorista",
+"antes": 23991,
+"despues": 23490
+},
+{
+"app": "Preventista suelta",
+"cod": 1564,
+"producto": "CAJA HAMB. SWIFT 12X80G",
+"campo": "precioMayorista",
+"antes": 20522,
+"despues": 20950
+},
+{
+"app": "Preventista suelta",
+"cod": 3440,
+"producto": "HAMBURGUESAS BURGUIS 2X80G",
+"campo": "precioMinorista",
+"antes": 3099,
+"despues": 3239
+},
+{
+"app": "Preventista suelta",
+"cod": 3440,
+"producto": "HAMBURGUESAS BURGUIS 2X80G",
+"campo": "precioMayorista",
+"antes": 2722,
+"despues": 2803
+},
+{
+"app": "Preventista suelta",
+"cod": 3554,
+"producto": "HAMBURGUESAS NATURAL DE PACU",
+"campo": "precioMinorista",
+"antes": 5390,
+"despues": 5790
+},
+{
+"app": "Preventista suelta",
+"cod": 3600,
+"producto": "PAQ. 4 MED. POLLO ESPINACA Y QUESO X320GR",
+"campo": "precioMinorista",
+"antes": 4499,
+"despues": 5920
+},
+{
+"app": "Preventista suelta",
+"cod": 3600,
+"producto": "PAQ. 4 MED. POLLO ESPINACA Y QUESO X320GR",
+"campo": "precioMayorista",
+"antes": 4004,
+"despues": 4220
+},
+{
+"app": "Preventista suelta",
+"cod": 3601,
+"producto": "PAQ. 4 MED. POLLO JAMON Y QUESO X320GR",
+"campo": "precioMinorista",
+"antes": 5550,
+"despues": 5920
+},
+{
+"app": "Preventista suelta",
+"cod": 3601,
+"producto": "PAQ. 4 MED. POLLO JAMON Y QUESO X320GR",
+"campo": "precioMayorista",
+"antes": 4071,
+"despues": 4220
+},
+{
+"app": "Preventista suelta",
+"cod": 3607,
+"producto": "MED. POLLO REB. X4 X320GR",
+"campo": "precioMinorista",
+"antes": 4690,
+"despues": 3999
+},
+{
+"app": "Preventista suelta",
+"cod": 3607,
+"producto": "MED. POLLO REB. X4 X320GR",
+"campo": "precioMayorista",
+"antes": 3309,
+"despues": 3314
+},
+{
+"app": "Preventista suelta",
+"cod": 3609,
+"producto": "MED. POLLO S/R X4 X320GR",
+"campo": "precioMayorista",
+"antes": 4626,
+"despues": 4719
+},
+{
+"app": "Preventista suelta",
+"cod": 2433,
+"producto": "TORTILLA DE PAPA X 300GR",
+"campo": "precioMinorista",
+"antes": 4629,
+"despues": 4390
+},
+{
+"app": "Preventista suelta",
+"cod": 2433,
+"producto": "TORTILLA DE PAPA X 300GR",
+"campo": "precioMayorista",
+"antes": 3666,
+"despues": 3721
+},
+{
+"app": "Preventista suelta",
+"cod": 2434,
+"producto": "TORTILLA DE VERDURA X 300GR",
+"campo": "precioMinorista",
+"antes": 3999,
+"despues": 5199
+},
+{
+"app": "Preventista suelta",
+"cod": 2434,
+"producto": "TORTILLA DE VERDURA X 300GR",
+"campo": "precioMayorista",
+"antes": 3605,
+"despues": 3728
+},
+{
+"app": "Preventista suelta",
+"cod": 2653,
+"producto": "TARTA CASERA JAMON Y QUESO",
+"campo": "unidadesCaja",
+"antes": 11,
+"despues": 9
+},
+{
+"app": "Preventista suelta",
+"cod": 1121,
+"producto": "CHORIZO CERDO CRIOLLO",
+"campo": "precioMinorista",
+"antes": 7690,
+"despues": 6360
+},
+{
+"app": "Preventista suelta",
+"cod": 1121,
+"producto": "CHORIZO CERDO CRIOLLO",
+"campo": "precioMayorista",
+"antes": 5840,
+"despues": 5851
+},
+{
+"app": "Preventista suelta",
+"cod": 1122,
+"producto": "MORCILLA",
+"campo": "precioMinorista",
+"antes": 2790,
+"despues": 3590
+},
+{
+"app": "Preventista suelta",
+"cod": 1122,
+"producto": "MORCILLA",
+"campo": "precioMayorista",
+"antes": 2594,
+"despues": 2884
+},
+{
+"app": "Preventista suelta",
+"cod": 1123,
+"producto": "SALCHICHA PARRILLERA",
+"campo": "precioMayorista",
+"antes": 6599,
+"despues": 6874
+},
+{
+"app": "Preventista suelta",
+"cod": 1125,
+"producto": "BONDIOLA",
+"campo": "precioMinorista",
+"antes": 9290,
+"despues": 11690
+},
+{
+"app": "Preventista suelta",
+"cod": 1125,
+"producto": "BONDIOLA",
+"campo": "precioMayorista",
+"antes": 9254,
+"despues": 10995
+},
+{
+"app": "Preventista suelta",
+"cod": 1126,
+"producto": "CARRE DESHUESADO DE CERDO",
+"campo": "precioMinorista",
+"antes": 11990,
+"despues": 11299
+},
+{
+"app": "Preventista suelta",
+"cod": 1126,
+"producto": "CARRE DESHUESADO DE CERDO",
+"campo": "precioMayorista",
+"antes": 11122,
+"despues": 10948
+},
+{
+"app": "Preventista suelta",
+"cod": 1134,
+"producto": "CARNE PICADA ESPECIAL",
+"campo": "precioMayorista",
+"antes": 15654,
+"despues": 16958
+},
+{
+"app": "Preventista suelta",
+"cod": 1150,
+"producto": "PATA MUSLO X 3KG",
+"campo": "precioMinorista",
+"antes": 9699,
+"despues": 9990
+},
+{
+"app": "Preventista suelta",
+"cod": 1150,
+"producto": "PATA MUSLO X 3KG",
+"campo": "precioMayorista",
+"antes": 9355,
+"despues": 9747
+},
+{
+"app": "Preventista suelta",
+"cod": 1154,
+"producto": "PECHUGUITAS REBOZADAS X 1KG.",
+"campo": "precioMayorista",
+"antes": 9083,
+"despues": 9461
+},
+{
+"app": "Preventista suelta",
+"cod": 1157,
+"producto": "CAJA CUARTOS TRASEROS X 15KG",
+"campo": "precioMinorista",
+"antes": 45341,
+"despues": 47451
+},
+{
+"app": "Preventista suelta",
+"cod": 1157,
+"producto": "CAJA CUARTOS TRASEROS X 15KG",
+"campo": "precioMayorista",
+"antes": 45341,
+"despues": 47451
+},
+{
+"app": "Preventista suelta",
+"cod": 1158,
+"producto": "FILET DE PECHUGA x 1KG",
+"campo": "precioMayorista",
+"antes": 9111,
+"despues": 9139
+},
+{
+"app": "Catálogo clientes",
+"cod": 1802,
+"producto": "NATUFANS REB ACEL Y ARROZ YAMANI x380GR",
+"campo": "precioMinorista",
+"antes": 3890,
+"despues": 3099
+},
+{
+"app": "Catálogo clientes",
+"cod": 1802,
+"producto": "NATUFANS REB ACEL Y ARROZ YAMANI x380GR",
+"campo": "precioMayorista",
+"antes": 2581,
+"despues": 2645
+},
+{
+"app": "Catálogo clientes",
+"cod": 1805,
+"producto": "NATUFANS CALAB. ZANAH. Y CHOCLO (S/R) x340GR",
+"campo": "precioMinorista",
+"antes": 3590,
+"despues": 4690
+},
+{
+"app": "Catálogo clientes",
+"cod": 1805,
+"producto": "NATUFANS CALAB. ZANAH. Y CHOCLO (S/R) x340GR",
+"campo": "precioMayorista",
+"antes": 2942,
+"despues": 3325
+},
+{
+"app": "Catálogo clientes",
+"cod": 1806,
+"producto": "NATUFANS S/R ACEL Y ARROZ YAMANI x340GR",
+"campo": "precioMayorista",
+"antes": 2314,
+"despues": 2411
+},
+{
+"app": "Catálogo clientes",
+"cod": 1806,
+"producto": "NATUFANS S/R ACEL Y ARROZ YAMANI x340GR",
+"campo": "unidadesCaja",
+"antes": 24,
+"despues": 30
+},
+{
+"app": "Catálogo clientes",
+"cod": 1807,
+"producto": "NATUFANS MED. ESPINACA S/R X340GR",
+"campo": "precioMinorista",
+"antes": 3880,
+"despues": 2999
+},
+{
+"app": "Catálogo clientes",
+"cod": 1807,
+"producto": "NATUFANS MED. ESPINACA S/R X340GR",
+"campo": "precioMayorista",
+"antes": 2500,
+"despues": 2541
+},
+{
+"app": "Catálogo clientes",
+"cod": 1808,
+"producto": "NATUFANS MEDALLONES DE LENTEJA X 340GR",
+"campo": "precioMinorista",
+"antes": 2790,
+"despues": 3650
+},
+{
+"app": "Catálogo clientes",
+"cod": 1808,
+"producto": "NATUFANS MEDALLONES DE LENTEJA X 340GR",
+"campo": "precioMayorista",
+"antes": 2284,
+"despues": 2418
+},
+{
+"app": "Catálogo clientes",
+"cod": 1809,
+"producto": "PIZZA DE ARROZ RUCULA NATUFANS X370G",
+"campo": "precioMinorista",
+"antes": 6690,
+"despues": 7490
+},
+{
+"app": "Catálogo clientes",
+"cod": 1809,
+"producto": "PIZZA DE ARROZ RUCULA NATUFANS X370G",
+"campo": "precioMayorista",
+"antes": 5428,
+"despues": 5749
+},
+{
+"app": "Catálogo clientes",
+"cod": 1810,
+"producto": "PIZZA DE ARROZ MOZZARELLA NATUFANS X360G",
+"campo": "precioMinorista",
+"antes": 7490,
+"despues": 6690
+},
+{
+"app": "Catálogo clientes",
+"cod": 1810,
+"producto": "PIZZA DE ARROZ MOZZARELLA NATUFANS X360G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5697
+},
+{
+"app": "Catálogo clientes",
+"cod": 1811,
+"producto": "PIZZA  DE ARROZ JAMON Y QUESO NATUFANS X390G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5749
+},
+{
+"app": "Catálogo clientes",
+"cod": 1812,
+"producto": "PIZZA  DE ARROZ CAPRESE NATUFANS X400G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5749
+},
+{
+"app": "Catálogo clientes",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo clientes",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9546,
+"despues": 10119
+},
+{
+"app": "Catálogo clientes",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo clientes",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9546,
+"despues": 10119
+},
+{
+"app": "Catálogo clientes",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9790,
+"despues": 9990
+},
+{
+"app": "Catálogo clientes",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8974,
+"despues": 9510
+},
+{
+"app": "Catálogo clientes",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9750,
+"despues": 9950
+},
+{
+"app": "Catálogo clientes",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9032,
+"despues": 9408
+},
+{
+"app": "Catálogo clientes",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1817,
+"producto": "ÑOQUIS DE PAPA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7981,
+"despues": 8314
+},
+{
+"app": "Catálogo clientes",
+"cod": 1817,
+"producto": "ÑOQUIS DE PAPA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1818,
+"producto": "RAVIOLES DE RICOTA Y MOZZARELLA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8713,
+"despues": 9076
+},
+{
+"app": "Catálogo clientes",
+"cod": 1818,
+"producto": "RAVIOLES DE RICOTA Y MOZZARELLA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 10190,
+"despues": 10350
+},
+{
+"app": "Catálogo clientes",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9374,
+"despues": 9936
+},
+{
+"app": "Catálogo clientes",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1820,
+"producto": "BASTONCITO DE MOZZARELLA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8090,
+"despues": 8250
+},
+{
+"app": "Catálogo clientes",
+"cod": 1820,
+"producto": "BASTONCITO DE MOZZARELLA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7461,
+"despues": 7908
+},
+{
+"app": "Catálogo clientes",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo clientes",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9109,
+"despues": 9489
+},
+{
+"app": "Catálogo clientes",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo clientes",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8760,
+"despues": 9282
+},
+{
+"app": "Catálogo clientes",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1823,
+"producto": "TARTA INDIVIDUAL ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8350,
+"despues": 8550
+},
+{
+"app": "Catálogo clientes",
+"cod": 1823,
+"producto": "TARTA INDIVIDUAL ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7792,
+"despues": 8117
+},
+{
+"app": "Catálogo clientes",
+"cod": 1824,
+"producto": "TARTA INDIVIDUAL DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8750,
+"despues": 8950
+},
+{
+"app": "Catálogo clientes",
+"cod": 1824,
+"producto": "TARTA INDIVIDUAL DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7961,
+"despues": 8437
+},
+{
+"app": "Catálogo clientes",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 10150,
+"despues": 10350
+},
+{
+"app": "Catálogo clientes",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9070,
+"despues": 9613
+},
+{
+"app": "Catálogo clientes",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo clientes",
+"cod": 1714,
+"producto": "MEDIO PACU DESPINADO (C/COSTILLA)",
+"campo": "precioMinorista",
+"antes": 21390,
+"despues": 19110
+},
+{
+"app": "Catálogo clientes",
+"cod": 1714,
+"producto": "MEDIO PACU DESPINADO (C/COSTILLA)",
+"campo": "precioMayorista",
+"antes": 16777,
+"despues": 17566
+},
+{
+"app": "Catálogo clientes",
+"cod": 1719,
+"producto": "LANGOSTINO PELADO X 250GR",
+"campo": "precioMayorista",
+"antes": 8186,
+"despues": 8513
+},
+{
+"app": "Catálogo clientes",
+"cod": 1720,
+"producto": "CAMARON X250GR",
+"campo": "precioMinorista",
+"antes": 10900,
+"despues": 13990
+},
+{
+"app": "Catálogo clientes",
+"cod": 1720,
+"producto": "CAMARON X250GR",
+"campo": "precioMayorista",
+"antes": 10116,
+"despues": 10538
+},
+{
+"app": "Catálogo clientes",
+"cod": 1721,
+"producto": "MEJILLON X250GR",
+"campo": "precioMayorista",
+"antes": 5880,
+"despues": 6125
+},
+{
+"app": "Catálogo clientes",
+"cod": 1728,
+"producto": "FILET DE PACU DESPINADO SIN COSTILLA",
+"campo": "precioMinorista",
+"antes": 23900,
+"despues": 29490
+},
+{
+"app": "Catálogo clientes",
+"cod": 1728,
+"producto": "FILET DE PACU DESPINADO SIN COSTILLA",
+"campo": "precioMayorista",
+"antes": 22048,
+"despues": 23974
+},
+{
+"app": "Catálogo clientes",
+"cod": 3513,
+"producto": "MEDALLON DE MERLUZA X400G",
+"campo": "precioMinorista",
+"antes": 3690,
+"despues": 4690
+},
+{
+"app": "Catálogo clientes",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "precioMinorista",
+"antes": 6790,
+"despues": 8490
+},
+{
+"app": "Catálogo clientes",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "precioMayorista",
+"antes": 5772,
+"despues": 5868
+},
+{
+"app": "Catálogo clientes",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "unidadesCaja",
+"antes": 20,
+"despues": 16
+},
+{
+"app": "Catálogo clientes",
+"cod": 3512,
+"producto": "CROQ. PAPA JAM/QUE X400GR",
+"campo": "precioMinorista",
+"antes": 4999,
+"despues": 3990
+},
+{
+"app": "Catálogo clientes",
+"cod": 3512,
+"producto": "CROQ. PAPA JAM/QUE X400GR",
+"campo": "precioMayorista",
+"antes": 3426,
+"despues": 3398
+},
+{
+"app": "Catálogo clientes",
+"cod": 3520,
+"producto": "CROQUETAS DE ESPINACA Y QUESO X 400GR",
+"campo": "precioMinorista",
+"antes": 5990,
+"despues": 4590
+},
+{
+"app": "Catálogo clientes",
+"cod": 3554,
+"producto": "HAMBURGUESAS NATURAL DE PACU",
+"campo": "precioMinorista",
+"antes": 5390,
+"despues": 5790
+},
+{
+"app": "Catálogo clientes",
+"cod": 3007,
+"producto": "PAQ. ESPINACA  X 600GR",
+"campo": "nombre",
+"antes": "PAQ. ESPINACA X 600GR",
+"despues": "PAQ. ESPINACA  X 600GR"
+},
+{
+"app": "Catálogo VIP",
+"cod": 1802,
+"producto": "NATUFANS REB ACEL Y ARROZ YAMANI x380GR",
+"campo": "precioMinorista",
+"antes": 3890,
+"despues": 3099
+},
+{
+"app": "Catálogo VIP",
+"cod": 1802,
+"producto": "NATUFANS REB ACEL Y ARROZ YAMANI x380GR",
+"campo": "precioMayorista",
+"antes": 2581,
+"despues": 2645
+},
+{
+"app": "Catálogo VIP",
+"cod": 1805,
+"producto": "NATUFANS CALAB. ZANAH. Y CHOCLO (S/R) x340GR",
+"campo": "precioMinorista",
+"antes": 3590,
+"despues": 4690
+},
+{
+"app": "Catálogo VIP",
+"cod": 1805,
+"producto": "NATUFANS CALAB. ZANAH. Y CHOCLO (S/R) x340GR",
+"campo": "precioMayorista",
+"antes": 2942,
+"despues": 3325
+},
+{
+"app": "Catálogo VIP",
+"cod": 1806,
+"producto": "NATUFANS S/R ACEL Y ARROZ YAMANI x340GR",
+"campo": "precioMayorista",
+"antes": 2314,
+"despues": 2411
+},
+{
+"app": "Catálogo VIP",
+"cod": 1806,
+"producto": "NATUFANS S/R ACEL Y ARROZ YAMANI x340GR",
+"campo": "unidadesCaja",
+"antes": 24,
+"despues": 30
+},
+{
+"app": "Catálogo VIP",
+"cod": 1807,
+"producto": "NATUFANS MED. ESPINACA S/R X340GR",
+"campo": "precioMinorista",
+"antes": 3880,
+"despues": 2999
+},
+{
+"app": "Catálogo VIP",
+"cod": 1807,
+"producto": "NATUFANS MED. ESPINACA S/R X340GR",
+"campo": "precioMayorista",
+"antes": 2500,
+"despues": 2541
+},
+{
+"app": "Catálogo VIP",
+"cod": 1808,
+"producto": "NATUFANS MEDALLONES DE LENTEJA X 340GR",
+"campo": "precioMinorista",
+"antes": 2790,
+"despues": 3650
+},
+{
+"app": "Catálogo VIP",
+"cod": 1808,
+"producto": "NATUFANS MEDALLONES DE LENTEJA X 340GR",
+"campo": "precioMayorista",
+"antes": 2284,
+"despues": 2418
+},
+{
+"app": "Catálogo VIP",
+"cod": 1809,
+"producto": "PIZZA DE ARROZ RUCULA NATUFANS X370G",
+"campo": "precioMinorista",
+"antes": 6690,
+"despues": 7490
+},
+{
+"app": "Catálogo VIP",
+"cod": 1809,
+"producto": "PIZZA DE ARROZ RUCULA NATUFANS X370G",
+"campo": "precioMayorista",
+"antes": 5428,
+"despues": 5749
+},
+{
+"app": "Catálogo VIP",
+"cod": 1810,
+"producto": "PIZZA DE ARROZ MOZZARELLA NATUFANS X360G",
+"campo": "precioMinorista",
+"antes": 7490,
+"despues": 6690
+},
+{
+"app": "Catálogo VIP",
+"cod": 1810,
+"producto": "PIZZA DE ARROZ MOZZARELLA NATUFANS X360G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5697
+},
+{
+"app": "Catálogo VIP",
+"cod": 1811,
+"producto": "PIZZA  DE ARROZ JAMON Y QUESO NATUFANS X390G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5749
+},
+{
+"app": "Catálogo VIP",
+"cod": 1812,
+"producto": "PIZZA  DE ARROZ CAPRESE NATUFANS X400G",
+"campo": "precioMayorista",
+"antes": 5519,
+"despues": 5749
+},
+{
+"app": "Catálogo VIP",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo VIP",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9546,
+"despues": 10119
+},
+{
+"app": "Catálogo VIP",
+"cod": 1813,
+"producto": "EMPANADAS XL JYQ X3U S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo VIP",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9546,
+"despues": 10119
+},
+{
+"app": "Catálogo VIP",
+"cod": 1814,
+"producto": "EMPANADAS XL CARNE X3U S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9790,
+"despues": 9990
+},
+{
+"app": "Catálogo VIP",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8974,
+"despues": 9510
+},
+{
+"app": "Catálogo VIP",
+"cod": 1815,
+"producto": "FETUCCINI DE ESPINACA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9750,
+"despues": 9950
+},
+{
+"app": "Catálogo VIP",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9032,
+"despues": 9408
+},
+{
+"app": "Catálogo VIP",
+"cod": 1816,
+"producto": "FETUCCINI AL HUEVO S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1817,
+"producto": "ÑOQUIS DE PAPA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7981,
+"despues": 8314
+},
+{
+"app": "Catálogo VIP",
+"cod": 1817,
+"producto": "ÑOQUIS DE PAPA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1818,
+"producto": "RAVIOLES DE RICOTA Y MOZZARELLA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8713,
+"despues": 9076
+},
+{
+"app": "Catálogo VIP",
+"cod": 1818,
+"producto": "RAVIOLES DE RICOTA Y MOZZARELLA S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 10190,
+"despues": 10350
+},
+{
+"app": "Catálogo VIP",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9374,
+"despues": 9936
+},
+{
+"app": "Catálogo VIP",
+"cod": 1819,
+"producto": "RAVIOLES DE JYQ S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1820,
+"producto": "BASTONCITO DE MOZZARELLA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8090,
+"despues": 8250
+},
+{
+"app": "Catálogo VIP",
+"cod": 1820,
+"producto": "BASTONCITO DE MOZZARELLA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7461,
+"despues": 7908
+},
+{
+"app": "Catálogo VIP",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo VIP",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9109,
+"despues": 9489
+},
+{
+"app": "Catálogo VIP",
+"cod": 1821,
+"producto": "SORRENTINOS QUESO AZUL S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 9990,
+"despues": 10150
+},
+{
+"app": "Catálogo VIP",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 8760,
+"despues": 9282
+},
+{
+"app": "Catálogo VIP",
+"cod": 1822,
+"producto": "SORRENTINO DE CALABAZA Y QUESO S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1823,
+"producto": "TARTA INDIVIDUAL ESPINACA S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8350,
+"despues": 8550
+},
+{
+"app": "Catálogo VIP",
+"cod": 1823,
+"producto": "TARTA INDIVIDUAL ESPINACA S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7792,
+"despues": 8117
+},
+{
+"app": "Catálogo VIP",
+"cod": 1824,
+"producto": "TARTA INDIVIDUAL DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 8750,
+"despues": 8950
+},
+{
+"app": "Catálogo VIP",
+"cod": 1824,
+"producto": "TARTA INDIVIDUAL DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 7961,
+"despues": 8437
+},
+{
+"app": "Catálogo VIP",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "precioMinorista",
+"antes": 10150,
+"despues": 10350
+},
+{
+"app": "Catálogo VIP",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "precioMayorista",
+"antes": 9070,
+"despues": 9613
+},
+{
+"app": "Catálogo VIP",
+"cod": 1828,
+"producto": "SORRENTINO DE JYQ S/GLUTEN",
+"campo": "unidadesCaja",
+"antes": 12,
+"despues": 8
+},
+{
+"app": "Catálogo VIP",
+"cod": 1714,
+"producto": "MEDIO PACU DESPINADO (C/COSTILLA)",
+"campo": "precioMinorista",
+"antes": 21390,
+"despues": 19110
+},
+{
+"app": "Catálogo VIP",
+"cod": 1714,
+"producto": "MEDIO PACU DESPINADO (C/COSTILLA)",
+"campo": "precioMayorista",
+"antes": 16777,
+"despues": 17566
+},
+{
+"app": "Catálogo VIP",
+"cod": 1719,
+"producto": "LANGOSTINO PELADO X 250GR",
+"campo": "precioMayorista",
+"antes": 8186,
+"despues": 8513
+},
+{
+"app": "Catálogo VIP",
+"cod": 1720,
+"producto": "CAMARON X250GR",
+"campo": "precioMinorista",
+"antes": 10900,
+"despues": 13990
+},
+{
+"app": "Catálogo VIP",
+"cod": 1720,
+"producto": "CAMARON X250GR",
+"campo": "precioMayorista",
+"antes": 10116,
+"despues": 10538
+},
+{
+"app": "Catálogo VIP",
+"cod": 1721,
+"producto": "MEJILLON X250GR",
+"campo": "precioMayorista",
+"antes": 5880,
+"despues": 6125
+},
+{
+"app": "Catálogo VIP",
+"cod": 1728,
+"producto": "FILET DE PACU DESPINADO SIN COSTILLA",
+"campo": "precioMinorista",
+"antes": 23900,
+"despues": 29490
+},
+{
+"app": "Catálogo VIP",
+"cod": 1728,
+"producto": "FILET DE PACU DESPINADO SIN COSTILLA",
+"campo": "precioMayorista",
+"antes": 22048,
+"despues": 23974
+},
+{
+"app": "Catálogo VIP",
+"cod": 3513,
+"producto": "MEDALLON DE MERLUZA X400G",
+"campo": "precioMinorista",
+"antes": 3690,
+"despues": 4690
+},
+{
+"app": "Catálogo VIP",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "precioMinorista",
+"antes": 6790,
+"despues": 8490
+},
+{
+"app": "Catálogo VIP",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "precioMayorista",
+"antes": 5772,
+"despues": 5868
+},
+{
+"app": "Catálogo VIP",
+"cod": 3510,
+"producto": "BARRITA MOZZARELLA X400GR",
+"campo": "unidadesCaja",
+"antes": 20,
+"despues": 16
+},
+{
+"app": "Catálogo VIP",
+"cod": 3512,
+"producto": "CROQ. PAPA JAM/QUE X400GR",
+"campo": "precioMinorista",
+"antes": 4999,
+"despues": 3990
+},
+{
+"app": "Catálogo VIP",
+"cod": 3512,
+"producto": "CROQ. PAPA JAM/QUE X400GR",
+"campo": "precioMayorista",
+"antes": 3426,
+"despues": 3398
+},
+{
+"app": "Catálogo VIP",
+"cod": 3520,
+"producto": "CROQUETAS DE ESPINACA Y QUESO X 400GR",
+"campo": "precioMinorista",
+"antes": 5990,
+"despues": 4590
+},
+{
+"app": "Catálogo VIP",
+"cod": 3554,
+"producto": "HAMBURGUESAS NATURAL DE PACU",
+"campo": "precioMinorista",
+"antes": 5390,
+"despues": 5790
+},
+{
+"app": "Catálogo VIP",
+"cod": 3007,
+"producto": "PAQ. ESPINACA  X 600GR",
+"campo": "nombre",
+"antes": "PAQ. ESPINACA X 600GR",
+"despues": "PAQ. ESPINACA  X 600GR"
+}
+]
+}
+]
