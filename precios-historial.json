@@ -3603,5 +3603,23 @@
 "despues": "3990 / 3329"
 }
 ]
+},
+{
+"fecha": "20/11/2026",
+"hora": "09:55",
+"tipo": "Corrección",
+"fuente": "Venta del sistema 19/11 (Factura A 0008-00000073: 4 cajas a $57.190,56 = 6 × $9.532)",
+"cargo": "Claude",
+"aprobo": "Banchi",
+"resumen": "La caja de 3068 trae 6 bolsas, no 7 (se había copiado de la 1557)",
+"cambios": [
+{
+"cod": 3068,
+"producto": "PAPAS BASTON COOL MIND x2,5kg 12mm",
+"campo": "unidadesCaja",
+"antes": 7,
+"despues": 6
+}
+]
 }
 ]
