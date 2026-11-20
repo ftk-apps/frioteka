@@ -4,74 +4,103 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Empleados FRIOTEKA</title>
+<meta name="theme-color" content="#6B3FA0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--pri:#b8436f;--pri2:#d9799c;--pri-l:#fbe3ec;--bg:#fdf5f8;--head:#f9d3e1;--headtx:#5e1d39;--card:#fff;--tx:#1e1b24;--mut:#6d6878;--bd:#f0d9e2;--ok:#1d7a46;--ok-l:#e3f4ea;--bad:#b42318;--bad-l:#fdecea;--warn:#9a6700;--warn-l:#fff4d6}
+:root{--pri:#6B3FA0;--pri2:#4A2675;--pri-l:#EFE7F8;--bg:#F4F2EF;--head:#6B3FA0;--headtx:#fff;--card:#fff;--tx:#1F1F1F;--mut:#7A7A7A;--bd:#E7E3DE;--ok:#2C7A57;--ok-l:#DDF1E6;--bad:#B3261E;--bad-l:#FADCD9;--warn:#94600C;--warn-l:#FBECD2}
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
-header{background:var(--head);color:var(--headtx);border-bottom:1px solid #f1bfd2;padding:14px 16px 12px;position:sticky;top:0;z-index:5}
-header h1{margin:0;font-size:18px;font-weight:700}
-header .sub{font-size:12px;opacity:.85;margin-top:2px}
-main{padding:12px 12px 90px;max-width:820px;margin:0 auto}
-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;border:0;background:none;padding:9px 2px 8px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
-nav button .ic{font-size:19px;line-height:1}
-nav button.on{color:var(--pri);font-weight:700}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
-.card h2{margin:0 0 10px;font-size:16px}
+body{margin:0;font-family:Nunito,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:15px;padding-bottom:84px}
+button,input,select,textarea{font-family:inherit}
+.hdr{position:sticky;top:0;z-index:20;background:var(--pri);color:#fff;padding:max(10px,env(safe-area-inset-top)) 14px 14px;border-radius:0 0 18px 18px}
+.hdr .top{display:flex;justify-content:space-between;align-items:center;max-width:820px;margin:0 auto}
+.hdr .ico{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:21px;border-radius:10px;border:0;background:none;color:#fff;cursor:pointer}
+.hdr .ico:active{background:rgba(255,255,255,.15)}
+.hdr .logo{font-family:"Fredoka One",sans-serif;font-size:22px;letter-spacing:.4px;text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr .sub{text-align:center;font-size:13px;color:#E2D4F3;margin-top:2px}
+main{padding:12px 14px 20px;max-width:820px;margin:0 auto}
+nav#nav{display:none}
+.card{background:var(--card);border:0;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.card h2{margin:0 0 8px;font-size:16px;font-weight:800;color:var(--pri2)}
 .card h3{margin:14px 0 8px;font-size:14px;color:var(--pri)}
 .muted{color:var(--mut);font-size:13px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--bd)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--bd)}
 .row:last-child{border-bottom:0}
-.row.tot{font-weight:700;border-top:2px solid var(--tx);border-bottom:0;margin-top:4px;padding-top:8px}
-.row.big{font-size:17px}
+.row.tot{font-weight:800;border-top:1.5px solid var(--bd);border-bottom:0;margin-top:4px;padding-top:8px}
+.row.big{font-size:17px;background:var(--pri-l);color:var(--pri2);border:0;border-radius:12px;padding:12px;margin-top:8px}
 .num{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
 .neg{color:var(--bad)} .pos{color:var(--ok)}
-.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
-.chip{border:1px solid var(--bd);background:#fff;border-radius:999px;padding:7px 13px;font-size:14px;white-space:nowrap;cursor:pointer}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--bd);background:#fff;border-radius:20px;padding:7px 14px;font-size:14px;font-weight:800;white-space:nowrap;cursor:pointer}
 .chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .emp{cursor:pointer}
-.emp .nm{font-weight:700;font-size:16px}
-.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--pri-l);color:var(--pri);font-weight:600}
-.tag.warn{background:var(--warn-l);color:var(--warn)} .tag.info{background:#e1e9f7;color:#3d5f99} .tag.mut{background:#f3f1f4;color:var(--mut)} .tag.bad{background:var(--bad-l);color:var(--bad)} .tag.ok{background:var(--ok-l);color:var(--ok)}
+.emp .nm{font-weight:800;font-size:16px}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:7px;background:var(--pri-l);color:var(--pri2);font-weight:800}
+.tag.warn{background:var(--warn-l);color:var(--warn)} .tag.info{background:#e1e9f7;color:#3d5f99} .tag.mut{background:#F1EFE8;color:#5F5E5A} .tag.bad{background:var(--bad-l);color:var(--bad)} .tag.ok{background:var(--ok-l);color:var(--ok)}
 .per{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .per b{font-size:15px;text-align:center;flex:1}
-.btn{border:0;background:var(--pri);color:#fff;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer}
-.btn.sec{background:var(--pri-l);color:var(--pri)} .btn.sm{padding:6px 10px;font-size:13px} .btn.full{width:100%}
-.btn.ghost{background:none;color:var(--pri);border:1px solid var(--bd)}
+.btn{border:0;background:var(--pri);color:#fff;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer}
+.btn.sec{background:var(--pri-l);color:var(--pri2)} .btn.sm{padding:6px 10px;font-size:13px} .btn.full{width:100%}
+.btn.ghost{background:#fff;color:var(--pri2);border:1px solid var(--bd)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;font-weight:600;color:var(--mut);font-size:12px;padding:6px 4px;border-bottom:1px solid var(--bd)}
-td{padding:5px 4px;border-bottom:1px solid #f6e6ec;vertical-align:middle}
+th{text-align:left;font-weight:700;color:var(--mut);font-size:12px;padding:6px 4px;border-bottom:1px solid var(--bd)}
+td{padding:5px 4px;border-bottom:1px solid #F1EEEA;vertical-align:middle}
 td input,td select{width:100%;border:1px solid var(--bd);border-radius:6px;padding:5px;font-size:13px;background:#fff}
 td input.h{width:58px;text-align:center}
-tr.fer td{background:#fce8f0} tr.off td{color:#aaa}
+tr.fer td{background:#F5EEFB} tr.off td{color:#aaa}
 .scroll{overflow-x:auto}
-label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px;font-weight:600}
 input,select,textarea{font:inherit}
-.f input,.f select,.f textarea{width:100%;border:1px solid var(--bd);border-radius:8px;padding:10px;font-size:15px;background:#fff}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:15px;background:#fff}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.seg{display:flex;background:var(--pri-l);border-radius:10px;padding:3px;gap:3px;margin-bottom:12px}
-.seg button{flex:1;border:0;background:none;padding:8px 4px;border-radius:8px;font-size:13px;color:var(--pri);cursor:pointer}
-.seg button.on{background:#fff;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.note{background:var(--warn-l);color:#5c4300;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
-.ok-box{background:var(--ok-l);color:#14532d;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
-pre.out{white-space:pre-wrap;background:#fffafc;border:1px solid var(--bd);border-radius:8px;padding:10px;font-size:12.5px;max-height:420px;overflow:auto}
-#pin{position:fixed;inset:0;background:var(--head);display:flex;align-items:center;justify-content:center;z-index:20}
-#pin .box{background:#fff;border-radius:16px;padding:22px;width:330px;max-width:92vw;text-align:center;max-height:92vh;overflow:auto}
+.seg{display:flex;background:var(--pri-l);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;padding:8px 4px;border-radius:9px;font-size:13px;font-weight:700;color:var(--pri2);cursor:pointer}
+.seg button.on{background:#fff;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.note{background:var(--warn-l);color:#5c4300;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.ok-box{background:var(--ok-l);color:#14532d;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+pre.out{white-space:pre-wrap;background:#FAF8FD;border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:12.5px;max-height:420px;overflow:auto}
+#pin{position:fixed;inset:0;background:var(--pri);display:flex;align-items:center;justify-content:center;z-index:70}
+#pin .box{background:#fff;border-radius:18px;padding:22px;width:330px;max-width:92vw;text-align:center;max-height:92vh;overflow:auto}
 #pin .box .f{text-align:left}
-#pin input{font-size:26px;letter-spacing:10px;text-align:center;width:100%;border:1px solid var(--bd);border-radius:10px;padding:10px;margin:12px 0}
-.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;opacity:0;transition:.25s;pointer-events:none}
+#pin input{font-size:26px;letter-spacing:10px;text-align:center;width:100%;border:1px solid var(--bd);border-radius:12px;padding:10px;margin:12px 0}
+.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#1F1F1F;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;z-index:80;opacity:0;transition:.25s;pointer-events:none}
 .toast.show{opacity:1}
 .del{border:0;background:none;color:var(--bad);cursor:pointer;font-size:15px}
+/* diseño nuevo 20/11 */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.kpi{background:#fff;border-radius:14px;padding:10px 12px}.kpi small{display:block;color:var(--mut);font-size:12px;font-weight:700}.kpi b{font-size:19px}
+.kpi.w{background:var(--warn-l);color:var(--warn)}.kpi.w small{color:var(--warn)}
+.erow{background:#fff;border-radius:14px;padding:10px 12px;display:flex;gap:11px;align-items:center;margin-bottom:8px;width:100%;text-align:left;border:0;cursor:pointer;color:inherit;font:inherit}
+.av{width:40px;height:40px;border-radius:50%;background:var(--pri-l);color:var(--pri2);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.erow .t{flex:1;min-width:0}.erow b{font-size:15px}.erow small{display:block;color:var(--mut);font-size:12px}
+.pill{display:inline-block;border-radius:7px;padding:2px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.p-ok{background:var(--ok-l);color:var(--ok)}.p-wa{background:var(--warn-l);color:var(--warn)}.p-ba{background:var(--bad-l);color:var(--bad)}.p-gr{background:#F1EFE8;color:#5F5E5A}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:820px;background:#fff;border-top:1px solid var(--bd);padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:20}
+.bar .btnbar{width:100%;background:var(--pri);color:#fff;border:0;border-radius:16px;padding:14px 0;font-weight:800;font-size:16px;cursor:pointer}
+.velo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}.velo.on{opacity:1;pointer-events:auto}
+.menu{position:fixed;top:0;bottom:0;left:0;width:82%;max-width:320px;background:#fff;z-index:50;transform:translateX(-105%);transition:transform .25s;overflow-y:auto;padding:16px 12px}
+.menu.on{transform:none}
+.mcab{background:var(--pri);color:#fff;border-radius:16px;padding:16px;text-align:center;margin-bottom:8px}
+.mcab b{font-family:"Fredoka One",sans-serif;font-weight:400;font-size:20px;display:block}
+.mit{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 8px;border:0;border-bottom:1px solid var(--bd);background:none;font:inherit;font-weight:700;color:inherit;cursor:pointer}
+.mit.on{color:var(--pri2)}
+.mit i{width:30px;height:30px;border-radius:9px;background:var(--pri-l);display:flex;align-items:center;justify-content:center;font-style:normal;flex:none}
+details.mas{background:#fff;border-radius:14px;padding:10px 14px;margin-bottom:10px}
+details.mas summary{font-weight:800;color:var(--pri2);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.menu,.velo{transition:none}}
 @media(max-width:520px){.two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div id="pin"><div class="box" id="pinBox"></div></div>
-<header><h1>Empleados FRIOTEKA</h1><div class="sub" id="hsub"></div></header>
+<header class="hdr"><div class="top"><button class="ico" id="bIzq" onclick="botonIzq()" aria-label="Menú">☰</button><div class="logo" id="tit">FRIOTEKA</div><span class="ico" aria-hidden="true"></span></div><div class="sub" id="hsub"></div></header>
 <main id="main"></main>
 <nav id="nav"></nav>
+<div class="bar" id="bar" style="display:none"><button class="btnbar" id="bAccion"></button></div>
+<div class="velo" id="velo" onclick="menu(false)"></div>
+<aside class="menu" id="menu"></aside>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -194,13 +223,68 @@ function importarHist(file){if(!file)return;file.text().then(txt=>{const H=JSON.
 
 /* ---------- navegación ---------- */
 const TABS=[["inicio","🏠","Inicio"],["empleado","👤","Empleado"],["cargar","➕","Cargar"],["cc","💳","Cta. cte."],["fichaje","⏱️","Fichaje"],["cierre","📋","Cierre"],["datos","⚙️","Datos"]];
-function renderNav(){$("#nav").innerHTML=TABS.map(([k,i,t])=>`<button class="${st.tab===k?"on":""}" onclick="go('${k}')"><span class="ic">${i}</span>${t}</button>`).join("")}
+function renderNav(){menuHtml();$("#nav").innerHTML=TABS.map(([k,i,t])=>`<button class="${st.tab===k?"on":""}" onclick="go('${k}')"><span class="ic">${i}</span>${t}</button>`).join("")}
 function go(t,emp){st.tab=t;if(emp){st.emp=emp;st.per=null}render();window.scrollTo(0,0)}
 function render(){if(DB)asegurar();renderNav();setEstado(estado||"guardado ✓");
-  ({inicio:vInicio,empleado:vEmp,cargar:vCargar,cc:vCC,fichaje:vFichaje,cierre:vCierre,datos:vDatos})[st.tab]()}
+  ({inicio:vInicio,empleado:vEmp,cargar:vCargar,cc:vCC,fichaje:vFichaje,cierre:vCierre,datos:vDatos,vac:vVac,sanc:vSanc})[st.tab]();cabezal()}
+
+
+/* ---------- DISEÑO NUEVO 20/11: menú, cabezal, inicio y ficha (solo pantalla; los cálculos son los de siempre) ---------- */
+const MENU=[["inicio","👥","Equipo y semana"],["fichaje","⏱️","Fichaje: revisar y pagar la semana"],["cargar","➕","Cargar adelanto, pago o compra"],["cc","💳","Cuentas corrientes"],["vac","🏖️","Vacaciones"],["sanc","📋","Historial disciplinario"],["pos","📥","Importar Excel del POS"],["cierre","📊","Resumen para gastos de la empresa"],["fjcfg","📍","Configuración del fichaje"],["datos","⚙️","Valores hora, recibos, feriados y datos"]];
+function menu(on){$("#menu").classList.toggle("on",on);$("#velo").classList.toggle("on",on)}
+function menuHtml(){const m=$("#menu");if(!m)return;m.innerHTML=`<div class="mcab"><b>Empleados</b><small>FRIOTEKA</small></div>`+MENU.map(([k,i,t])=>`<button class="mit ${st.tab===k||(k==="pos"&&st.tab==="cargar"&&st.cargar==="pos")?"on":""}" onclick="irMenu('${k}')"><i>${i}</i>${t}</button>`).join("")}
+function irMenu(k){menu(false);if(k==="pos"){st.cargar="pos";return go("cargar")}if(k==="fjcfg"){st.fjVerCfg=1;go("fichaje");setTimeout(()=>{const c=[...document.querySelectorAll(".card h2")].find(x=>x.textContent.startsWith("Configuración del fichaje"));if(c)c.scrollIntoView({behavior:"smooth"})},400);return}if(k==="cargar"&&st.cargar==="pos")st.cargar="adelanto";go(k)}
+function botonIzq(){if(st.tab==="empleado"){go("inicio")}else menu(true)}
+const lunPago=()=>addD(lunes(HOY),-7);
+function locTxt2(id){const l=(E(id)||{}).loc||{};if(l.sas)return"Los dos locales";if(l.car&&l.sm)return"051 · Cárcano y 045 · San Martín";if(l.sm)return"045 · San Martín";if(l.car)return"051 · Cárcano";return""}
+function cabezal(){const ficha=st.tab==="empleado"&&st.emp;const b=$("#bIzq"),t=$("#tit"),bar=$("#bar"),ba=$("#bAccion");if(!b)return;
+  b.textContent=ficha?"←":"☰";b.setAttribute("aria-label",ficha?"Volver":"Menú");t.textContent=ficha?st.emp:"FRIOTEKA";
+  if(ficha){const p=st.per||{};$("#hsub").textContent=regimen(st.emp,HOY)==="mensual"?"Cobra por mes":"Cobra por semana"}
+  else if(st.tab==="inicio"){const l=lunPago();$("#hsub").textContent=`Empleados · semana ${dm(l)} al ${dm(addD(l,6))} · ${estado||"guardado ✓"}`}
+  let txt=null,fn=null;
+  if(st.tab==="inicio"){txt="Cerrar y pagar la semana";fn=()=>{st.fjLun=lunPago();st.fjEmp="todos";go("fichaje")}}
+  else if(ficha){const p=st.per||perDefault(st.emp),isM=p.t==="m";let L=null;try{L=isM?liqMes(st.emp,p.v):liqSemana(st.emp,p.v)}catch(e){}
+    const pend=L?(isM?L.saldo-L.pagado:L.pend):0;txt=pend>0.5?"Registrar pago · "+fmt(pend):"Registrar pago";fn=()=>nuevoPago(st.emp,L?L.key:undefined)}
+  bar.style.display=txt?"":"none";document.body.style.paddingBottom=txt?"84px":"20px";if(txt){ba.textContent=txt;ba.onclick=fn}}
+function revisarDe(id,lun){if(!window.FJ||FJC.lun!==lun||!FJC.marcas)return null;try{return fjCruce(id,lun).filter(r=>r.acc&&!r.hecho).length}catch(e){return null}}
+function vInicio(){
+  const lun=lunPago();if(window.FJ&&FJC.lun!==lun&&!FJC.err)fjCargar(lun);
+  let tot=0,rev=0,revOk=true;
+  const filas=EMPS().map(id=>{const reg=regimen(id,lun),e=E(id);let horas="",pill;
+    const r=revisarDe(id,lun);if(r==null)revOk=false;else rev+=r;
+    if(reg==="mensual"){const ym=HOY.slice(0,7);const L=liqMes(id,ym);horas=e.horasRecibo?fh(L.hp)+" h en "+MESES[+ym.slice(5)-1]:"Recibo completo";
+      pill=r?["p-ba",r+" para revisar"]:["p-gr","Cobra por mes"]}
+    else{const L=liqSemana(id,lun);horas=fh(L.hp)+" h";const pagado=L.bruto>0&&L.pend<=0.5;if(!pagado)tot+=Math.max(0,L.pend);
+      pill=pagado?["p-ok","Pagado"]:r?["p-ba",r+" para revisar"]:e.quincenal?["p-gr","Quincenal"]:["p-ok","Cobra esta semana"]}
+    return `<button class="erow" onclick="st.ftab='horas';st.per=null;go('empleado','${id}')"><span class="av">${id.slice(0,2).toUpperCase()}</span><span class="t"><b>${id}</b><small>${horas}${locTxt2(id)?" · "+locTxt2(id):""}</small></span><span class="pill ${pill[0]}">${pill[1]}</span></button>`}).join("");
+  const ccTot=EMPS().reduce((a,id)=>a+saldoCC(id),0);
+  $("#main").innerHTML=`<div class="g2"><div class="kpi"><small>A pagar esta semana</small><b>${fmt(tot)}</b></div><div class="kpi ${rev?"w":""}"><small>Para revisar</small><b>${revOk?rev+" fichaje"+(rev===1?"":"s"):"…"}</b></div></div>
+    ${filas}<div class="muted" style="text-align:center;margin:6px 0 12px">Tocá un empleado para ver su semana.</div>
+    <div class="card"><div class="row"><span>Cuentas corrientes (lo que deben hoy)</span><span class="num neg"><b>${fmt(ccTot)}</b></span></div></div>${cardSac()}`}
+function horasDias(id,lun){
+  if(!window.FJ)return"";if(FJC.lun!==lun||(!FJC.marcas&&!FJC.err)){fjCargar(lun);return `<div class="card"><div class="muted">Leyendo los fichajes…</div></div>`}
+  if(FJC.err)return `<div class="card"><div class="note">No pude leer los fichajes: ${FJC.err}</div></div>`;
+  let rows=[];try{rows=fjCruce(id,lun)}catch(e){return""}
+  const hm=m=>m==null?"—":String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+  const LOC={"Cárcano":"051 · Cárcano","San Martín":"045 · San Martín"};
+  const estado=r=>{const t=r.est.map(x=>x[0]);const has=k=>t.some(x=>x.startsWith(k));
+    if(t.some(x=>x.startsWith("Justificado")))return["p-ok","Justificado"];
+    if(has("Falta"))return["p-ba","Falta"];if(has("No fichó"))return["p-ba","No fichó"];
+    if(r.acc&&!r.hecho)return["p-ba","Revisar"];if(has("Fuera de horario"))return["p-wa","Fuera de horario"];
+    if(has("Tarde"))return["p-wa","Tarde"];if(has("Todavía no"))return["p-gr","Programado"];if(has("Trabajando"))return["p-gr","Trabajando"];return["p-ok","A horario"]};
+  if(!rows.length)return `<div class="card"><div class="muted">Sin horario ni fichadas esta semana.</div></div>`;
+  return rows.map(r=>{const s=estado(r),dd=D(r.f);const loc=LOC[r.loc]||r.loc||"";
+    const txt=r.ent==null&&r.sal==null?(r.a!=null?`Turno ${hm(r.a)} – ${hm(r.b)}`:"Sin fichadas"):`${hm(r.ent)} – ${r.sal!=null?hm(r.sal):"sin salida"}`;
+    return `<div class="erow" onclick="st.fjLun='${lun}';st.fjEmp='${id}';go('fichaje')"><span class="t"><b>${DIAS[dd.getDay()]} ${dm(r.f)}${esFer(r.f)?' <span class="tag">feriado</span>':""}</b><small>${txt}${loc?" · "+loc:""}</small></span><span class="pill ${s[0]}">${s[1]}</span></div>`}).join("")+`<div class="muted" style="text-align:center;margin:-2px 0 10px">Tocá un día para corregirlo en Fichaje.</div>`}
+function recibosCard(id){const L=(DB.recibos||[]).filter(r=>r.emp===id).sort((a,b)=>a.mes<b.mes?1:-1);
+  let h=`<div class="card"><h2>Recibos de sueldo</h2>`;if(!L.length)h+=`<div class="muted">${id} no tiene recibos cargados.</div>`;
+  L.forEach(r=>h+=R(`<b>${mesTxt(r.mes)}</b>${r.bruto!=null?` <span class="muted">· bruto ${fmt(r.bruto)}</span>`:""}`,`<b>${fmt(r.neto)}</b>`));
+  return h+`<button class="btn sec sm" style="margin-top:10px" onclick="go('datos')">Cargar o corregir recibos</button></div>`}
+function vVac(){$("#main").innerHTML=EMPS().map(id=>vacCard(id).replace('<h2>','<h2>'+id+' · ')).join("")}
+function vSanc(){$("#main").innerHTML=EMPS().map(id=>sancCard(id).replace('<h2>','<h2>'+id+' · ')).join("")}
 
 /* ---------- INICIO ---------- */
-function vInicio(){
+function vInicioViejo(){
   const ym=HOY.slice(0,7);let tot=0,totAd=0;
   const cards=EMPS().map(id=>{
     const reg=regimen(id,HOY),cc=saldoCC(id),n=novMes(id,ym);
@@ -228,22 +312,25 @@ function cardSac(){const rows=EMPS().map(id=>({id,s:sac(id,HOY)})).filter(x=>x.s
 function perDefault(id){if(regimen(id,HOY)==="mensual")return{t:"m",v:HOY.slice(0,7)};
   return{t:"s",v:lunes(HOY)}}
 function vEmp(){
-  const id=st.emp;if(!st.per)st.per=perDefault(id);
-  const chips=EMPS().map(e=>`<span class="chip ${e===id?"on":""}" onclick="go('empleado','${e}')">${e}</span>`).join("");
+  const id=st.emp;if(!st.per)st.per=regimen(id,HOY)==="mensual"?perDefault(id):{t:"s",v:lunPago()};st.ftab=st.ftab||"horas";
   const p=st.per,isM=p.t==="m";
+  const tabs=[["horas","Horas"],["cta","Cta. cte."],["pagos","Pagos"],["recibos","Recibos"]];
+  let h=`<div class="chips">${tabs.map(([k,t])=>`<span class="chip ${st.ftab===k?"on":""}" onclick="st.ftab='${k}';render()">${t}</span>`).join("")}</div>`;
+  if(st.ftab==="recibos"){$("#main").innerHTML=h+recibosCard(id);return}
   const lbl=isM?mesTxt(p.v):"Semana "+dm(p.v)+" al "+dm(addD(p.v,6));
-  const segs=`<div class="seg"><button class="${!isM?"on":""}" onclick="setPerT('s')">Por semana</button><button class="${isM?"on":""}" onclick="setPerT('m')">Por mes</button></div>`;
-  let h=`<div class="chips">${chips}</div>${segs}<div class="per"><button class="btn sec sm" onclick="movPer(-1)">◀</button><b>${lbl}</b><button class="btn sec sm" onclick="movPer(1)">▶</button></div>
+  h+=`<div class="seg"><button class="${!isM?"on":""}" onclick="setPerT('s')">Por semana</button><button class="${isM?"on":""}" onclick="setPerT('m')">Por mes</button></div><div class="per"><button class="btn sec sm" onclick="movPer(-1)">◀</button><b>${lbl}</b><button class="btn sec sm" onclick="movPer(1)">▶</button></div>
   <div class="per" style="margin-top:-4px"><label class="muted" style="margin:0">Ir a:</label>${isM?`<input type="month" value="${p.v}" onchange="irPer(this.value)" style="width:auto">`:`<input type="date" value="${p.v}" onchange="irPer(this.value)" style="width:auto">`}<button class="btn ghost sm" onclick="irPer(null)">${isM?"Este mes":"Esta semana"}</button></div>`;
   const regPer=regimen(id,isM?finMes(p.v):p.v);
   if(isM&&regPer==="semanal")h+=`<div class="note">${id} en este período cobraba por semana. La vista mensual es solo para ver el total; la liquidación es la semanal.</div>`;
   if(!isM&&regPer==="mensual")h+=`<div class="note">${id} en este período cobra por mes. La semana sirve de referencia o para calcular un adelanto; la liquidación es la mensual.</div>`;
   const L=isM?liqMes(id,p.v):liqSemana(id,p.v);
-  h+=liqCard(id,L,isM,regPer);
-  if(!isM)h+=horarioCard(id,p.v,L);
-  h+=diasCard(id,L,isM);
-  h+=ccCard(id,isM?p.v+"-01":p.v,isM?finMes(p.v):addD(p.v,6));
-  h+=vacCard(id)+sancCard(id);
+  if(st.ftab==="horas"){
+    if(!isM)h+=horasDias(id,p.v);
+    h+=liqCard(id,L,isM,regPer,"liq");
+    h+=`<details class="mas"><summary>Editar horas y novedades día por día</summary>${diasCard(id,L,isM)}</details>`;
+    if(!isM)h+=`<details class="mas"><summary>Horario programado</summary>${horarioCard(id,p.v,L)}</details>`}
+  else if(st.ftab==="cta")h+=ccCard(id,isM?p.v+"-01":p.v,isM?finMes(p.v):addD(p.v,6));
+  else if(st.ftab==="pagos")h+=liqCard(id,L,isM,regPer,"pagos");
   $("#main").innerHTML=h}
 const TSANC=["Advertencia verbal","Apercibimiento escrito","Suspensión","Otro"];
 function sancCard(id){const L=sancDe(id);
@@ -273,7 +360,7 @@ function setPerT(t){const p=st.per;if(t==="m")st.per={t:"m",v:(p.t==="m"?p.v:add
 function irPer(v){const p=st.per;if(p.t==="m")st.per={t:"m",v:v||HOY.slice(0,7)};else st.per={t:"s",v:lunes(v||HOY)};render()}
 function movPer(n){const p=st.per;st.per=p.t==="m"?{t:"m",v:sumMes(p.v,n)}:{t:"s",v:addD(p.v,7*n)};render()}
 const R=(a,b,c="")=>`<div class="row ${c}"><span>${a}</span><span class="num">${b}</span></div>`;
-function liqCard(id,L,isM,reg){
+function liqCard(id,L,isM,reg,parte){
   let h=`<div class="card"><h2>Liquidación</h2>`;
   if(!isM){
     h+=R("Horas pagas",fh(L.hp)+" hs"+(L.hp!==L.ht?` <span class="muted">(${fh(L.ht)} trabajadas)</span>`:""));
@@ -299,13 +386,14 @@ function liqCard(id,L,isM,reg){
     else h+=R(L.saldo<-0.5?"SALDO: TE DEBE":"SALDO A PAGAR",`<span class="${L.saldo<-0.5?"neg":""}">${fmt(Math.abs(L.saldo))}</span>`,"tot big");
     L.falta=falta;
   }
-  h+=`<h3>Pagos</h3>`;
+  const corte=h.length;h+=`<h3>Pagos</h3>`;
   const pg=L.pg.filter(p=>p.tipo==="pago");
   if(!pg.length)h+=`<div class="muted">Sin pagos cargados.</div>`;
   pg.forEach(p=>{h+=R(`${dm(p.fecha)} · ${FORMA[p.forma]||p.forma}${p.cond?" · "+p.cond:""}${edBtns("Pago",p.id)}`,fmt(p.importe));if(st.edPago===p.id)h+=pagoForm(p)});
   const pend=isM?L.saldo-L.pagado:L.pend;
   if(!L.falta&&(pg.length||Math.abs(pend)>0.5))h+=R("Pendiente de pago",`<span class="${Math.abs(pend)>0.5?"neg":"pos"}">${Math.abs(pend)<0.5?"✓ pagado":fmt(pend)}</span>`,"tot");
   h+=`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" onclick="nuevoPago('${id}','${L.key}')">+ Pago</button><button class="btn sec sm" onclick="nuevoDesc('${id}','${L.key}')">+ Descuento cta. cte.</button>${isM?`<button class="btn sec sm" onclick="nuevoAdel('${id}','${L.key}')">+ Adelanto</button>`:`<button class="btn sec sm" onclick="imprimirRecibo('${id}','${L.key.slice(1)}')">🖨 Imprimir recibo</button>`}</div></div>`;
+  if(parte==="liq")return h.slice(0,corte)+"</div>";if(parte==="pagos")return `<div class="card"><h2>Pagos</h2>`+h.slice(corte+"<h3>Pagos</h3>".length);
   return h}
 function descRows(id,key){let h="";movsDe(id).filter(m=>m.tipo==="descuento"&&m.imputa===key).forEach(m=>{h+=R(`<span class="muted" style="padding-left:12px">· ${dm(m.fecha)} ${m.detalle||"Descuento"}</span>${edBtns("Mov",m.id)}`,`<span class="muted">${fmt2(m.importe)}</span>`);if(st.edMov===m.id)h+=movForm(m)});return h}
 const NOVS=["","Tarde","Falta","Falta con aviso","Suspensión","Otro"];
@@ -626,7 +714,7 @@ async function fjCargar(lun,forzar){
   FJC.borr=[];FJC.clave=null;
   try{FJC.clave=await FJ.clave()}catch(e){}
   try{FJC.borr=await FJ.borrados(lun,addD(lun,6))}catch(e){FJC.borr=null}
-  fjSync(lun);fjSync(addD(lun,7));if(st.tab==="fichaje")render()}
+  fjSync(lun);fjSync(addD(lun,7));if(["fichaje","inicio","empleado"].includes(st.tab))render()}
 async function fjSync(lun){if(!window.FJ)return;const t={};
   for(const k in (DB.horarios||{})){const f=k.split("|")[1];if(f>=lun&&f<=addD(lun,6))t[k]=DB.horarios[k]}
   if(!Object.keys(t).length)return;const firma=JSON.stringify(t);if(FJC.sync[lun]===firma)return;
