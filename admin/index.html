@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administración FRIOTEKA</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mut:#6b7385;--line:#e3e6ec;--acc:#1f6feb;--bar:#5b8def;--red:#c62828;--redbg:#fdecea;--yel:#9a6700;--yelbg:#fff6d6}
+@media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--tx:#e6e9ef;--mut:#9aa3b5;--line:#2c3340;--acc:#58a6ff;--bar:#4c7fe0;--red:#ff7b72;--redbg:#3a1d1d;--yel:#e3b341;--yelbg:#3a321b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.crumb{color:var(--mut);font-size:13px}.crumb a{color:var(--acc);text-decoration:none}
+h1{margin:2px 0 0;font-size:22px}
+h2{font-size:16px;margin:22px 0 10px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-size:16px;padding:12px 18px}
+.lect{color:var(--mut);font-size:12px;margin-top:4px;text-align:right}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.areas{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.two{grid-template-columns:1fr 1fr}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.lbl{color:var(--mut);font-size:13px}
+.big{font-size:26px;font-weight:650;margin:2px 0}
+.sub{color:var(--mut);font-size:13px}
+.area{display:block;text-decoration:none;color:var(--tx);font-weight:600;font-size:16px;padding:18px 14px}
+.area small{display:block;color:var(--mut);font-weight:400;font-size:12px;margin-top:2px}
+.area.off{opacity:.45;pointer-events:none}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:500;font-size:12px}
+.n{text-align:right;white-space:nowrap}
+tr.det td{color:var(--mut);font-size:13px;background:var(--bg)}
+tr.fila{cursor:pointer}
+.rub{display:grid;grid-template-columns:130px 1fr 120px;gap:8px;align-items:center;margin:7px 0;font-size:14px}
+.track{background:var(--line);border-radius:4px;height:12px}
+.fill{background:var(--bar);height:12px;border-radius:4px}
+.al{border-radius:8px;padding:9px 11px;margin:6px 0;font-size:14px}
+.r{background:var(--redbg);color:var(--red)}
+.y{background:var(--yelbg);color:var(--yel)}
+ul{margin:4px 0;padding-left:18px}li{margin:3px 0}
+.src{color:var(--mut);font-size:12px;margin-top:8px}
+.centro{max-width:460px;margin:60px auto;text-align:center}
+.centro p{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="centro"><p>Cargando…</p></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { requireLogin } from "../login.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+// ---------- Login (el mismo Firebase de las apps) ----------
+const fbApp = initializeApp({
+  apiKey: "AIzaSyC5voDKO_imN8QqRRpjMQdwV7QILrJw40g",
+  authDomain: "frioteka-preventista.firebaseapp.com",
+  projectId: "frioteka-preventista",
+  storageBucket: "frioteka-preventista.firebasestorage.app",
+  messagingSenderId: "212598423220",
+  appId: "1:212598423220:web:aee51bc39626b3c08621e1"
+}, "admin");
+await requireLogin(fbApp, { color: "#1f3a5f", titulo: "Administración FRIOTEKA" });
+
+// ---------- Archivos: se leen de la carpeta TODO CLAUDE de esta PC, nunca se escriben ----------
+const RUTA = {
+  gastos: "GASTOS FIJOS Y VARIABLES/GASTOS.xlsx",
+  ventas: m => `JORNADAS/${MESES[m.getMonth()]}_CLAUDE.xlsx`,
+  cierre: ym => `PANORAMA GENERAL/CIERRES/${ym}/CIERRE_GASTOS_${ym}.json`
+};
+const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+const $app = document.getElementById("app");
+
+function idb() {
+  return new Promise((ok, mal) => { const r = indexedDB.open("ftk-admin", 1); r.onupgradeneeded = () => r.result.createObjectStore("k"); r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error); });
+}
+async function guardarCarpeta(h) { const db = await idb(); await new Promise(ok => { const t = db.transaction("k", "readwrite"); t.objectStore("k").put(h, "carpeta"); t.oncomplete = ok; }); }
+async function cargarCarpeta() { try { const db = await idb(); return await new Promise(ok => { const q = db.transaction("k").objectStore("k").get("carpeta"); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch { return null; } }
+
+let carpeta = null;
+async function archivo(ruta) {
+  if (window.__leerPrueba) return window.__leerPrueba(ruta);
+  let d = carpeta; const partes = ruta.split("/"); const nombre = partes.pop();
+  for (const p of partes) d = await d.getDirectoryHandle(p);
+  const f = await (await d.getFileHandle(nombre)).getFile();
+  return { buf: await f.arrayBuffer(), mod: new Date(f.lastModified) };
+}
+async function libro(ruta) { const a = await archivo(ruta); return { wb: XLSX.read(a.buf, { type: "array" }), mod: a.mod }; }
+
+// Grilla con posiciones reales (fila 1 = índice 0, columna A = índice 0)
+function grilla(ws) {
+  const R = XLSX.utils.decode_range(ws["!ref"] || "A1"), g = [];
+  for (let r = 0; r <= R.e.r; r++) { const fila = []; for (let c = 0; c <= R.e.c; c++) { const x = ws[XLSX.utils.encode_cell({ r, c })]; fila.push(x ? x.v : null); } g.push(fila); }
+  return g;
+}
+const txt = v => (v == null ? "" : String(v)).trim();
+const num = v => (typeof v === "number" ? v : null);
+const norm = s => txt(s).toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const fecha = s => { const d = new Date(Math.round((s - 25569) * 864e5)); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); };
+const dm = d => d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+const $ = n => n == null ? "—" : Math.round(n).toLocaleString("es-AR");
+const pct = n => n == null || !isFinite(n) ? "—" : (n * 100).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " %";
+const esc = s => txt(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const ym = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+function fechaTexto(t, hoy) { // "10/12/2026" o "13/12"
+  const m = txt(t).match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/); if (!m) return null;
+  let a = m[3] ? +m[3] : hoy.getFullYear(); const f = new Date(a, +m[2] - 1, +m[1]);
+  if (!m[3] && f < new Date(hoy.getFullYear(), hoy.getMonth() - 6, 1)) f.setFullYear(a + 1);
+  return f;
+}
+
+// ---------- Lectura de GASTOS.xlsx (por rótulos, no por número de fila) ----------
+function leerHoja1(g) {
+  const lados = { sm: { lbl: 2, val: 1 }, carcano: { lbl: 6, val: 5 } }, out = {}, avisos = [];
+  for (const [k, { lbl, val }] of Object.entries(lados)) {
+    const v = r => { for (const f of g) if (norm(f[lbl]) === r) { if (num(f[val]) == null) avisos.push(`Hoja1: "${r}" sin valor guardado (abrir y guardar GASTOS.xlsx en Excel)`); return num(f[val]) ?? 0; } avisos.push(`Hoja1: no encontré "${r}" (${k === "sm" ? "San Martín" : "Cárcano"})`); return 0; };
+    const total = v("TOTAL GASTOS"), alq = v("TOTAL ALQUILER"), sue = v("TOTAL SUELDOS"), apo = v("TOTAL APORTES"), luz = v("TOTAL EPEC"), var_ = v("TOTAL VARIOS"), flete = v("FLETE FENOVO");
+    out[k] = { total, rubros: { "Luz": luz, "Alquileres": alq, "Sueldos y cargas": sue + apo, "Servicios": var_ - flete, "Flete Fenovo": flete } };
+    const suma = alq + sue + apo + luz + var_;
+    if (Math.abs(suma - total) > 1) avisos.push(`Hoja1 ${k === "sm" ? "San Martín" : "Cárcano"}: los rubros suman ${$(suma)} pero el TOTAL GASTOS dice ${$(total)}`);
+  }
+  // Gestión: el monto está escrito en el rótulo ("BANCHI 2M", "FERNANDA (2M ...")
+  let gestion = 0, nGest = 0;
+  for (const f of g) { const t = txt(f[1]); if (/^GESTION\s*-/i.test(norm(t))) { const m = t.match(/(\d+(?:[.,]\d+)?)\s*M\b/); if (m) { gestion += parseFloat(m[1].replace(",", ".")) * 1e6; nGest++; } } }
+  if (nGest !== 2) avisos.push(`Hoja1: encontré ${nGest} sueldos de gestión (esperaba 2)`);
+  // Vencimientos anotados en Hoja1 ("a pagar hasta 30/11", "VEP expira 13/12")
+  const notas = [];
+  for (const f of g) { const m = txt(f[5]).match(/(?:a pagar hasta|expira)\s+(\d{1,2}\/\d{1,2})/i); if (m && num(f[2]) != null) notas.push({ que: txt(f[1]), monto: f[2], fechaTxt: m[1], nota: txt(f[5]) }); }
+  return { ...out, gestion, notas, avisos };
+}
+
+function leerImpuestos(g, mes, hoy) {
+  const avisos = [], planes = {}, alertas = [], proximos = [];
+  const mesAnt = new Date(mes.getFullYear(), mes.getMonth() - 1, 1);
+  const perAnt = `${String(mesAnt.getMonth() + 1).padStart(2, "0")}/${mesAnt.getFullYear()}`;
+  let muni = null;
+  for (const f of g) {
+    const per = txt(f[0]), imp = norm(f[1]);
+    if (/^\d{2}\/\d{4}$/.test(per) && imp.startsWith("MUNICIPALIDAD")) {
+      const aPagar = num(f[8]) ?? 0, pagada = /PAGAD/i.test(txt(f[11]) + " " + txt(f[12]));
+      if (per === perAnt) muni = aPagar;
+      if (aPagar > 0 && !pagada && num(f[10]) != null) {
+        const v = fecha(f[10]);
+        if (v < hoy) alertas.push({ t: "r", h: `<b>Vencida:</b> Municipalidad ${per} · $ ${$(aPagar)} · vencía ${dm(v)} y no figura pagada.` });
+        else proximos.push({ f: v, h: `Municipalidad ${per} · $ ${$(aPagar)}` });
+      }
+    }
+    const pm = txt(f[0]).match(/^([A-Z])\s*\(\d+\s*cuotas\)/i);
+    if (pm && num(f[1]) != null) {
+      const p = planes[pm[1]] ||= { cuotas: [], obs: "" };
+      p.cuotas.push({ n: f[1], venc: txt(f[2]), monto: num(f[3]) ?? 0, estado: txt(f[4]) }); p.obs = txt(f[5]);
+    }
+    if (norm(f[0]) === "TOTAL VENCIDO" && num(f[5])) alertas.push({ t: "r", h: `<b>Vencida:</b> deuda Municipalidad de meses anteriores · $ ${$(f[5])} (dato del portal; crece con recargos).` });
+  }
+  if (muni == null) { avisos.push(`IMPUESTOS: no está la Municipalidad del período ${perAnt}`); muni = 0; }
+  let cuotasPlanes = 0; const planesTxt = [];
+  for (const [k, p] of Object.entries(planes)) {
+    const aparte = !/no sumar aparte/i.test(p.obs);
+    const cuota = p.cuotas[p.cuotas.length - 1].monto;
+    if (aparte) { cuotasPlanes += cuota; planesTxt.push(`plan ${k}`); }
+    for (const c of p.cuotas) {
+      const v = fechaTexto(c.venc, hoy); if (!v) continue;
+      if (/A VENCER/i.test(c.estado) && v < hoy) alertas.push({ t: "y", h: `<b>Confirmar:</b> plan IIBB ${k} cuota ${c.n} (${dm(v)}) sigue "a vencer": ¿se debitó?` });
+      else if (!/PAGAD/i.test(c.estado) && v >= hoy && v - hoy < 31 * 864e5) proximos.push({ f: v, h: `Plan IIBB ${k} cuota ${c.n} · $ ${$(c.monto)}` });
+    }
+  }
+  return { muni, perAnt, cuotasPlanes, planesTxt, alertas, proximos, avisos };
+}
+
+function leerVariables(g, mes) {
+  const filas = [], faltan = [];
+  for (let i = 1; i < g.length; i++) {
+    const f = g[i]; if (num(f[0]) == null) continue;
+    const d = fecha(f[0]); if (d.getMonth() !== mes.getMonth() || d.getFullYear() !== mes.getFullYear()) continue;
+    const l = norm(f[4]), local = l.startsWith("SAN MARTIN") ? "sm" : l.startsWith("CARCANO") ? "carcano" : "sas";
+    const r = { d, cat: txt(f[1]), con: txt(f[2]), prov: txt(f[3]), localTxt: txt(f[4]), local, monto: num(f[5]) };
+    filas.push(r);
+    if (r.monto == null) faltan.push(`Variable del ${dm(d)} sin monto: ${r.con}`);
+    else if (/a confirmar|pendiente/i.test(r.con)) faltan.push(`Variable del ${dm(d)} (${r.cat}): ${r.con.match(/[^—-]*(a confirmar|pendiente)[^—]*/i)?.[0].trim() || "a confirmar"}`);
+  }
+  filas.sort((a, b) => a.d - b.d);
+  return { filas, faltan };
+}
+
+function leerEpec(g) {
+  const ult = {};
+  for (let i = 1; i < g.length; i++) { const f = g[i], l = norm(f[0]); if (!l || num(f[5]) == null) continue; const v = num(f[2]) ?? 0; if (!ult[l] || v > ult[l].v) ult[l] = { v, kwh: f[5], pk: num(f[12]) }; }
+  return ult;
+}
+
+// ---------- Venta del mes (JORNADAS) ----------
+function leerVentas(g, mes) {
+  let local = null; const v = { sm: 0, carcano: 0 }, dias = new Set(); let ultimo = null, ayer = { sm: 0, carcano: 0 };
+  const porDia = {};
+  for (const f of g) {
+    const b = norm(f[1]); if (b === "SAN MARTIN") { local = "sm"; continue; } if (b === "CARCANO") { local = "carcano"; continue; }
+    const dia = (num(f[3]) ?? 0) + (num(f[4]) ?? 0); // caja 1 + caja 2 (la columna TOTAL del día no trae valor guardado)
+    if (!local || num(f[2]) == null || !dia) continue;
+    const d = fecha(f[2]); if (d.getMonth() !== mes.getMonth() || d.getFullYear() !== mes.getFullYear()) continue;
+    v[local] += dia; dias.add(+d); (porDia[+d] ||= { sm: 0, carcano: 0 })[local] += dia;
+    if (!ultimo || d > ultimo) ultimo = d;
+  }
+  if (ultimo) ayer = porDia[+ultimo];
+  return { ...v, total: v.sm + v.carcano, dias: dias.size, ultimo, ayer };
+}
+
+// ---------- Armado de todo lo del mes ----------
+async function calcular() {
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const mes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const diasMes = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate();
+  const G = await libro(RUTA.gastos), hoja = n => { const ws = G.wb.Sheets[n]; if (!ws) throw new Error(`GASTOS.xlsx no tiene la hoja ${n}`); return grilla(ws); };
+  const h1 = leerHoja1(hoja("Hoja1")), imp = leerImpuestos(hoja("IMPUESTOS"), mes, hoy), va = leerVariables(hoja("VARIABLES"), mes), ep = leerEpec(hoja("EPEC"));
+  let ve = null, veMod = null, veError = null;
+  try { const V = await libro(RUTA.ventas(mes)); ve = leerVentas(grilla(V.wb.Sheets[V.wb.SheetNames[0]]), mes); veMod = V.mod; } catch (e) { veError = `No pude leer ${RUTA.ventas(mes)}`; }
+  let prev = null; const mesAnt = new Date(mes.getFullYear(), mes.getMonth() - 1, 1);
+  try { const a = await archivo(RUTA.cierre(ym(mesAnt))); const j = JSON.parse(new TextDecoder().decode(a.buf)); const n = k => j.numeros.find(x => x.clave === k)?.valor; prev = { total: n("total_mes"), pct: n("gasto_total_pct_venta"), nombre: MESES[mesAnt.getMonth()].toLowerCase() }; } catch {}
+
+  const fijoSas = h1.gestion + imp.cuotasPlanes + imp.muni;
+  const fijo = { sm: h1.sm.total, carcano: h1.carcano.total, sas: fijoSas };
+  const varL = { sm: 0, carcano: 0, sas: 0 }; for (const r of va.filas) varL[r.local] += r.monto || 0;
+  const fijoTot = fijo.sm + fijo.carcano + fijo.sas, varTot = varL.sm + varL.carcano + varL.sas;
+  const rubros = {}; for (const k of ["sm", "carcano"]) for (const [n, x] of Object.entries(h1[k].rubros)) rubros[n] = (rubros[n] || 0) + x;
+  rubros["Gestión"] = h1.gestion; rubros["Impuestos y tasas"] = imp.cuotasPlanes + imp.muni;
+  const prop = ve && ve.dias ? ve.dias / diasMes : null;
+  const pctL = k => ve && ve[k] ? (fijo[k] * prop + varL[k]) / ve[k] : null;
+
+  const proximos = [...imp.proximos];
+  for (const n of h1.notas) { const f = fechaTexto(n.fechaTxt, hoy); if (f && f >= hoy) proximos.push({ f, h: `${n.que} · $ ${$(n.monto)}${/interes/i.test(n.nota) ? " (corren intereses)" : ""}` }); }
+  proximos.sort((a, b) => a.f - b.f);
+  const avisos = [...h1.avisos, ...imp.avisos]; if (veError) avisos.push(veError);
+  return { hoy, mes, diasMes, gMod: G.mod, veMod, ve, prev, fijo, varL, fijoTot, varTot, total: fijoTot + varTot,
+    pct: ve && ve.total ? (fijoTot * prop + varTot) / ve.total : null, pctL, rubros, va, ep, imp,
+    alertas: imp.alertas, proximos, faltan: [...va.faltan, ...avisos] };
+}
+
+// ---------- Pantallas ----------
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["", "Bancos", "Pronto"], ["", "Empleados", "Pronto"], ["", "Proveedores", "Pronto"], ["", "Fenovo / deuda", "Pronto"], ["", "IVA", "Pronto"], ["", "Compras almacén", "Pronto"], ["", "Energía", "Pronto"]];
+const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
+const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+
+function cabecera(titulo, crumb, x) {
+  return `<header><div><div class="crumb">${crumb}</div><h1>${titulo}</h1></div>
+  <div><button class="btn" id="releer">↻ Volver a leer los Excel</button>
+  <div class="lect">GASTOS.xlsx: ${hora(x.gMod)} · Ventas: ${x.ve?.ultimo ? "hasta el " + dm(x.ve.ultimo) : "sin datos"}</div></div></header>`;
+}
+const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}</div>`).join("") || `<div class="sub">Sin alertas.</div>`}
+  ${x.proximos.length ? `<div class="lbl" style="margin-top:10px">Próximos vencimientos</div><ul>${x.proximos.map(p => `<li>${dm(p.f)} · ${esc(p.h)}</li>`).join("")}</ul>` : ""}
+  ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
+
+function inicio(x) {
+  const ve = x.ve;
+  return cabecera("Administración FRIOTEKA", "Inicio", x) + `
+  <div class="grid kpis">
+    <div class="card"><div class="lbl">Venta del último día${ve?.ultimo ? " (" + dm(ve.ultimo) + ")" : ""}</div><div class="big">$ ${$(ve && ve.ayer.sm + ve.ayer.carcano)}</div><div class="sub">SM ${$(ve?.ayer.sm)} · Cárcano ${$(ve?.ayer.carcano)}</div></div>
+    <div class="card"><div class="lbl">Venta de ${mesNom(x.mes).toLowerCase()}</div><div class="big">$ ${$(ve?.total)}</div><div class="sub">${ve?.dias || 0} días cargados</div></div>
+    <div class="card"><div class="lbl">Gasto sobre la venta</div><div class="big">${pct(x.pct)}</div><div class="sub">${x.prev ? `En ${x.prev.nombre}: ${String(x.prev.pct).replace(".", ",")} %` : ""}</div></div>
+  </div>
+  <h2>Áreas</h2>
+  <div class="grid areas">${AREAS.map(([id, n, s]) => `<a class="card area ${id ? "" : "off"}" href="${id ? "#" + id : "#"}">${n}<small>${s}</small></a>`).join("")}</div>
+  <h2>Alertas</h2><div class="card">${bloqueAlertas(x)}</div>`;
+}
+
+function gastos(x) {
+  const ve = x.ve, rub = Object.entries(x.rubros).sort((a, b) => b[1] - a[1]), max = rub[0]?.[1] || 1;
+  const porCat = {}; for (const r of x.va.filas) porCat[r.cat] = (porCat[r.cat] || 0) + (r.monto || 0);
+  const ep = x.ep, luzTxt = Object.entries(ep).map(([l, e]) => `${l === "CARCANO" ? "Cárcano" : l === "SAN MARTIN" ? "SM" : l} ${$(e.kwh)} kWh a $${$(e.pk)}/kWh`).join(" · ");
+  const fila = (n, k) => `<tr><td>${n}</td><td class="n">${$(x.fijo[k])}</td><td class="n">${$(x.varL[k])}</td><td class="n">${$(x.fijo[k] + x.varL[k])}</td><td class="n">${k === "sas" ? "—" : pct(x.pctL(k))}</td></tr>`;
+  return cabecera(`Gastos · ${mesNom(x.mes)}`, `<a href="#">Inicio</a> › Gastos`, x) + `
+  <div class="grid kpis">
+    <div class="card"><div class="lbl">Gasto del mes</div><div class="big">$ ${$(x.total)}</div><div class="sub">Fijo ${$(x.fijoTot)} · Variable ${$(x.varTot)}</div></div>
+    <div class="card"><div class="lbl">Gasto sobre la venta</div><div class="big">${pct(x.pct)}</div><div class="sub">${x.prev ? `${x.prev.nombre[0].toUpperCase() + x.prev.nombre.slice(1)}: ${String(x.prev.pct).replace(".", ",")} % · ` : ""}proporcional a ${ve?.dias || 0} días de venta</div></div>
+    <div class="card"><div class="lbl">Gasto fijo por día</div><div class="big">$ ${$(x.fijoTot / x.diasMes)}</div><div class="sub">Lo que cuesta abrir cada día</div></div>
+    <div class="card"><div class="lbl">Venta${ve?.ultimo ? " al " + dm(ve.ultimo) : ""}</div><div class="big">$ ${$(ve?.total)}</div><div class="sub">SM ${$(ve?.sm)} · Cárcano ${$(ve?.carcano)}</div></div>
+  </div>
+  <h2>Por local</h2>
+  <div class="card tbl"><table>
+    <tr><th>Local</th><th class="n">Fijo</th><th class="n">Variable</th><th class="n">Total</th><th class="n">% de su venta</th></tr>
+    ${fila("San Martín", "sm")}${fila("Cárcano", "carcano")}${fila("SAS (compartido)", "sas")}
+  </table><div class="src">SAS = gestión, ${x.imp.planesTxt.join(" y ")} de IIBB, Municipalidad ${x.imp.perAnt}, y los variables que no son de un solo local.</div></div>
+  <div class="grid two">
+    <div><h2>Fijo por rubro</h2><div class="card">
+      ${rub.map(([n, v]) => `<div class="rub"><span>${n}</span><div class="track"><div class="fill" style="width:${Math.max(0, v / max * 100)}%"></div></div><span class="n">${$(v)} · ${Math.round(v / x.fijoTot * 100)}%</span></div>`).join("")}
+      ${luzTxt ? `<div class="src">Luz (última factura): ${luzTxt}.</div>` : ""}
+    </div></div>
+    <div><h2>Alertas</h2><div class="card">${bloqueAlertas(x)}</div></div>
+  </div>
+  <h2>Variables del mes · $ ${$(x.varTot)}</h2>
+  <div class="card tbl"><table id="vars">
+    <tr><th>Fecha</th><th>Categoría</th><th>Proveedor</th><th>Local</th><th class="n">Monto</th></tr>
+    ${x.va.filas.map((r, i) => `<tr class="fila" data-i="${i}"><td>${dm(r.d)}</td><td>${esc(r.cat)}</td><td>${esc(r.prov) || "—"}</td><td>${esc(r.localTxt)}</td><td class="n">${r.monto == null ? "sin monto" : $(r.monto)}</td></tr><tr class="det" hidden><td colspan="5">${esc(r.con)}</td></tr>`).join("") || `<tr><td colspan="5" class="sub">Todavía no hay variables cargados este mes.</td></tr>`}
+  </table><div class="src">Por categoría: ${Object.entries(porCat).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${esc(c)} ${$(v)}`).join(" · ")}. Tocá una fila para ver el detalle.</div></div>
+  <h2>De dónde sale cada número</h2>
+  <div class="card sub">Fijos de cada local y rubros: GASTOS.xlsx › Hoja1 (renglones TOTAL GASTOS, TOTAL ALQUILER, TOTAL SUELDOS, TOTAL APORTES, TOTAL EPEC, TOTAL VARIOS) · Gestión: renglones GESTION de Hoja1 · Planes IIBB y Municipalidad: hoja IMPUESTOS · Variables: hoja VARIABLES · Luz: hoja EPEC · Venta: JORNADAS › ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx · Mes anterior: cierre de PANORAMA. El sistema solo lee estos archivos; no los modifica.</div>`;
+}
+
+// ---------- Arranque ----------
+let datos = null;
+function pintar() {
+  if (!datos) return;
+  $app.innerHTML = location.hash === "#gastos" ? gastos(datos) : inicio(datos);
+  document.getElementById("releer").onclick = cargar;
+  const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
+  scrollTo(0, 0);
+}
+async function cargar() {
+  $app.innerHTML = `<div class="centro"><p>Leyendo los Excel…</p></div>`;
+  try { datos = await calcular(); pintar(); }
+  catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
+}
+async function elegir() {
+  try { carpeta = await window.showDirectoryPicker({ id: "todoclaude", mode: "read" }); await guardarCarpeta(carpeta); cargar(); } catch {}
+}
+function pedirCarpeta(yaHay) {
+  $app.innerHTML = `<div class="centro"><h1>Administración FRIOTEKA</h1>
+  <p>${yaHay ? "Chrome necesita que confirmes otra vez el permiso para leer la carpeta." : "La primera vez, elegí la carpeta <b>Escritorio › TODO CLAUDE</b>. Chrome solo la va a leer: no cambia nada y no sube nada a internet."}</p>
+  <button class="btn pri" id="ok">${yaHay ? "Permitir leer TODO CLAUDE" : "Elegir la carpeta TODO CLAUDE"}</button></div>`;
+  document.getElementById("ok").onclick = async () => {
+    if (yaHay && (await carpeta.requestPermission({ mode: "read" })) === "granted") cargar(); else elegir();
+  };
+}
+window.addEventListener("hashchange", pintar);
+if (window.__leerPrueba) cargar();
+else if (!window.showDirectoryPicker) $app.innerHTML = `<div class="centro"><h1>Abrilo en Chrome</h1><p>Este navegador no puede leer carpetas de la PC.</p></div>`;
+else {
+  carpeta = await cargarCarpeta();
+  if (carpeta && (await carpeta.queryPermission({ mode: "read" })) === "granted") cargar();
+  else pedirCarpeta(!!carpeta);
+}
+</script>
+</body>
+</html>
