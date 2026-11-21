@@ -121,7 +121,8 @@ const RUTA = {
   almacen: "COMPRAS ALMACEN/COMPRAS_ALMACEN.xlsx",
   inventarioLuz: "ENERGIA CARCANO/INVENTARIO_CONSUMO_CARCANO.xlsx",
   sueldos: "EMPLEADOS/RESUMEN_SUELDOS.xlsx",
-  cierreB: ym => `PANORAMA GENERAL/CIERRES/${ym}/CIERRE_BANCOS_${ym}.json`
+  cierreB: ym => `PANORAMA GENERAL/CIERRES/${ym}/CIERRE_BANCOS_${ym}.json`,
+  impuestos: "PANORAMA GENERAL/IMPUESTOS_MES.xlsx"
 };
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 const $app = document.getElementById("app");
@@ -480,6 +481,53 @@ function calcularIva(x, F, P) {
   return { ult, saldo, debito, i105: iv?.i105, i21: iv?.i21, fen, prov, credito, dif, aPagar, llevar: dif == null ? null : Math.max(0, dif), ant, meses: ant?.llevar ? saldo / ant.llevar : null, filas, alertas, avisos };
 }
 
+// ---------- Impuestos (IVA + IIBB): PANORAMA GENERAL › IMPUESTOS_MES.xlsx, lo arma PANORAMA cada lunes ----------
+const IMP_COLS = ["fecha_informe", "periodo_desde", "periodo_hasta", "local", "iva_debito", "iva_credito_fenovo", "iva_credito_proveedores", "iva_percepciones", "iva_saldo_mes", "iva_a_favor_acumulado", "iva_a_fenovo_estimado", "iibb_alicuota", "iibb_impuesto", "iibb_sircreb", "iibb_ret_payway_mp", "iibb_percepciones", "iibb_diferencia_mes", "iibb_a_favor_acumulado", "faltantes"];
+function fechaImp(v) {
+  if (typeof v === "number") return fecha(Math.round(v)); // número de fecha de Excel, redondeado al día
+  if (v instanceof Date) { const d = new Date(v.getTime() + 12 * 36e5); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); } // redondea al día más cercano (fechas guardadas a medianoche UTC)
+  const t = txt(v), iso = t.match(/^(\d{4})-(\d{2})-(\d{2})/); if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+}
+function numImp(v) {
+  if (typeof v === "number") return v;
+  const t = txt(v).replace(/[$\s]/g, ""); if (!t) return null;
+  const n = Number(/,\d+$/.test(t) ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "")); return isFinite(n) ? n : null;
+}
+function calcularImpuestos(IM, hoy) {
+  if (!IM) return { espera: true };
+  const ws = IM.wb.Sheets[IM.wb.SheetNames[0]]; if (!ws) throw new Error("el archivo no tiene hojas");
+  const g = grilla(ws), hdr = (g[0] || []).map(h => txt(h).toLowerCase()), C = {}, avisos = [];
+  for (const c of IMP_COLS) { C[c] = hdr.indexOf(c); if (C[c] < 0) avisos.push(`IMPUESTOS_MES.xlsx: no encontré la columna "${c}"`); }
+  if (C.fecha_informe < 0 || C.local < 0) throw new Error('faltan las columnas "fecha_informe" o "local"');
+  const cual = l => { const n = norm(l); return n.includes("CARCANO") ? "carcano" : n.includes("SAN MARTIN") || n === "SM" ? "sm" : n.includes("TOTAL") ? "total" : null; };
+  const porFecha = new Map();
+  for (const f of g.slice(1)) {
+    const fi = fechaImp(f[C.fecha_informe]), loc = cual(f[C.local]); if (!fi || !loc) { if (txt(f[C.local]) || txt(f[C.fecha_informe])) avisos.push(`IMPUESTOS_MES.xlsx: no entendí la fila "${txt(f[C.fecha_informe])} · ${txt(f[C.local])}"`); continue; }
+    const v = {}; for (const c of IMP_COLS.slice(4, -1)) v[c] = C[c] < 0 ? null : numImp(f[C[c]]);
+    v.desde = C.periodo_desde < 0 ? null : fechaImp(f[C.periodo_desde]); v.hasta = C.periodo_hasta < 0 ? null : fechaImp(f[C.periodo_hasta]);
+    v.faltantes = C.faltantes < 0 ? "" : txt(f[C.faltantes]);
+    if (!porFecha.has(+fi)) porFecha.set(+fi, { fi, loc: {} });
+    porFecha.get(+fi).loc[loc] = v; // si un informe repite el local, vale la última fila
+  }
+  const informes = [...porFecha.values()].sort((a, b) => a.fi - b.fi);
+  if (!informes.length) return { espera: true, vacio: true, mod: IM.mod };
+  const ult = informes[informes.length - 1];
+  for (const k of ["carcano", "sm", "total"]) if (!ult.loc[k]) avisos.push(`IMPUESTOS_MES.xlsx: el informe del ${dm(ult.fi)} no tiene la fila de ${k === "sm" ? "San Martín" : k === "carcano" ? "Cárcano" : "Total"}`);
+  // Saldo a favor de IIBB por semana (fila Total; si no está, Cárcano + San Martín)
+  const favor = inf => inf.loc.total?.iibb_a_favor_acumulado ?? ((inf.loc.carcano?.iibb_a_favor_acumulado ?? null) == null && (inf.loc.sm?.iibb_a_favor_acumulado ?? null) == null ? null : (inf.loc.carcano?.iibb_a_favor_acumulado ?? 0) + (inf.loc.sm?.iibb_a_favor_acumulado ?? 0));
+  const semanas = informes.map((inf, i) => { const v = favor(inf), p = i ? favor(informes[i - 1]) : null; return { fi: inf.fi, v, crece: v != null && p != null && v > p, cr: inf.loc.carcano?.iibb_a_favor_acumulado, sm: inf.loc.sm?.iibb_a_favor_acumulado }; });
+  const sU = semanas[semanas.length - 1], sP = semanas.length > 1 ? semanas[semanas.length - 2] : null;
+  const delta = sU.v != null && sP?.v != null ? sU.v - sP.v : null;
+  const faltantes = [["carcano", "Cárcano"], ["sm", "San Martín"]].filter(([k]) => ult.loc[k]?.faltantes).map(([k, n]) => ({ n, t: ult.loc[k].faltantes }));
+  if (!faltantes.length && ult.loc.total?.faltantes) faltantes.push({ n: "Total", t: ult.loc.total.faltantes }); // la fila Total suele repetir lo de los locales
+  const alertas = [], viejo = (hoy - ult.fi) / 864e5 > 8;
+  if (faltantes.length) alertas.push({ t: "r", h: `<b>Impuestos:</b> al informe del ${dm(ult.fi)} le faltan datos (${faltantes.map(f => f.n).join(", ")}). Ver el botón Impuestos.` });
+  if (delta != null && delta > 0) alertas.push({ t: "y", h: `<b>IIBB a favor creció ${pesos(delta)}</b> en la última semana: es plata atrapada.` });
+  if (viejo) alertas.push({ t: "y", h: `<b>Impuestos:</b> el último informe es del ${dm(ult.fi)} (más de una semana).` });
+  return { mod: IM.mod, ult, semanas, delta, faltantes, viejo, alertas, avisos };
+}
+
 // ---------- Proveedores de almacén: hojas Compras y Precios de FRIOTEKA_Proveedores.xlsx ----------
 function calcularProveedores(P, hoy, mes) {
   const hoja = n => { const ws = P.wb.Sheets[n]; if (!ws) throw new Error(`FRIOTEKA_Proveedores.xlsx no tiene la hoja ${n}`); return grilla(ws); };
@@ -643,7 +691,7 @@ function calcularEmpleados(x, RS) {
 }
 
 // ---------- Pantallas ----------
-const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["empleados", "Empleados", "Sueldos, horas y cta. cte."], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["energia", "Energía", "Luz de los dos locales"]];
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["empleados", "Empleados", "Sueldos, horas y cta. cte."], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["impuestos", "Impuestos", "IVA e IIBB: saldos a favor"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["energia", "Energía", "Luz de los dos locales"]];
 const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
 const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -659,7 +707,7 @@ const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}<
   ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
 
 function inicio(x) {
-  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a, en = x.e, mods = [b, fv, iv, pr, al, en, x.em];
+  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a, en = x.e, mods = [b, fv, iv, x.im, pr, al, en, x.em];
   const todas = { alertas: [...mods.flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: [...x.proximos, ...(en.proximos || [])].sort((p, q) => p.f - q.f), faltan: [...x.faltan, ...mods.filter(o => o.error).map(o => o.error)] };
   return cabecera("Administración FRIOTEKA", "Inicio", lectG(x) + (b.error ? "" : " · " + lectB(b))) + `
   <div class="grid kpis">
@@ -723,41 +771,48 @@ function fenovo(x) {
   <div class="card sub">Todo de FENOVO › FRIOTEKA_Fenovo.xlsx: deuda total, excedente, atraso e intereses del plan de PLAN_DEUDA (celdas fijas de la fila 4 y la tabla semanal) · cuenta corriente, vencimientos de camiones, plata apartada y costo de los cheques de RESUMEN (por rótulo) · compras y pagos del mes de CTA_CTE · e-cheqs de PAGOS · tasa de cada tanda de INTERESES. El sistema solo lee este archivo; no lo modifica.</div>`;
 }
 
-function ivaPantalla(x) {
-  const v = x.i, cr = `<a href="#">Inicio</a> › IVA`;
-  if (v.error) return cabecera("IVA", cr, "No se pudo leer") + `<div class="card">${esc(v.error)}</div>`;
+function impuestosPantalla(x) {
+  const m = x.im, cr = `<a href="#">Inicio</a> › Impuestos`;
+  if (m.error) return cabecera("Impuestos", cr, "IMPUESTOS_MES.xlsx: no se pudo leer") + `<div class="card">${esc(m.error)}</div>`;
+  if (m.espera) {
+    const lunes = new Date(2026, 10, 23), antes = x.hoy <= lunes;
+    return cabecera("Impuestos", cr, m.vacio ? `IMPUESTOS_MES.xlsx: ${hora(m.mod)} · sin informes` : "IMPUESTOS_MES.xlsx: todavía no está") + `
+  <div class="card centro" style="margin-top:20px"><h1 style="font-size:20px">${antes ? "Esperando el primer informe del lunes" : "Todavía no llegó el informe de impuestos"}</h1>
+  <p>${antes ? "El lunes 23/11 PANORAMA arma el primer informe de IVA e IIBB." : "PANORAMA arma el informe de IVA e IIBB cada lunes."} Lo deja en PANORAMA GENERAL › IMPUESTOS_MES.xlsx y este botón lo muestra solo. Si ya está, tocá ↻ Volver a leer los Excel.</p></div>`;
+  }
+  const u = m.ult, L = [["carcano", "Cárcano"], ["sm", "San Martín"], ["total", "Total"]], T = u.loc.total || {};
+  const per = (() => { const r = Object.values(u.loc)[0] || {}; return r.desde && r.hasta ? `del ${dm(r.desde)} al ${dm(r.hasta)}` : ""; })();
+  const ali = v => v == null ? "—" : (v < 1 ? v * 100 : v).toLocaleString("es-AR", { maximumFractionDigits: 2 }) + " %";
+  const tabla = filas => `<div class="tbl"><table><tr><th></th>${L.map(([, n]) => `<th class="n">${n}</th>`).join("")}</tr>
+    ${filas.map(([n, c, f, b]) => `<tr><td>${b ? "<b>" + n + "</b>" : n}</td>${L.map(([k]) => { const v = u.loc[k]?.[c]; const s = (f || $)(v); return `<td class="n">${b ? "<b>" + s + "</b>" : s}</td>`; }).join("")}</tr>`).join("")}</table></div>`;
+  const mx = Math.max(1, ...m.semanas.map(s => s.v || 0));
   const M = n => n == null ? "—" : (n / 1e6).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const partes = [["Fenovo (IVA)", v.fen.iva], ["Fenovo (percepciones)", v.fen.per], ["Proveedores almacén (IVA)", v.prov.iva], ["Proveedores (percepciones)", v.prov.per]];
-  const mx = Math.max(1, v.i21 || 0, v.i105 || 0, ...partes.map(p => p[1]));
-  const barra = (n, val, cls) => `<div class="rub"><span>${n}</span><div class="track"><div class="fill ${cls}" style="width:${(val || 0) / mx * 100}%"></div></div><span class="n">${$(val)}</span></div>`;
-  const signo = d => d == null ? "—" : `<span class="${d < 0 ? "neg" : "pos"}">${d < 0 ? "−" : "+"}${$(Math.abs(d))}</span>`;
-  return cabecera(`IVA · ${mesNom(x.mes)}`, cr, `Ventas hasta el ${x.ve?.ultimo ? dm(x.ve.ultimo) : "—"} · Última DDJJ cargada: ${v.ult?.per || "ninguna"}`) + `
+  return cabecera(`Impuestos · informe del ${dm(u.fi)}`, cr, `IMPUESTOS_MES.xlsx: ${hora(m.mod)}${per ? " · Período " + per : ""}`) + `
+  ${m.faltantes.length ? `<div class="al r" style="font-size:15px"><b>Faltan datos en este informe:</b><ul>${m.faltantes.map(f => `<li><b>${f.n}:</b> ${esc(f.t)}</li>`).join("")}</ul>Los números de abajo pueden cambiar cuando se completen.</div>` : ""}
+  ${m.viejo ? `<div class="al y">El último informe es del ${dm(u.fi)}: tiene más de una semana.</div>` : ""}
   <div class="grid kpis">
-    <div class="card"><div class="lbl">Saldo a favor${v.ult ? " (DDJJ " + v.ult.per + ")" : ""}</div><div class="big pos">${pesos(v.saldo)}</div><div class="sub">Técnico $ ${M(v.ult?.tecnico)}M · Libre disponibilidad $ ${M(v.ult?.libre)}M.${v.meses ? ` Al ritmo del mes pasado alcanza ~${Math.round(v.meses)} meses.` : ""}</div></div>
-    <div class="card"><div class="lbl">IVA de ${mesNom(x.mes).split(" ")[0].toLowerCase()} a pagar a ARCA</div><div class="big">${pesos(v.aPagar)}</div><div class="sub">${v.aPagar ? "El saldo a favor no alcanza" : "Lo cubre el saldo a favor"}</div></div>
-    <div class="card"><div class="lbl">Se puede llevar a Fenovo (${mesNom(x.mes).split(" ")[0].toLowerCase()}, estimado)</div><div class="big">${pesos(v.llevar)}</div><div class="sub">Débito − crédito al ${x.ve?.ultimo ? dm(x.ve.ultimo) : "—"}. Baja si entran más facturas A.</div></div>
-    <div class="card"><div class="lbl">${mesNom(new Date(x.mes.getFullYear(), x.mes.getMonth() - 1, 1)).split(" ")[0]} (${v.ant?.fuente || "sin dato"})</div><div class="big">${pesos(v.ant?.llevar)}</div><div class="sub">${v.ant?.fuente === "DDJJ" ? "Según la DDJJ presentada" : "Falta la DDJJ"}</div></div>
+    <div class="card"><div class="lbl">IVA a favor acumulado</div><div class="big">${pesos(T.iva_a_favor_acumulado)}</div><div class="sub">Saldo del mes: ${pesos(T.iva_saldo_mes)}</div></div>
+    <div class="card"><div class="lbl">IVA a Fenovo (estimado)</div><div class="big">${pesos(T.iva_a_fenovo_estimado)}</div><div class="sub">Según el informe del ${dm(u.fi)}</div></div>
+    <div class="card"><div class="lbl">IIBB a favor acumulado</div><div class="big ${m.delta > 0 ? "neg" : ""}">${pesos(T.iibb_a_favor_acumulado)}</div><div class="sub">${m.delta == null ? "Todavía no hay semana anterior para comparar" : m.delta > 0 ? `<span class="neg">Creció ${pesos(m.delta)} en la semana: plata atrapada</span>` : m.delta < 0 ? `Bajó ${pesos(-m.delta)} en la semana` : "Igual que la semana pasada"}</div></div>
+    <div class="card"><div class="lbl">IIBB diferencia del mes</div><div class="big">${pesos(T.iibb_diferencia_mes)}</div><div class="sub">Alícuota ${ali(T.iibb_alicuota)}</div></div>
   </div>
   <div class="grid two">
-    <div><h2>${mesNom(x.mes).split(" ")[0]} al ${x.ve?.ultimo ? dm(x.ve.ultimo) : "—"}: débito contra crédito</h2><div class="card">
-      <div class="lbl">Débito (IVA de las ventas) · ${pesos(v.debito)}</div>
-      ${barra("Ventas al 21%", v.i21, "")}${barra("Ventas al 10,5%", v.i105, "")}
-      <div class="lbl" style="margin-top:12px">Crédito (IVA de las compras) · ${pesos(v.credito)}</div>
-      ${partes.map(p => barra(p[0], p[1], "in")).join("")}
-      <div class="src">Proveedores: ${v.prov.n} facturas A de este mes. Todavía no suma el IVA de servicios con Factura A (luz, alarma, insumos): el crédito real es un poco mayor.</div>
-    </div></div>
-    <div><h2>Alertas</h2><div class="card">
-      ${v.alertas.map(a => `<div class="al ${a.t}">${a.h}</div>`).join("") || `<div class="sub">Sin alertas.</div>`}
-      ${v.avisos.length ? `<ul class="sub">${v.avisos.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
-    </div></div>
+    <div><h2>IVA</h2><div class="card">${tabla([
+      ["Débito (ventas)", "iva_debito"], ["Crédito Fenovo", "iva_credito_fenovo"], ["Crédito proveedores", "iva_credito_proveedores"], ["Percepciones", "iva_percepciones"],
+      ["Saldo del mes", "iva_saldo_mes", null, true], ["A favor acumulado", "iva_a_favor_acumulado", null, true], ["A Fenovo (estimado)", "iva_a_fenovo_estimado"]])}</div></div>
+    <div><h2>Ingresos Brutos</h2><div class="card">${tabla([
+      ["Alícuota", "iibb_alicuota", ali], ["Impuesto del mes", "iibb_impuesto"], ["SIRCREB (bancos)", "iibb_sircreb"], ["Retenciones Payway / MP", "iibb_ret_payway_mp"], ["Percepciones", "iibb_percepciones"],
+      ["Diferencia del mes", "iibb_diferencia_mes", null, true], ["A favor acumulado", "iibb_a_favor_acumulado", null, true]])}</div></div>
   </div>
-  <h2>Historial: débito, crédito y saldo a favor por mes</h2>
-  <div class="card tbl"><table>
-    <tr><th>Mes</th><th class="n">Débito</th><th class="n">Crédito</th><th class="n">Crédito − débito</th><th class="n">A favor al cierre</th></tr>
-    ${v.filas.map(f => `<tr class="${f.version ? "ver" : ""}"><td>${f.ddjj ? "<b>" + esc(f.mes) + "</b>" : esc(f.mes)}</td><td class="n">${$(f.deb)}</td><td class="n">${$(f.cred)}</td><td class="n">${signo(f.dif)}</td><td class="n">${f.ddjj ? "<b>" + $(f.aFavor) + "</b>" : $(f.aFavor)}</td></tr>`).join("")}
-  </table><div class="src">En amarillo, los meses con dos versiones del estudio. Cuando el débito supera al crédito (rojo), esa diferencia la cubre el saldo a favor y es lo que se puede llevar a Fenovo.</div></div>
+  <h2>IIBB a favor: cómo evoluciona por semana</h2>
+  <div class="card">
+    <div class="ley"><span><i style="background:var(--bar)"></i>Bajó o quedó igual</span><span><i style="background:var(--red)"></i>Creció: plata atrapada</span></div>
+    ${m.semanas.map(s => `<div class="sem"><span>${dm(s.fi)}</span><div class="par"><div class="b real ${s.crece ? "mal" : ""}" style="width:${(s.v || 0) / mx * 100}%"></div></div><span class="n">${M(s.v)}M <span class="sub">(Cárc. ${M(s.cr)} · SM ${M(s.sm)})</span></span></div>`).join("")}
+    <div class="src">Saldo a favor de IIBB al día de cada informe (fila Total). Si crece, se está reteniendo más de lo que corresponde pagar y esa plata queda trabada.</div>
+  </div>
+  ${m.avisos.length ? `<h2>Datos que faltan o no cierran</h2><div class="card"><ul class="sub">${m.avisos.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>` : ""}
   <h2>De dónde sale cada número</h2>
-  <div class="card sub">Saldo a favor, DDJJ, historial y transferido a Fenovo: GASTOS.xlsx › IMPUESTOS (bloques "IVA MENSUAL" e "IVA — HISTORIAL") · Débito del mes: JORNADAS › ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx (IVA 10,5% y 21%, caja 1 + caja 2) · Crédito de Fenovo: FRIOTEKA_Fenovo.xlsx › IVA · Crédito de proveedores: FRIOTEKA_Proveedores.xlsx › Compras (IVA crédito y percepciones de facturas A, por mes del comprobante). El sistema solo lee estos archivos; no los modifica.</div>`;
+  <div class="card sub">Todo de PANORAMA GENERAL › IMPUESTOS_MES.xlsx, que arma PANORAMA cada lunes (una fila por informe y local). Se muestra el último informe; el gráfico usa todos. El sistema solo lee este archivo; no lo modifica.</div>`;
 }
 
 function proveedores(x) {
@@ -773,7 +828,7 @@ function proveedores(x) {
     <div class="card"><div class="lbl">Compras de ${mesN.toLowerCase()} (al ${dm(x.hoy)})</div><div class="big">${pesos(a.t)}</div><div class="sub">${a.c} comprobantes · ${antN} entero: ${pesos(ant.t)}</div></div>
     <div class="card"><div class="lbl">En negro</div><div class="big">${a.t ? Math.round(a.n / a.t * 100) : 0} %</div><div class="sub">$ ${M(a.n)}M de $ ${M(a.t)}M · sin IVA a favor</div></div>
     <div class="card"><div class="lbl">A pagar (cuenta corriente)</div><div class="big">${pesos(p.totalPend)}</div><div class="sub">${p.vencido ? `<span class="neg">Vencido ${pesos(p.vencido)}</span> · ` : ""}próximos 7 días ${pesos(p.semana)}</div></div>
-    <div class="card"><div class="lbl">IVA a favor del mes</div><div class="big">${pesos(a.iva)}</div><div class="sub">El detalle está en el botón IVA</div></div>
+    <div class="card"><div class="lbl">IVA a favor del mes</div><div class="big">${pesos(a.iva)}</div><div class="sub">El detalle está en el botón Impuestos</div></div>
   </div>
   <div class="grid two">
     <div><h2>Pagos a proveedores · por vencimiento</h2><div class="card tbl"><table>
@@ -798,7 +853,7 @@ function proveedores(x) {
     </div></div>
   </div>
   <h2>De dónde sale cada número</h2>
-  <div class="card sub">Todo de PROVEEDORES › FRIOTEKA_Proveedores.xlsx: compras, pagos, semanas y proveedores de la hoja Compras (una fila por comprobante); subas de la hoja Precios. No se usan las hojas Resumen ni Pagos pendientes (dependen de la fecha del día): la app hace esas cuentas sola. Fenovo va en su propio botón y el detalle del IVA en el botón IVA. El sistema solo lee este archivo; no lo modifica.</div>`;
+  <div class="card sub">Todo de PROVEEDORES › FRIOTEKA_Proveedores.xlsx: compras, pagos, semanas y proveedores de la hoja Compras (una fila por comprobante); subas de la hoja Precios. No se usan las hojas Resumen ni Pagos pendientes (dependen de la fecha del día): la app hace esas cuentas sola. Fenovo va en su propio botón y el detalle del IVA en el botón Impuestos. El sistema solo lee este archivo; no lo modifica.</div>`;
 }
 
 function almacen(x) {
@@ -992,7 +1047,7 @@ let datos = null;
 function pintar(arriba = true) {
   if (!datos) return;
   const h = location.hash;
-  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : h === "#energia" ? energia(datos) : h === "#empleados" ? empleados(datos) : inicio(datos);
+  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#impuestos" || h === "#iva" ? impuestosPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : h === "#energia" ? energia(datos) : h === "#empleados" ? empleados(datos) : inicio(datos);
   document.getElementById("releer").onclick = cargar;
   const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
   for (const bt of document.querySelectorAll("[data-s]")) bt.onclick = () => { semana = +bt.dataset.s; const y = scrollY; pintar(false); scrollTo(0, y); };
@@ -1007,6 +1062,7 @@ async function cargar() {
     try { if (!F) throw new Error("no se pudo abrir el archivo"); datos.f = calcularFenovo(F, datos.hoy, datos.mes); } catch (e) { datos.f = { error: `No pude leer ${RUTA.fenovo}: ${e.message || e}` }; }
     let P = null; try { P = await libro(RUTA.proveedores); } catch {}
     try { datos.i = calcularIva(datos, F, P); } catch (e) { datos.i = { error: `No pude armar el IVA: ${e.message || e}` }; }
+    try { let IM = null; try { IM = await libro(RUTA.impuestos); } catch (e) { if (!(e?.name === "NotFoundError" || /no esta/.test(e?.message))) throw e; } datos.im = calcularImpuestos(IM, datos.hoy); } catch (e) { datos.im = { error: `No pude leer ${RUTA.impuestos}: ${e.message || e}` }; }
     try { if (!P) throw new Error("no se pudo abrir el archivo"); datos.p = calcularProveedores(P, datos.hoy, datos.mes); } catch (e) { datos.p = { error: `No pude leer ${RUTA.proveedores}: ${e.message || e}` }; }
     try {
       const mesAnt = new Date(datos.mes.getFullYear(), datos.mes.getMonth() - 1, 1);
