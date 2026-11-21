@@ -57,6 +57,8 @@ tr.ver td{color:var(--yel)}
 .tag{display:inline-block;font-size:12px;border-radius:10px;padding:1px 8px}
 .tag.r{background:var(--redbg);color:var(--red)}.tag.y{background:var(--yelbg);color:var(--yel)}.tag.g{background:var(--line);color:var(--mut)}
 .up{color:var(--red);font-weight:600}
+.dia{font-weight:600;white-space:nowrap}
+.debe{color:var(--red);font-size:13px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .btn.on{background:var(--acc);border-color:var(--acc);color:#fff}
 details summary{cursor:pointer;font-size:14px}
@@ -111,6 +113,8 @@ const RUTA = {
   bancos: "BANCOS/BANCOS.xlsx",
   fenovo: "FENOVO/FRIOTEKA_Fenovo.xlsx",
   proveedores: "PROVEEDORES/FRIOTEKA_Proveedores.xlsx",
+  visitas: "_CIRCUITO/VISITAS_PROVEEDORES.xlsx",
+  almacen: "COMPRAS ALMACEN/COMPRAS_ALMACEN.xlsx",
   cierreB: ym => `PANORAMA GENERAL/CIERRES/${ym}/CIERRE_BANCOS_${ym}.json`
 };
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
@@ -238,6 +242,7 @@ function leerEpec(g) {
 function leerVentas(g, mes) {
   let local = null; const v = { sm: 0, carcano: 0 }, dias = new Set(); let ultimo = null, ayer = { sm: 0, carcano: 0 };
   const porDia = {}, iva = { i105: 0, i21: 0, ok: norm(g[0]?.[30]).startsWith("IVA 10") && norm(g[0]?.[36]).startsWith("IVA 21") };
+  const alm = { ok: norm(g[0]?.[65]).startsWith("TV ALMACEN") && norm(g[0]?.[71]).startsWith("RG ALMACEN"), dia: {}, sm: { tv: 0, rg: 0 }, carcano: { tv: 0, rg: 0 } };
   for (const f of g) {
     const b = norm(f[1]); if (b === "SAN MARTIN") { local = "sm"; continue; } if (b === "CARCANO") { local = "carcano"; continue; }
     const dia = (num(f[3]) ?? 0) + (num(f[4]) ?? 0); // caja 1 + caja 2 (la columna TOTAL del día no trae valor guardado)
@@ -245,10 +250,12 @@ function leerVentas(g, mes) {
     const d = fecha(f[2]); if (d.getMonth() !== mes.getMonth() || d.getFullYear() !== mes.getFullYear()) continue;
     v[local] += dia; dias.add(+d); (porDia[+d] ||= { sm: 0, carcano: 0 })[local] += dia;
     if (iva.ok) { iva.i105 += (num(f[30]) ?? 0) + (num(f[31]) ?? 0); iva.i21 += (num(f[36]) ?? 0) + (num(f[37]) ?? 0); } // IVA 10,5% y 21%: caja 1 + caja 2
+    if (alm.ok) { const tv = (num(f[65]) ?? 0) + (num(f[66]) ?? 0), rg = (num(f[71]) ?? 0) + (num(f[72]) ?? 0); // almacén: venta y ganancia, caja 1 + caja 2
+      alm[local].tv += tv; alm[local].rg += rg; const a = alm.dia[+d] ||= { tv: 0, rg: 0 }; a.tv += tv; a.rg += rg; }
     if (!ultimo || d > ultimo) ultimo = d;
   }
   if (ultimo) ayer = porDia[+ultimo];
-  return { ...v, total: v.sm + v.carcano, dias: dias.size, ultimo, ayer, iva };
+  return { ...v, total: v.sm + v.carcano, dias: dias.size, ultimo, ayer, iva, alm };
 }
 
 // ---------- Armado de todo lo del mes ----------
@@ -473,11 +480,12 @@ function calcularProveedores(P, hoy, mes) {
   const g = hoja("Compras"), h = g[0], C = {};
   for (const [k, n] of [["fp", "FECHA PAGO"], ["fc", "FECHA COMPROBANTE"], ["pv", "PROVEEDOR"], ["comp", "COMPROBANTE"], ["cond", "CONDICION"], ["medio", "MEDIO DE PAGO"], ["tot", "TOTAL"], ["est", "ESTADO"], ["vence", "VENCE"], ["ivac", "IVA CREDITO"], ["per", "PERCEP. IVA"]]) { C[k] = col(h, n); if (C[k] < 0) throw new Error(`hoja Compras: no encontré la columna "${n}"`); }
   const mesAnt = new Date(mes.getFullYear(), mes.getMonth() - 1, 1), vacio = () => ({ t: 0, b: 0, n: 0, ef: 0, tr: 0, cc: 0, iva: 0, c: 0 });
-  const meses = { act: vacio(), ant: vacio() }, semanasP = {}, prov = {}, pend = [];
+  const meses = { act: vacio(), ant: vacio() }, semanasP = {}, prov = {}, pend = [], porDia = {};
   const lunes = d => { const l = new Date(d); l.setDate(d.getDate() - (d.getDay() + 6) % 7); return l; };
   for (const f of g.slice(1)) {
     const fn = num(f[C.fp]) ?? num(f[C.fc]), tot = num(f[C.tot]); if (fn == null || tot == null) continue;
     const d = fecha(fn), blanco = norm(f[C.cond]) === "BLANCO", pendiente = norm(f[C.est]) === "PENDIENTE", medio = norm(f[C.medio]);
+    porDia[+d] = (porDia[+d] || 0) + tot;
     const m = d >= mes ? meses.act : d >= mesAnt ? meses.ant : null;
     if (m && d <= hoy) { m.t += tot; m.c++; blanco ? m.b += tot : m.n += tot; if (pendiente || !(medio.startsWith("EFECTIVO") || medio.startsWith("TRANSF"))) m.cc += tot; else if (medio.startsWith("EFECTIVO")) m.ef += tot; else m.tr += tot; m.iva += (num(f[C.ivac]) ?? 0) + (blanco ? num(f[C.per]) ?? 0 : 0); }
     if (m === meses.act && d <= hoy) prov[txt(f[C.pv])] = (prov[txt(f[C.pv])] || 0) + tot;
@@ -497,11 +505,51 @@ function calcularProveedores(P, hoy, mes) {
   const alertas = [];
   if (vencido > 0) alertas.push({ t: "r", h: `<b>Pagos a proveedores vencidos:</b> ${pesos(vencido)} (${[...new Set(pend.filter(p => p.dias < 0).map(p => p.pv))].join(", ")}).` });
   const top = Object.entries(prov).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  return { mod: P.mod, meses, pend, vencido, semana, despues, totalPend: vencido + semana + despues, sems, top, subas, alertas, avisos };
+  return { mod: P.mod, meses, porDia, pend, vencido, semana, despues, totalPend: vencido + semana + despues, sems, top, subas, alertas, avisos };
+}
+
+// ---------- Compras almacén: venta y costo de almacén (JORNADAS) contra lo comprado (Proveedores), visitas y cupo ----------
+const DIAS = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
+function calcularAlmacen(x, veAnt, VIS, CA) {
+  const avisos = [], hoy = x.hoy, mesAnt = new Date(x.mes.getFullYear(), x.mes.getMonth() - 1, 1);
+  const act = x.ve?.alm, ant = veAnt?.alm;
+  if (!act?.ok) throw new Error("JORNADAS: no encontré las columnas TV ALMACEN / RG ALMACEN");
+  if (!ant?.ok) avisos.push(`No pude leer la venta de almacén de ${MESES[mesAnt.getMonth()].toLowerCase()} (JORNADAS)`);
+  const tot = a => ({ tv: a.sm.tv + a.carcano.tv, rg: a.sm.rg + a.carcano.rg });
+  const tA = tot(act), tP = ant?.ok ? tot(ant) : null;
+  const comp = x.p?.porDia || {}; if (x.p?.error) avisos.push("No pude leer lo comprado (Proveedores)");
+  const compEntre = (a, b) => Object.entries(comp).reduce((s, [k, v]) => +k >= +a && +k <= +b ? s + v : s, 0);
+  const compAct = compEntre(x.mes, hoy), compAnt = compEntre(mesAnt, new Date(+x.mes - 864e5));
+  // Semanas desde el 1° del mes pasado
+  const dias = { ...(ant?.dia || {}), ...act.dia }, sems = [];
+  let l = new Date(mesAnt); l.setDate(l.getDate() - (l.getDay() + 6) % 7);
+  while (l <= hoy) { const fin = new Date(+l + 6 * 864e5), desde = l < mesAnt ? mesAnt : l, hasta = fin > hoy ? hoy : fin;
+    let costo = 0; for (const [k, v] of Object.entries(dias)) if (+k >= +desde && +k <= +hasta) costo += v.tv - v.rg;
+    sems.push({ d: new Date(l), costo, comp: compEntre(desde, hasta) }); l = new Date(+l + 7 * 864e5); }
+  const acum = sems.reduce((s, w) => s + w.comp - w.costo, 0);
+  // Visitas de los próximos 7 días
+  const visitas = [];
+  try { const g = grilla(VIS.wb.Sheets["VISITAS"]), h = g[0], cp = col(h, "PROVEEDOR"), cd = col(h, "DIA DE VISITA");
+    const deuda = {}; for (const q of x.p?.pend || []) { const e = deuda[q.pv] ||= { tot: 0, venc: 0, v: q.v }; e.tot += q.tot; if (q.dias < 0) e.venc += q.tot; if (q.v < e.v) e.v = q.v; }
+    const lista = g.slice(1).filter(f => txt(f[cp])).map(f => { const t = txt(f[cd]), fuera = norm(t.replace(/\([^)]*\)/g, "")), notas = [...t.matchAll(/\(([^)]*)\)/g)].map(m => m[1]);
+      return { pv: txt(f[cp]), dias: DIAS.map((d, i) => fuera.includes(d) ? i : -1).filter(i => i >= 0), nota: notas.join(" / ") }; });
+    for (let i = 0; i < 7; i++) { const d = new Date(+hoy + i * 864e5), w = d.getDay(); const quien = lista.filter(p => p.dias.includes(w)).map(p => ({ ...p, deuda: deuda[p.pv] })); if (quien.length) visitas.push({ d, quien }); }
+    const sinDia = lista.filter(p => !p.dias.length).length; if (sinDia) avisos.push(`${sinDia} proveedores tienen el día de visita "a confirmar" o "todos los días"`);
+  } catch { avisos.push(`No pude leer ${RUTA.visitas}`); }
+  // Cupo de la semana actual o la anterior
+  let cupo = null;
+  try { const g = grilla(CA.wb.Sheets["CUPO"]), h = g[0], cs = col(h, "SEMANA"), cp = col(h, "PROVEEDOR"), cc = col(h, "CUPO"), cb = col(h, "COMPRADO");
+    const lunesHoy = new Date(hoy); lunesHoy.setDate(hoy.getDate() - (hoy.getDay() + 6) % 7);
+    for (const lun of [lunesHoy, new Date(+lunesHoy - 7 * 864e5)]) { const filas = g.slice(1).filter(f => num(f[cs]) != null && +fecha(f[cs]) === +lun && num(f[cc]) != null);
+      if (filas.length) { cupo = { semana: lun, filas: filas.map(f => ({ pv: txt(f[cp]), cupo: f[cc], comp: num(f[cb]) ?? 0 })).sort((a, b) => b.cupo - a.cupo) }; break; } }
+  } catch { avisos.push(`No pude leer ${RUTA.almacen} (hoja CUPO)`); }
+  const alertas = []; const ultSem = sems.filter(w => w.comp - w.costo > 1e6).pop();
+  if (ultSem && hoy - ultSem.d < 14 * 864e5) alertas.push({ t: "y", h: `<b>Almacén:</b> la semana del ${dm(ultSem.d)} se compraron ${pesos(ultSem.comp - ultSem.costo)} más de lo vendido al costo.` });
+  return { act, ant, tA, tP, compAct, compAnt, sems, acum, desde: mesAnt, visitas, cupo, alertas, avisos };
 }
 
 // ---------- Pantallas ----------
-const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["", "Compras almacén", "Pronto"], ["", "Energía", "Pronto"]];
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["", "Energía", "Pronto"]];
 const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
 const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -517,8 +565,8 @@ const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}<
   ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
 
 function inicio(x) {
-  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p;
-  const todas = { alertas: [...[b, fv, iv, pr].flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...[b, fv, iv, pr].filter(o => o.error).map(o => o.error)] };
+  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a;
+  const todas = { alertas: [...[b, fv, iv, pr, al].flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...[b, fv, iv, pr, al].filter(o => o.error).map(o => o.error)] };
   return cabecera("Administración FRIOTEKA", "Inicio", lectG(x) + (b.error ? "" : " · " + lectB(b))) + `
   <div class="grid kpis">
     <div class="card"><div class="lbl">Deuda total Fenovo + banco</div><div class="big">${fv.error ? "sin dato" : pesos(fv.deudaTotal)}</div><div class="sub">${fv.error ? "No se pudo leer el Excel de Fenovo" : `Contra el plan: <span class="${fv.atraso < 0 ? "neg" : ""}">${pesos(fv.atraso)}</span>`}</div></div>
@@ -659,6 +707,44 @@ function proveedores(x) {
   <div class="card sub">Todo de PROVEEDORES › FRIOTEKA_Proveedores.xlsx: compras, pagos, semanas y proveedores de la hoja Compras (una fila por comprobante); subas de la hoja Precios. No se usan las hojas Resumen ni Pagos pendientes (dependen de la fecha del día): la app hace esas cuentas sola. Fenovo va en su propio botón y el detalle del IVA en el botón IVA. El sistema solo lee este archivo; no lo modifica.</div>`;
 }
 
+function almacen(x) {
+  const a = x.a, cr = `<a href="#">Inicio</a> › Compras almacén`;
+  if (a.error) return cabecera("Compras almacén", cr, "No se pudo leer") + `<div class="card">${esc(a.error)}</div>`;
+  const M = n => (n / 1e6).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }), sg = n => (n >= 0 ? "+" : "−") + M(Math.abs(n)) + "M";
+  const costoA = a.tA.tv - a.tA.rg, difA = a.compAct - costoA, mg = t => t.tv ? pct(t.rg / t.tv) : "—";
+  const mx = Math.max(1, ...a.sems.flatMap(w => [w.costo, w.comp])), antN = MESES[a.desde.getMonth()].toLowerCase();
+  const difP = a.tP ? a.compAnt - (a.tP.tv - a.tP.rg) : null;
+  const filaLoc = (n, k) => `<tr><td>${n}</td><td class="n">${$(a.act[k].tv)}</td><td class="n">${mg(a.act[k])}</td><td class="n">${a.ant?.ok ? $(a.ant[k].tv) : "—"}</td></tr>`;
+  return cabecera(`Compras almacén · ${mesNom(x.mes)}`, cr, `Ventas hasta el ${x.ve?.ultimo ? dm(x.ve.ultimo) : "—"} · Compras hasta el ${dm(x.hoy)}`) + `
+  <div class="grid kpis">
+    <div class="card"><div class="lbl">Venta de almacén (${mesNom(x.mes).split(" ")[0].toLowerCase()})</div><div class="big">${pesos(a.tA.tv)}</div><div class="sub">Margen ${mg(a.tA)} · ganancia $ ${M(a.tA.rg)}M</div></div>
+    <div class="card"><div class="lbl">Costo de lo vendido</div><div class="big">${pesos(costoA)}</div><div class="sub">Venta − ganancia</div></div>
+    <div class="card"><div class="lbl">Comprado a proveedores</div><div class="big">${pesos(a.compAct)}</div><div class="sub ${difA > 0 ? "neg" : ""}">${pesos(Math.abs(difA))} ${difA > 0 ? "más" : "menos"} que lo vendido al costo</div></div>
+    <div class="card"><div class="lbl">Desde el 1/${a.desde.getMonth() + 1}</div><div class="big">${a.acum >= 0 ? "+" : "−"}$ ${$(Math.abs(a.acum))}</div><div class="sub">${difP != null ? `En ${antN} ${difP >= 0 ? "compramos" : "compramos"} $ ${M(Math.abs(difP))}M ${difP >= 0 ? "más" : "menos"}; este mes $ ${M(Math.abs(difA))}M ${difA >= 0 ? "más" : "menos"}` : ""}</div></div>
+  </div>
+  <div class="grid two">
+    <div><h2>¿Compramos lo que vendemos? · por semana</h2><div class="card">
+      <div class="ley"><span><i style="background:var(--plan)"></i>Costo de lo vendido</span><span><i style="background:var(--bar)"></i>Comprado</span><span><i style="background:var(--red)"></i>Comprado de más (+$ 1M o más)</span></div>
+      ${a.sems.map(w => { const d = w.comp - w.costo; return `<div class="sem"><span>${dm(w.d)}</span><div class="par"><div class="b plan" style="width:${w.costo / mx * 100}%"></div><div class="b real ${d > 1e6 ? "mal" : ""}" style="width:${w.comp / mx * 100}%"></div></div><span class="n ${d > 1e6 ? "neg" : ""}">${sg(d)}</span></div>`; }).join("")}
+      <div class="src">Positivo = se compró más de lo que se vendió al costo (queda mercadería en góndola o depósito). Ojo: lo comprado incluye algo que no es reventa (materia prima TOGO, leña, panadería), así que el número real de almacén es un poco menor.</div>
+    </div></div>
+    <div><h2>Visitas de proveedores · próximos días</h2><div class="card tbl"><table>
+      ${a.visitas.map((v, i) => `<tr><td class="dia">${i === 0 ? "Hoy " : ""}${v.d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric" })}</td><td>${v.quien.map(p => p.deuda ? `<b>${esc(p.pv)}</b> <span class="debe">· se le debe ${pesos(p.deuda.tot)}${p.deuda.venc ? ` (${pesos(p.deuda.venc)} vencido)` : ` (vence ${dm(p.deuda.v)})`}</span>` : esc(p.pv) + (p.nota ? ` <span class="sub">(${esc(p.nota)})</span>` : "")).join(" · ")}</td></tr>`).join("") || `<tr><td class="sub">Sin datos de visitas.</td></tr>`}
+    </table><div class="src">Proveedores "cada 2 semanas" aparecen todas las semanas hasta que el área confirme la frecuencia.</div></div></div>
+  </div>
+  <div class="grid two">
+    <div><h2>Venta de almacén por local · ${mesNom(x.mes).split(" ")[0].toLowerCase()}</h2><div class="card tbl"><table>
+      <tr><th>Local</th><th class="n">Venta</th><th class="n">Margen</th><th class="n">${antN[0].toUpperCase() + antN.slice(1)}</th></tr>
+      ${filaLoc("Cárcano", "carcano")}${filaLoc("San Martín", "sm")}
+      <tr><td><b>Total</b></td><td class="n"><b>${$(a.tA.tv)}</b></td><td class="n"><b>${mg(a.tA)}</b></td><td class="n">${a.tP ? $(a.tP.tv) : "—"}</td></tr>
+    </table><div class="src">Este mes hasta el ${x.ve?.ultimo ? dm(x.ve.ultimo) : "—"}; el mes pasado completo.</div></div></div>
+    <div><h2>Cupo por proveedor</h2><div class="card">${a.cupo ? `<div class="tbl"><table><tr><th>Proveedor</th><th class="n">Cupo (vendido al costo)</th><th class="n">Comprado</th><th class="n">Diferencia</th></tr>${a.cupo.filas.map(f => `<tr><td>${esc(f.pv)}</td><td class="n">${$(f.cupo)}</td><td class="n">${$(f.comp)}</td><td class="n ${f.comp > f.cupo ? "neg" : ""}">${f.comp - f.cupo >= 0 ? "+" : "−"}${$(Math.abs(f.comp - f.cupo))}</td></tr>`).join("")}</table></div><div class="src">Semana del ${dm(a.cupo.semana)}.</div>` : `<div class="al y"><b>Sin datos de la semana:</b> la hoja CUPO de Compras almacén no tiene cargada esta semana ni la anterior. Cuando el área la cargue, acá aparece lo vendido al costo contra lo comprado por cada proveedor.</div>`}
+      ${a.avisos.length ? `<ul class="sub">${a.avisos.map(v => `<li>${esc(v)}</li>`).join("")}</ul>` : ""}</div></div>
+  </div>
+  <h2>De dónde sale cada número</h2>
+  <div class="card sub">Venta y ganancia de almacén por día y local: JORNADAS › ${MESES[a.desde.getMonth()]}_CLAUDE y ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx (TV ALMACEN y RG ALMACEN, caja 1 + caja 2) · Comprado: PROVEEDORES › FRIOTEKA_Proveedores.xlsx › Compras (el detalle de facturas y pagos está en el botón Proveedores) · Visitas: _CIRCUITO › VISITAS_PROVEEDORES.xlsx · Cupo: COMPRAS ALMACEN › COMPRAS_ALMACEN.xlsx › CUPO. El sistema solo lee estos archivos; no los modifica.</div>`;
+}
+
 let semana = -1; // -1 = todo el mes
 function bancos(x) {
   const b = x.b;
@@ -745,7 +831,7 @@ let datos = null;
 function pintar(arriba = true) {
   if (!datos) return;
   const h = location.hash;
-  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : inicio(datos);
+  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : inicio(datos);
   document.getElementById("releer").onclick = cargar;
   const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
   for (const bt of document.querySelectorAll("[data-s]")) bt.onclick = () => { semana = +bt.dataset.s; const y = scrollY; pintar(false); scrollTo(0, y); };
@@ -761,6 +847,12 @@ async function cargar() {
     let P = null; try { P = await libro(RUTA.proveedores); } catch {}
     try { datos.i = calcularIva(datos, F, P); } catch (e) { datos.i = { error: `No pude armar el IVA: ${e.message || e}` }; }
     try { if (!P) throw new Error("no se pudo abrir el archivo"); datos.p = calcularProveedores(P, datos.hoy, datos.mes); } catch (e) { datos.p = { error: `No pude leer ${RUTA.proveedores}: ${e.message || e}` }; }
+    try {
+      const mesAnt = new Date(datos.mes.getFullYear(), datos.mes.getMonth() - 1, 1);
+      let veAnt = null; try { const V = await libro(RUTA.ventas(mesAnt)); veAnt = leerVentas(grilla(V.wb.Sheets[V.wb.SheetNames[0]]), mesAnt); } catch {}
+      let VIS = null, CA = null; try { VIS = await libro(RUTA.visitas); } catch {} try { CA = await libro(RUTA.almacen); } catch {}
+      datos.a = calcularAlmacen(datos, veAnt, VIS, CA);
+    } catch (e) { datos.a = { error: `No pude armar Compras almacén: ${e.message || e}` }; }
     pintar();
   }
   catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
