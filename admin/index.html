@@ -120,6 +120,7 @@ const RUTA = {
   visitas: "_CIRCUITO/VISITAS_PROVEEDORES.xlsx",
   almacen: "COMPRAS ALMACEN/COMPRAS_ALMACEN.xlsx",
   inventarioLuz: "ENERGIA CARCANO/INVENTARIO_CONSUMO_CARCANO.xlsx",
+  sueldos: "EMPLEADOS/RESUMEN_SUELDOS.xlsx",
   cierreB: ym => `PANORAMA GENERAL/CIERRES/${ym}/CIERRE_BANCOS_${ym}.json`
 };
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
@@ -170,7 +171,7 @@ function leerHoja1(g) {
   for (const [k, { lbl, val }] of Object.entries(lados)) {
     const v = r => { for (const f of g) if (norm(f[lbl]) === r) { if (num(f[val]) == null) avisos.push(`Hoja1: "${r}" sin valor guardado (abrir y guardar GASTOS.xlsx en Excel)`); return num(f[val]) ?? 0; } avisos.push(`Hoja1: no encontré "${r}" (${k === "sm" ? "San Martín" : "Cárcano"})`); return 0; };
     const total = v("TOTAL GASTOS"), alq = v("TOTAL ALQUILER"), sue = v("TOTAL SUELDOS"), apo = v("TOTAL APORTES"), luz = v("TOTAL EPEC"), var_ = v("TOTAL VARIOS"), flete = v("FLETE FENOVO");
-    out[k] = { total, rubros: { "Luz": luz, "Alquileres": alq, "Sueldos y cargas": sue + apo, "Servicios": var_ - flete, "Flete Fenovo": flete } };
+    out[k] = { total, sueldos: sue, rubros: { "Luz": luz, "Alquileres": alq, "Sueldos y cargas": sue + apo, "Servicios": var_ - flete, "Flete Fenovo": flete } };
     const suma = alq + sue + apo + luz + var_;
     if (Math.abs(suma - total) > 1) avisos.push(`Hoja1 ${k === "sm" ? "San Martín" : "Cárcano"}: los rubros suman ${$(suma)} pero el TOTAL GASTOS dice ${$(total)}`);
   }
@@ -288,7 +289,7 @@ async function calcular() {
   for (const n of h1.notas) { const f = fechaTexto(n.fechaTxt, hoy); if (f && f >= hoy) proximos.push({ f, h: `${n.que} · $ ${$(n.monto)}${/interes/i.test(n.nota) ? " (corren intereses)" : ""}` }); }
   proximos.sort((a, b) => a.f - b.f);
   const avisos = [...h1.avisos, ...imp.avisos]; if (veError) avisos.push(veError);
-  return { hoy, mes, diasMes, G, gMod: G.mod, veMod, ve, prev, fijo, varL, fijoTot, varTot, total: fijoTot + varTot,
+  return { hoy, mes, diasMes, G, h1, gMod: G.mod, veMod, ve, prev, fijo, varL, fijoTot, varTot, total: fijoTot + varTot,
     pct: ve && ve.total ? (fijoTot * prop + varTot) / ve.total : null, pctL, rubros, va, ep, imp,
     alertas: imp.alertas, proximos, faltan: [...va.faltan, ...avisos] };
 }
@@ -598,8 +599,51 @@ function calcularEnergia(x, INV) {
   return { boletas, resumen, inv, alertas, proximos, avisos };
 }
 
+// ---------- Empleados: RESUMEN_SUELDOS.xlsx (lo deja Empleados) + cargas sociales de GASTOS ----------
+function aMes(v) { if (typeof v === "number") { const d = fecha(v); return new Date(d.getFullYear(), d.getMonth(), 1); } const m = txt(v).match(/(\d{1,2})\/(\d{4})/); return m ? new Date(+m[2], +m[1] - 1, 1) : null; }
+function calcularEmpleados(x, RS) {
+  const hoja = n => { const ws = RS.wb.Sheets[n]; if (!ws) throw new Error(`RESUMEN_SUELDOS.xlsx no tiene la hoja ${n}`); return grilla(ws); };
+  const avisos = [], alertas = [];
+  const gs = hoja("SEMANAS"), hs = gs[0], S = {};
+  for (const [k, n] of [["sem", "SEMANA"], ["emp", "EMPLEADO"], ["tipo", "TIPO"], ["horas", "HORAS"], ["vh", "VALOR HORA"], ["gan", "TOTAL GANADO"], ["adel", "ADELANTOS"], ["cc", "CTA. CTE. DESCONTADA"], ["pag", "PAGADO"], ["pend", "PENDIENTE"], ["saldo", "SALDO CTA. CTE."]]) { S[k] = col(hs, n); if (S[k] < 0) throw new Error(`hoja SEMANAS: no encontré la columna "${n}"`); }
+  const semanas = gs.slice(1).map(f => ({ d: aFecha(f[S.sem]), emp: txt(f[S.emp]), mensual: /MENSUAL/i.test(txt(f[S.tipo])), horas: num(f[S.horas]), vh: num(f[S.vh]), gan: num(f[S.gan]) ?? 0, adel: num(f[S.adel]) ?? 0, cc: num(f[S.cc]) ?? 0, pag: num(f[S.pag]), pend: num(f[S.pend]), saldo: num(f[S.saldo]) })).filter(s => s.d && s.emp);
+  const gm = hoja("MESES"), hm = gm[0], Mc = {};
+  for (const [k, n] of [["mes", "MES"], ["emp", "EMPLEADO"], ["rec", "NETO RECIBO"], ["fuera", "POR FUERA"], ["tot", "TOTAL DEL MES"], ["agui", "AGUINALDO"]]) { Mc[k] = col(hm, n); if (Mc[k] < 0) throw new Error(`hoja MESES: no encontré la columna "${n}"`); }
+  const meses = gm.slice(1).map(f => ({ m: aMes(f[Mc.mes]), emp: txt(f[Mc.emp]), rec: num(f[Mc.rec]) ?? 0, fuera: num(f[Mc.fuera]) ?? 0, tot: num(f[Mc.tot]) ?? 0, agui: num(f[Mc.agui]) ?? 0 })).filter(r => r.m && r.emp);
+  // Último mes cerrado = el más nuevo con al menos 3 empleados
+  const porMes = {}; for (const r of meses) (porMes[+r.m] ||= []).push(r);
+  const claves = Object.keys(porMes).map(Number).sort((a, b) => b - a), kc = claves.find(k => porMes[k].length >= 3);
+  const cerrado = kc ? { m: new Date(kc), filas: porMes[kc] } : null;
+  let res = null;
+  if (cerrado) {
+    const fin = new Date(cerrado.m.getFullYear(), cerrado.m.getMonth() + 1, 1), enMes = s => s.d >= cerrado.m && s.d < fin;
+    const ccEmp = {}; for (const s of semanas.filter(enMes)) ccEmp[s.emp] = (ccEmp[s.emp] || 0) + s.cc;
+    const sum = k => cerrado.filas.reduce((a, r) => a + r[k], 0);
+    // Cargas sociales: los renglones CARGAS SOCIALES, CEC y FAECYS de GASTOS › Hoja1 (último período cargado)
+    let cargas = 0; const g1 = grilla(x.G.wb.Sheets["Hoja1"]);
+    for (const n of ["CARGAS SOCIALES", "CEC", "FAECYS"]) { const f = g1.find(f => norm(f[1]) === n && num(f[2]) != null); if (f) cargas += f[2]; else avisos.push(`GASTOS › Hoja1: no encontré "${n}"`); }
+    const estimado = (x.h1?.sm?.sueldos ?? 0) + (x.h1?.carcano?.sueldos ?? 0);
+    res = { rec: sum("rec"), fuera: sum("fuera"), tot: sum("tot"), agui: sum("agui"), cc: Object.values(ccEmp).reduce((a, v) => a + v, 0), ccEmp, cargas, estimado };
+    if (estimado && res.tot > estimado * 1.1) alertas.push({ t: "y", h: `<b>Gastos subestima los sueldos:</b> estima ${pesos(estimado)} por mes y ${MESES[cerrado.m.getMonth()].toLowerCase()} real fue ${pesos(res.tot)}. Conviene que Gastos tome el real de este archivo.` });
+  }
+  // Pendientes de pago y semanas sin montos
+  for (const s of semanas) if (s.pend > 0) alertas.unshift({ t: "r", h: `<b>${esc(s.emp)}, ${s.mensual ? MESES[s.d.getMonth()].toLowerCase() : "semana del " + dm(s.d)}:</b> figura pendiente ${pesos(s.pend)}: falta registrar cómo y cuándo se pagó.` });
+  const sinMontos = [...new Set(semanas.filter(s => !s.mensual && s.pag == null).map(s => +s.d))];
+  for (const d of sinMontos) alertas.push({ t: "y", h: `<b>Semana del ${dm(new Date(d))}:</b> sin montos pagados cargados (${semanas.filter(s => +s.d === d && s.pag == null).map(s => esc(s.emp)).join(", ")}).` });
+  // Último saldo de cuenta corriente de cada uno
+  const empleados = [...new Set(semanas.map(s => s.emp))], saldo = {};
+  for (const e of empleados) { const u = semanas.filter(s => s.emp === e && s.saldo != null).sort((a, b) => a.d - b.d).pop(); saldo[e] = u ? u.saldo : null; }
+  // Horas de las últimas 6 semanas de los semanales
+  const semsS = [...new Set(semanas.filter(s => !s.mensual).map(s => +s.d))].sort((a, b) => a - b).slice(-6), semanales = empleados.filter(e => semanas.some(s => s.emp === e && !s.mensual));
+  const horas = semanales.map(e => ({ emp: e, vh: semanas.filter(s => s.emp === e && s.vh).sort((a, b) => a.d - b.d).pop()?.vh, celdas: semsS.map(d => { const s = semanas.find(s => s.emp === e && +s.d === d); return s ? { h: s.horas, inc: s.pag == null } : null; }) }));
+  // Mes en curso
+  const finAct = new Date(x.mes.getFullYear(), x.mes.getMonth() + 1, 1), act = semanas.filter(s => !s.mensual && s.d >= x.mes && s.d < finAct);
+  const actual = { gan: act.reduce((a, s) => a + s.gan, 0), cc: act.reduce((a, s) => a + s.cc, 0), semanas: new Set(act.map(s => +s.d)).size, hasta: act.length ? new Date(Math.max(...act.map(s => +s.d)) + 6 * 864e5) : null, mensuales: (porMes[+x.mes] || []) };
+  return { mod: RS.mod, cerrado, res, saldo, horas, semsS, actual, alertas, avisos };
+}
+
 // ---------- Pantallas ----------
-const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["energia", "Energía", "Luz de los dos locales"]];
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["empleados", "Empleados", "Sueldos, horas y cta. cte."], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["energia", "Energía", "Luz de los dos locales"]];
 const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
 const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -615,7 +659,7 @@ const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}<
   ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
 
 function inicio(x) {
-  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a, en = x.e, mods = [b, fv, iv, pr, al, en];
+  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a, en = x.e, mods = [b, fv, iv, pr, al, en, x.em];
   const todas = { alertas: [...mods.flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: [...x.proximos, ...(en.proximos || [])].sort((p, q) => p.f - q.f), faltan: [...x.faltan, ...mods.filter(o => o.error).map(o => o.error)] };
   return cabecera("Administración FRIOTEKA", "Inicio", lectG(x) + (b.error ? "" : " · " + lectB(b))) + `
   <div class="grid kpis">
@@ -827,6 +871,41 @@ function energia(x) {
   <div class="card sub">Boletas: GASTOS FIJOS Y VARIABLES › GASTOS.xlsx › hoja EPEC (las carga Gastos) · En qué se va la luz: ENERGIA CARCANO › INVENTARIO_CONSUMO_CARCANO.xlsx (hojas CARGAS y CUADRE) · Venta del local: JORNADAS (mes pasado). El sistema solo lee estos archivos; no los modifica.</div>`;
 }
 
+function empleados(x) {
+  const e = x.em, cr = `<a href="#">Inicio</a> › Empleados`;
+  if (e.error) return cabecera("Empleados", cr, "RESUMEN_SUELDOS.xlsx: no se pudo leer") + `<div class="card">${esc(e.error)}</div>`;
+  const r = e.res, c = e.cerrado, mesC = c ? MESES[c.m.getMonth()].toLowerCase() : "", M = n => (n / 1e6).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const mxH = Math.max(1, ...e.horas.flatMap(h => h.celdas.map(z => z?.h || 0)));
+  return cabecera(`Empleados · ${mesNom(x.mes)}`, cr, `RESUMEN_SUELDOS.xlsx: ${hora(e.mod)} · Último mes cerrado: ${mesC || "ninguno"}`) + `
+  ${r ? `<div class="grid kpis">
+    <div class="card"><div class="lbl">Costo laboral de ${mesC}</div><div class="big">${pesos(r.tot + r.cargas)}</div><div class="sub">Sueldos $ ${M(r.tot)}M + cargas sociales $ ${M(r.cargas)}M (F931, CEC, FAECYS)</div></div>
+    <div class="card"><div class="lbl">Contra lo estimado en Gastos</div><div class="big ${r.tot > r.estimado ? "neg" : ""}">${r.tot >= r.estimado ? "+" : "−"}$ ${$(Math.abs(r.tot - r.estimado))}</div><div class="sub">Sueldos reales $ ${M(r.tot)}M · Gastos estima $ ${M(r.estimado)}M${r.estimado ? ` (${r.tot >= r.estimado ? "+" : "−"}${Math.round(Math.abs(r.tot / r.estimado - 1) * 100)}%)` : ""}</div></div>
+    <div class="card"><div class="lbl">Recibo y por fuera (${mesC})</div><div class="big">${r.tot ? Math.round(r.fuera / r.tot * 100) : 0} % por fuera</div>
+      <div class="split"><div style="width:${r.tot ? r.rec / r.tot * 100 : 0}%;background:var(--bar)"></div><div style="width:${r.tot ? r.fuera / r.tot * 100 : 0}%;background:var(--neg2)"></div></div>
+      <div class="sub">Recibo $ ${M(r.rec)}M · por fuera $ ${M(r.fuera)}M</div></div>
+    <div class="card"><div class="lbl">Vuelve como compras (cta. cte.)</div><div class="big">${r.tot ? Math.round(r.cc / r.tot * 100) : 0} %</div><div class="sub">En ${mesC} se descontaron ${pesos(r.cc)} de cuenta corriente de los sueldos</div></div>
+  </div>` : `<div class="card sub">Todavía no hay un mes cerrado en la hoja MESES.</div>`}
+  <div class="grid two">
+    <div><h2>Por empleado · ${mesC}</h2><div class="card tbl">${c ? `<table>
+      <tr><th>Empleado</th><th class="n">Recibo</th><th class="n">Por fuera</th><th class="n">Total</th><th class="n">Cta. cte. desc.</th><th class="n">Saldo cta. cte.</th></tr>
+      ${[...c.filas].sort((a, b) => b.tot - a.tot).map(f => `<tr><td>${esc(f.emp)}</td><td class="n">${$(f.rec)}</td><td class="n">${$(f.fuera)}</td><td class="n">${$(f.tot)}</td><td class="n">${$(r.ccEmp[f.emp] || 0)}</td><td class="n">${$(e.saldo[f.emp])}</td></tr>`).join("")}
+      <tr><td><b>Total</b></td><td class="n"><b>${$(r.rec)}</b></td><td class="n"><b>${$(r.fuera)}</b></td><td class="n"><b>${$(r.tot)}</b></td><td class="n"><b>${$(r.cc)}</b></td><td></td></tr>
+    </table><div class="src">Saldo de cuenta corriente: el último registrado de cada uno. Aguinaldo provisionado: ${pesos(r.agui)} por mes.</div>` : ""}</div></div>
+    <div><h2>Alertas</h2><div class="card">
+      ${e.alertas.map(a => `<div class="al ${a.t}">${a.h}</div>`).join("") || `<div class="sub">Sin alertas.</div>`}
+      <div class="sub" style="margin-top:8px">${mesNom(x.mes).split(" ")[0]}${e.actual.hasta ? ` (al ${dm(e.actual.hasta)})` : ""}: semanales ${pesos(e.actual.gan)} ganados en ${e.actual.semanas} semana(s), ${pesos(e.actual.cc)} descontados de cta. cte.${e.actual.mensuales.map(m => ` · ${esc(m.emp)} ${pesos(m.tot)}`).join("")}. El mes se cierra a fin de mes.</div>
+      ${e.avisos.length ? `<ul class="sub">${e.avisos.map(v => `<li>${esc(v)}</li>`).join("")}</ul>` : ""}
+    </div></div>
+  </div>
+  <h2>Horas por semana · semanales</h2>
+  <div class="card tbl"><table>
+    <tr><th></th>${e.semsS.map(d => `<th class="n">${dm(new Date(d))}</th>`).join("")}</tr>
+    ${e.horas.map(h => `<tr><td>${esc(h.emp)}${h.vh ? ` <span class="sub">$ ${$(h.vh)}/h</span>` : ""}</td>${h.celdas.map(z => `<td class="n">${z ? `<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><span style="display:inline-block;height:10px;width:${Math.max(2, (z.h || 0) / mxH * 60)}px;border-radius:2px;background:${z.inc ? "var(--plan)" : "var(--bar)"}"></span>${(z.h ?? 0).toLocaleString("es-AR")}${z.inc ? "*" : ""}</div>` : "—"}</td>`).join("")}</tr>`).join("")}
+  </table><div class="src">* Semana sin montos pagados cargados (puede tener horas incompletas).</div></div>
+  <h2>De dónde sale cada número</h2>
+  <div class="card sub">Sueldos, horas, cuenta corriente y pagos: EMPLEADOS › RESUMEN_SUELDOS.xlsx (hojas SEMANAS y MESES, lo actualiza Empleados) · Cargas sociales y sueldos estimados: GASTOS.xlsx › Hoja1. El sistema solo lee estos archivos; no los modifica. Los datos de cada empleado no salen de esta PC.</div>`;
+}
+
 let semana = -1; // -1 = todo el mes
 function bancos(x) {
   const b = x.b;
@@ -913,7 +992,7 @@ let datos = null;
 function pintar(arriba = true) {
   if (!datos) return;
   const h = location.hash;
-  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : h === "#energia" ? energia(datos) : inicio(datos);
+  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : h === "#energia" ? energia(datos) : h === "#empleados" ? empleados(datos) : inicio(datos);
   document.getElementById("releer").onclick = cargar;
   const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
   for (const bt of document.querySelectorAll("[data-s]")) bt.onclick = () => { semana = +bt.dataset.s; const y = scrollY; pintar(false); scrollTo(0, y); };
@@ -937,6 +1016,7 @@ async function cargar() {
       datos.a = calcularAlmacen(datos, veAnt, VIS, CA);
     } catch (e) { datos.a = { error: `No pude armar Compras almacén: ${e.message || e}` }; }
     try { let INV = null; try { INV = await libro(RUTA.inventarioLuz); } catch {} datos.e = calcularEnergia(datos, INV); } catch (e) { datos.e = { error: `No pude armar Energía: ${e.message || e}` }; }
+    try { const RS = await libro(RUTA.sueldos); datos.em = calcularEmpleados(datos, RS); } catch (e) { datos.em = { error: `No pude leer ${RUTA.sueldos}: ${e.message || e}` }; }
     pintar();
   }
   catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
