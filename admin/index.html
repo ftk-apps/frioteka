@@ -279,6 +279,18 @@ async function calcular() {
   let prev = null; const mesAnt = new Date(mes.getFullYear(), mes.getMonth() - 1, 1);
   try { const a = await archivo(RUTA.cierre(ym(mesAnt))); const j = JSON.parse(new TextDecoder().decode(a.buf)); const n = k => j.numeros.find(x => x.clave === k)?.valor; prev = { total: n("total_mes"), pct: n("gasto_total_pct_venta"), nombre: MESES[mesAnt.getMonth()].toLowerCase() }; } catch {}
 
+  // Sueldos: el real del último mes cerrado (EMPLEADOS › RESUMEN_SUELDOS.xlsx) en vez del estimado de Hoja1, repartido entre locales como el estimado
+  let RS = null, sueldos = null; const avisosSue = [];
+  try { RS = await libro(RUTA.sueldos); } catch { avisosSue.push(`No pude leer ${RUTA.sueldos}: el total usa los sueldos estimados de Hoja1`); }
+  if (RS) {
+    const sr = sueldosMesCerrado(RS), est = h1.sm.sueldos + h1.carcano.sueldos;
+    if (!sr) avisosSue.push("RESUMEN_SUELDOS.xlsx: no encontré un mes cerrado en MESES; el total usa los sueldos estimados de Hoja1");
+    else if (est > 0) {
+      sueldos = { m: sr.m, real: sr.tot, est, aj: {} };
+      for (const k of ["sm", "carcano"]) { const a = (sr.tot - est) * h1[k].sueldos / est; sueldos.aj[k] = a; h1[k].total += a; h1[k].rubros["Sueldos y cargas"] += a; }
+    }
+  }
+
   const fijoSas = h1.gestion + imp.cuotasPlanes + imp.muni;
   const fijo = { sm: h1.sm.total, carcano: h1.carcano.total, sas: fijoSas };
   const varL = { sm: 0, carcano: 0, sas: 0 }; for (const r of va.filas) varL[r.local] += r.monto || 0;
@@ -291,8 +303,8 @@ async function calcular() {
   const proximos = [...imp.proximos];
   for (const n of h1.notas) { const f = fechaTexto(n.fechaTxt, hoy); if (f && f >= hoy) proximos.push({ f, h: `${n.que} · $ ${$(n.monto)}${/interes/i.test(n.nota) ? " (corren intereses)" : ""}` }); }
   proximos.sort((a, b) => a.f - b.f);
-  const avisos = [...h1.avisos, ...imp.avisos]; if (veError) avisos.push(veError);
-  return { hoy, mes, diasMes, G, h1, gMod: G.mod, veMod, ve, prev, fijo, varL, fijoTot, varTot, total: fijoTot + varTot,
+  const avisos = [...h1.avisos, ...imp.avisos, ...avisosSue]; if (veError) avisos.push(veError);
+  return { hoy, mes, diasMes, G, h1, RS, sueldos, gMod: G.mod, veMod, ve, prev, fijo, varL, fijoTot, varTot, total: fijoTot + varTot,
     pct: ve && ve.total ? (fijoTot * prop + varTot) / ve.total : null, pctL, rubros, va, ep, imp,
     alertas: imp.alertas, proximos, faltan: [...va.faltan, ...avisos] };
 }
@@ -651,6 +663,14 @@ function calcularEnergia(x, INV) {
 
 // ---------- Empleados: RESUMEN_SUELDOS.xlsx (lo deja Empleados) + cargas sociales de GASTOS ----------
 function aMes(v) { if (typeof v === "number") { const d = fecha(v); return new Date(d.getFullYear(), d.getMonth(), 1); } const m = txt(v).match(/(\d{1,2})\/(\d{4})/); return m ? new Date(+m[2], +m[1] - 1, 1) : null; }
+// Sueldos reales del último mes cerrado (el más nuevo de MESES con 3 o más empleados), para el total de Gastos
+function sueldosMesCerrado(RS) {
+  const gm = grilla(RS.wb.Sheets["MESES"]), h = gm[0] || [], cm = col(h, "MES"), ce = col(h, "EMPLEADO"), ct = col(h, "TOTAL DEL MES");
+  if (cm < 0 || ce < 0 || ct < 0) return null;
+  const porMes = {}; for (const f of gm.slice(1)) { const m = aMes(f[cm]); if (m && txt(f[ce])) (porMes[+m] ||= []).push(num(f[ct]) ?? 0); }
+  const k = Object.keys(porMes).map(Number).sort((a, b) => b - a).find(k => porMes[k].length >= 3);
+  return k ? { m: new Date(k), tot: porMes[k].reduce((a, v) => a + v, 0) } : null;
+}
 function calcularEmpleados(x, RS) {
   const hoja = n => { const ws = RS.wb.Sheets[n]; if (!ws) throw new Error(`RESUMEN_SUELDOS.xlsx no tiene la hoja ${n}`); return grilla(ws); };
   const avisos = [], alertas = [];
@@ -674,7 +694,7 @@ function calcularEmpleados(x, RS) {
     for (const n of ["CARGAS SOCIALES", "CEC", "FAECYS"]) { const f = g1.find(f => norm(f[1]) === n && num(f[2]) != null); if (f) cargas += f[2]; else avisos.push(`GASTOS › Hoja1: no encontré "${n}"`); }
     const estimado = (x.h1?.sm?.sueldos ?? 0) + (x.h1?.carcano?.sueldos ?? 0);
     res = { rec: sum("rec"), fuera: sum("fuera"), tot: sum("tot"), agui: sum("agui"), cc: Object.values(ccEmp).reduce((a, v) => a + v, 0), ccEmp, cargas, estimado };
-    if (estimado && res.tot > estimado * 1.1) alertas.push({ t: "y", h: `<b>Gastos subestima los sueldos:</b> estima ${pesos(estimado)} por mes y ${MESES[cerrado.m.getMonth()].toLowerCase()} real fue ${pesos(res.tot)}. Conviene que Gastos tome el real de este archivo.` });
+    if (estimado && res.tot > estimado * 1.1) alertas.push({ t: "y", h: `<b>Hoja1 de Gastos subestima los sueldos:</b> estima ${pesos(estimado)} por mes y ${MESES[cerrado.m.getMonth()].toLowerCase()} real fue ${pesos(res.tot)}. El total del sistema ya usa el real.` });
   }
   // Pendientes de pago y semanas sin montos
   for (const s of semanas) if (s.pend > 0) alertas.unshift({ t: "r", h: `<b>${esc(s.emp)}, ${s.mensual ? MESES[s.d.getMonth()].toLowerCase() : "semana del " + dm(s.d)}:</b> figura pendiente ${pesos(s.pend)}: falta registrar cómo y cuándo se pagó.` });
@@ -1027,7 +1047,7 @@ function gastos(x) {
   <div class="card tbl"><table>
     <tr><th>Local</th><th class="n">Fijo</th><th class="n">Variable</th><th class="n">Total</th><th class="n">% de su venta</th></tr>
     ${fila("San Martín", "sm")}${fila("Cárcano", "carcano")}${fila("SAS (compartido)", "sas")}
-  </table><div class="src">SAS = gestión, ${x.imp.planesTxt.length ? x.imp.planesTxt.join(" y ") + " de IIBB, " : ""}Municipalidad ${x.imp.perAnt}, y los variables que no son de un solo local.${x.h1?.planesHoja1?.size ? ` Los planes ${[...x.h1.planesHoja1].join(" y ")} de IIBB ya van en el fijo de cada local (GASTOS › Hoja1).` : ""}</div></div>
+  </table><div class="src">SAS = gestión, ${x.imp.planesTxt.length ? x.imp.planesTxt.join(" y ") + " de IIBB, " : ""}Municipalidad ${x.imp.perAnt}, y los variables que no son de un solo local.${x.h1?.planesHoja1?.size ? ` Los planes ${[...x.h1.planesHoja1].join(" y ")} de IIBB ya van en el fijo de cada local (GASTOS › Hoja1).` : ""}${x.sueldos ? ` Sueldos: el real de ${MESES[x.sueldos.m.getMonth()].toLowerCase()} (${pesos(x.sueldos.real)}) en vez del estimado de Hoja1 (${pesos(x.sueldos.est)}), repartido entre los locales como el estimado (SM ${x.sueldos.aj.sm < 0 ? "−" : "+"}${$(Math.abs(x.sueldos.aj.sm))}, Cárcano ${x.sueldos.aj.carcano < 0 ? "−" : "+"}${$(Math.abs(x.sueldos.aj.carcano))}).` : ""}</div></div>
   <div class="grid two">
     <div><h2>Fijo por rubro</h2><div class="card">
       ${rub.map(([n, v]) => `<div class="rub"><span>${n}</span><div class="track"><div class="fill" style="width:${Math.max(0, v / max * 100)}%"></div></div><span class="n">${$(v)} · ${Math.round(v / x.fijoTot * 100)}%</span></div>`).join("")}
@@ -1041,7 +1061,7 @@ function gastos(x) {
     ${x.va.filas.map((r, i) => `<tr class="fila" data-i="${i}"><td>${dm(r.d)}</td><td>${esc(r.cat)}</td><td>${esc(r.prov) || "—"}</td><td>${esc(r.localTxt)}</td><td class="n">${r.monto == null ? "sin monto" : $(r.monto)}</td></tr><tr class="det" hidden><td colspan="5">${esc(r.con)}</td></tr>`).join("") || `<tr><td colspan="5" class="sub">Todavía no hay variables cargados este mes.</td></tr>`}
   </table><div class="src">Por categoría: ${Object.entries(porCat).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${esc(c)} ${$(v)}`).join(" · ")}. Tocá una fila para ver el detalle.</div></div>
   <h2>De dónde sale cada número</h2>
-  <div class="card sub">Fijos de cada local y rubros: GASTOS.xlsx › Hoja1 (renglones TOTAL GASTOS, TOTAL ALQUILER, TOTAL SUELDOS, TOTAL APORTES, TOTAL EPEC, TOTAL VARIOS) · Gestión: renglones GESTION de Hoja1 · Planes IIBB y Municipalidad: hoja IMPUESTOS · Variables: hoja VARIABLES · Luz: hoja EPEC · Venta: JORNADAS › ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx · Mes anterior: cierre de PANORAMA. El sistema solo lee estos archivos; no los modifica.</div>`;
+  <div class="card sub">Fijos de cada local y rubros: GASTOS.xlsx › Hoja1 (renglones TOTAL GASTOS, TOTAL ALQUILER, TOTAL SUELDOS, TOTAL APORTES, TOTAL EPEC, TOTAL VARIOS) · Sueldos: el real del último mes cerrado de EMPLEADOS › RESUMEN_SUELDOS.xlsx (hoja MESES) en vez del estimado de Hoja1 · Gestión: renglones GESTION de Hoja1 · Planes IIBB y Municipalidad: hoja IMPUESTOS · Variables: hoja VARIABLES · Luz: hoja EPEC · Venta: JORNADAS › ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx · Mes anterior: cierre de PANORAMA. El sistema solo lee estos archivos; no los modifica.</div>`;
 }
 
 // ---------- Arranque ----------
@@ -1074,7 +1094,7 @@ async function cargar() {
       datos.a = calcularAlmacen(datos, veAnt, VIS, CA);
     } catch (e) { datos.a = { error: `No pude armar Compras almacén: ${e.message || e}` }; }
     try { let INV = null; try { INV = await libro(RUTA.inventarioLuz); } catch {} datos.e = calcularEnergia(datos, INV); } catch (e) { datos.e = { error: `No pude armar Energía: ${e.message || e}` }; }
-    try { const RS = await libro(RUTA.sueldos); datos.em = calcularEmpleados(datos, RS); } catch (e) { datos.em = { error: `No pude leer ${RUTA.sueldos}: ${e.message || e}` }; }
+    try { const RS = datos.RS || await libro(RUTA.sueldos); datos.em = calcularEmpleados(datos, RS); } catch (e) { datos.em = { error: `No pude leer ${RUTA.sueldos}: ${e.message || e}` }; }
     pintar();
   }
   catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
