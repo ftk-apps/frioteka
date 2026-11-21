@@ -50,6 +50,13 @@ ul{margin:4px 0;padding-left:18px}li{margin:3px 0}
 .pos{color:#2e9d5b}
 .fill.in{background:#2e9d5b}
 tr.ver td{color:var(--yel)}
+:root{--neg2:#8a6fd1}
+@media (prefers-color-scheme:dark){:root{--neg2:#9d86e0}}
+.stack{display:flex;height:14px;border-radius:4px;overflow:hidden}
+.stack .b{background:var(--bar)}.stack .nn{background:var(--neg2)}
+.tag{display:inline-block;font-size:12px;border-radius:10px;padding:1px 8px}
+.tag.r{background:var(--redbg);color:var(--red)}.tag.y{background:var(--yelbg);color:var(--yel)}.tag.g{background:var(--line);color:var(--mut)}
+.up{color:var(--red);font-weight:600}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .btn.on{background:var(--acc);border-color:var(--acc);color:#fff}
 details summary{cursor:pointer;font-size:14px}
@@ -460,8 +467,41 @@ function calcularIva(x, F, P) {
   return { ult, saldo, debito, i105: iv?.i105, i21: iv?.i21, fen, prov, credito, dif, aPagar, llevar: dif == null ? null : Math.max(0, dif), ant, meses: ant?.llevar ? saldo / ant.llevar : null, filas, alertas, avisos };
 }
 
+// ---------- Proveedores de almacén: hojas Compras y Precios de FRIOTEKA_Proveedores.xlsx ----------
+function calcularProveedores(P, hoy, mes) {
+  const hoja = n => { const ws = P.wb.Sheets[n]; if (!ws) throw new Error(`FRIOTEKA_Proveedores.xlsx no tiene la hoja ${n}`); return grilla(ws); };
+  const g = hoja("Compras"), h = g[0], C = {};
+  for (const [k, n] of [["fp", "FECHA PAGO"], ["fc", "FECHA COMPROBANTE"], ["pv", "PROVEEDOR"], ["comp", "COMPROBANTE"], ["cond", "CONDICION"], ["medio", "MEDIO DE PAGO"], ["tot", "TOTAL"], ["est", "ESTADO"], ["vence", "VENCE"], ["ivac", "IVA CREDITO"], ["per", "PERCEP. IVA"]]) { C[k] = col(h, n); if (C[k] < 0) throw new Error(`hoja Compras: no encontré la columna "${n}"`); }
+  const mesAnt = new Date(mes.getFullYear(), mes.getMonth() - 1, 1), vacio = () => ({ t: 0, b: 0, n: 0, ef: 0, tr: 0, cc: 0, iva: 0, c: 0 });
+  const meses = { act: vacio(), ant: vacio() }, semanasP = {}, prov = {}, pend = [];
+  const lunes = d => { const l = new Date(d); l.setDate(d.getDate() - (d.getDay() + 6) % 7); return l; };
+  for (const f of g.slice(1)) {
+    const fn = num(f[C.fp]) ?? num(f[C.fc]), tot = num(f[C.tot]); if (fn == null || tot == null) continue;
+    const d = fecha(fn), blanco = norm(f[C.cond]) === "BLANCO", pendiente = norm(f[C.est]) === "PENDIENTE", medio = norm(f[C.medio]);
+    const m = d >= mes ? meses.act : d >= mesAnt ? meses.ant : null;
+    if (m && d <= hoy) { m.t += tot; m.c++; blanco ? m.b += tot : m.n += tot; if (pendiente || !(medio.startsWith("EFECTIVO") || medio.startsWith("TRANSF"))) m.cc += tot; else if (medio.startsWith("EFECTIVO")) m.ef += tot; else m.tr += tot; m.iva += (num(f[C.ivac]) ?? 0) + (blanco ? num(f[C.per]) ?? 0 : 0); }
+    if (m === meses.act && d <= hoy) prov[txt(f[C.pv])] = (prov[txt(f[C.pv])] || 0) + tot;
+    const l = +lunes(d); (semanasP[l] ||= { d: new Date(l), b: 0, n: 0 })[blanco ? "b" : "n"] += tot;
+    if (pendiente) { const fcv = num(f[C.fc]) ?? fn, v = num(f[C.vence]) != null ? fecha(f[C.vence]) : new Date(+fecha(fcv) + 7 * 864e5); pend.push({ v, pv: txt(f[C.pv]), comp: txt(f[C.comp]), blanco, tot, dias: Math.round((v - hoy) / 864e5) }); }
+  }
+  pend.sort((a, b) => a.v - b.v);
+  const tramo = k => pend.filter(k).reduce((a, p) => a + p.tot, 0);
+  const vencido = tramo(p => p.dias < 0), semana = tramo(p => p.dias >= 0 && p.dias <= 7), despues = tramo(p => p.dias > 7);
+  const desde = +lunes(new Date(+hoy - 7 * 7 * 864e5)), sems = Object.values(semanasP).filter(s => +s.d >= desde && s.d <= hoy).sort((a, b) => a.d - b.d);
+  // Precios que subieron en las últimas 2 semanas
+  const gp = hoja("Precios"), hp = gp[0], cpv = col(hp, "PROVEEDOR"), cpr = col(hp, "PRODUCTO"), cul = col(hp, "ULTIMA COMPRA"), cne = col(hp, "PRECIO UNIT. NETO"), can = col(hp, "PRECIO NETO ANTERIOR"), cva = col(hp, "VARIACION");
+  const subas = [], avisos = [];
+  if ([cpv, cpr, cul, cne, can, cva].some(c => c < 0)) avisos.push("hoja Precios: faltan columnas, no se muestran las subas");
+  else for (const f of gp.slice(1)) { const u = num(f[cul]), v = num(f[cva]); if (u == null || v == null || v <= 0) continue; const d = fecha(u); if (d >= new Date(+hoy - 14 * 864e5)) subas.push({ d, pv: txt(f[cpv]), pr: txt(f[cpr]), antes: num(f[can]), ahora: num(f[cne]), v }); }
+  subas.sort((a, b) => b.v - a.v);
+  const alertas = [];
+  if (vencido > 0) alertas.push({ t: "r", h: `<b>Pagos a proveedores vencidos:</b> ${pesos(vencido)} (${[...new Set(pend.filter(p => p.dias < 0).map(p => p.pv))].join(", ")}).` });
+  const top = Object.entries(prov).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  return { mod: P.mod, meses, pend, vencido, semana, despues, totalPend: vencido + semana + despues, sems, top, subas, alertas, avisos };
+}
+
 // ---------- Pantallas ----------
-const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["", "Proveedores", "Pronto"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["", "Compras almacén", "Pronto"], ["", "Energía", "Pronto"]];
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["", "Compras almacén", "Pronto"], ["", "Energía", "Pronto"]];
 const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
 const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -477,8 +517,8 @@ const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}<
   ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
 
 function inicio(x) {
-  const ve = x.ve, b = x.b, fv = x.f, iv = x.i;
-  const todas = { alertas: [...(b.alertas || []).filter(a => a.t === "r"), ...(fv.alertas || []).filter(a => a.t === "r"), ...(iv.alertas || []).filter(a => a.t === "r"), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...[b, fv, iv].filter(o => o.error).map(o => o.error)] };
+  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p;
+  const todas = { alertas: [...[b, fv, iv, pr].flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...[b, fv, iv, pr].filter(o => o.error).map(o => o.error)] };
   return cabecera("Administración FRIOTEKA", "Inicio", lectG(x) + (b.error ? "" : " · " + lectB(b))) + `
   <div class="grid kpis">
     <div class="card"><div class="lbl">Deuda total Fenovo + banco</div><div class="big">${fv.error ? "sin dato" : pesos(fv.deudaTotal)}</div><div class="sub">${fv.error ? "No se pudo leer el Excel de Fenovo" : `Contra el plan: <span class="${fv.atraso < 0 ? "neg" : ""}">${pesos(fv.atraso)}</span>`}</div></div>
@@ -578,6 +618,47 @@ function ivaPantalla(x) {
   <div class="card sub">Saldo a favor, DDJJ, historial y transferido a Fenovo: GASTOS.xlsx › IMPUESTOS (bloques "IVA MENSUAL" e "IVA — HISTORIAL") · Débito del mes: JORNADAS › ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx (IVA 10,5% y 21%, caja 1 + caja 2) · Crédito de Fenovo: FRIOTEKA_Fenovo.xlsx › IVA · Crédito de proveedores: FRIOTEKA_Proveedores.xlsx › Compras (IVA crédito y percepciones de facturas A, por mes del comprobante). El sistema solo lee estos archivos; no los modifica.</div>`;
 }
 
+function proveedores(x) {
+  const p = x.p, cr = `<a href="#">Inicio</a> › Proveedores`;
+  if (p.error) return cabecera("Proveedores", cr, "FRIOTEKA_Proveedores.xlsx: no se pudo leer") + `<div class="card">${esc(p.error)}</div>`;
+  const a = p.meses.act, ant = p.meses.ant, M = n => (n / 1e6).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const mesN = mesNom(x.mes).split(" ")[0], antN = mesNom(new Date(x.mes.getFullYear(), x.mes.getMonth() - 1, 1)).split(" ")[0];
+  const tag = q => q.dias < 0 ? `<span class="tag r">vencido</span>` : q.dias <= 2 ? `<span class="tag y">${q.dias === 0 ? "hoy" : "en " + q.dias + " día" + (q.dias > 1 ? "s" : "")}</span>` : q.dias > 7 ? `<span class="tag g">más adelante</span>` : "";
+  const mxS = Math.max(1, ...p.sems.map(s => s.b + s.n)), mxP = p.top[0]?.[1] || 1;
+  const filaSuba = s => `<tr><td>${esc(s.pr)}</td><td>${esc(s.pv)}</td><td class="n">${$(s.antes)} → ${$(s.ahora)}</td><td class="n up">+${(s.v * 100).toLocaleString("es-AR", { maximumFractionDigits: 1 })}%</td></tr>`;
+  return cabecera(`Proveedores · ${mesNom(x.mes)}`, cr, `FRIOTEKA_Proveedores.xlsx: ${hora(p.mod)}`) + `
+  <div class="grid kpis">
+    <div class="card"><div class="lbl">Compras de ${mesN.toLowerCase()} (al ${dm(x.hoy)})</div><div class="big">${pesos(a.t)}</div><div class="sub">${a.c} comprobantes · ${antN} entero: ${pesos(ant.t)}</div></div>
+    <div class="card"><div class="lbl">En negro</div><div class="big">${a.t ? Math.round(a.n / a.t * 100) : 0} %</div><div class="sub">$ ${M(a.n)}M de $ ${M(a.t)}M · sin IVA a favor</div></div>
+    <div class="card"><div class="lbl">A pagar (cuenta corriente)</div><div class="big">${pesos(p.totalPend)}</div><div class="sub">${p.vencido ? `<span class="neg">Vencido ${pesos(p.vencido)}</span> · ` : ""}próximos 7 días ${pesos(p.semana)}</div></div>
+    <div class="card"><div class="lbl">IVA a favor del mes</div><div class="big">${pesos(a.iva)}</div><div class="sub">El detalle está en el botón IVA</div></div>
+  </div>
+  <div class="grid two">
+    <div><h2>Pagos a proveedores · por vencimiento</h2><div class="card tbl"><table>
+      <tr><th>Vence</th><th>Proveedor</th><th>Comprobante</th><th class="n">A pagar</th></tr>
+      ${p.pend.map(q => `<tr><td>${dm(q.v)} ${tag(q)}</td><td>${esc(q.pv)}</td><td>${esc(q.comp)}${q.blanco ? "" : " (negro)"}</td><td class="n">${$(q.tot)}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No hay pagos pendientes.</td></tr>`}
+    </table><div class="src">Contra boleta vence a los 7 días; Santa María, a los 30.</div></div></div>
+    <div><h2>Compras por semana · blanco y negro</h2><div class="card">
+      <div class="ley"><span><i style="background:var(--bar)"></i>En blanco</span><span><i style="background:var(--neg2)"></i>En negro</span></div>
+      ${p.sems.map(s => { const t = s.b + s.n; return `<div class="sem"><span>${dm(s.d)}</span><div class="stack" style="width:${t / mxS * 100}%"><div class="b" style="width:${t ? s.b / t * 100 : 0}%"></div><div class="nn" style="width:${t ? s.n / t * 100 : 0}%"></div></div><span class="n">${M(t)}M</span></div>`; }).join("")}
+      <div class="src">Semana de lunes a domingo, según fecha de pago (si está pendiente, la del comprobante). La última va hasta hoy.</div>
+    </div></div>
+  </div>
+  <div class="grid two">
+    <div><h2>A quién le compramos más · ${mesN.toLowerCase()}</h2><div class="card">
+      ${p.top.map(([n, v]) => `<div class="rub"><span>${esc(n)}</span><div class="track"><div class="fill" style="width:${v / mxP * 100}%"></div></div><span class="n">${$(v)}</span></div>`).join("") || `<div class="sub">Todavía no hay compras este mes.</div>`}
+      <div class="src">Pagado en ${mesN.toLowerCase()}: efectivo $ ${M(a.ef)}M · transferencia $ ${M(a.tr)}M · cuenta corriente $ ${M(a.cc)}M.</div>
+    </div></div>
+    <div><h2>Precios que subieron · últimas 2 semanas</h2><div class="card tbl">
+      <table><tr><th>Producto</th><th>Proveedor</th><th class="n">Antes → ahora (neto)</th><th class="n">Suba</th></tr>${p.subas.slice(0, 8).map(filaSuba).join("") || `<tr><td colspan="4" class="sub">No hubo subas.</td></tr>`}</table>
+      ${p.subas.length > 8 ? `<details><summary class="sub">Ver los otros ${p.subas.length - 8} productos que subieron (${p.subas.length} en total)</summary><table>${p.subas.slice(8).map(filaSuba).join("")}</table></details>` : ""}
+      <div class="src">Para revisar si el precio de venta acompaña.${p.avisos.map(v => " " + esc(v) + ".").join("")}</div>
+    </div></div>
+  </div>
+  <h2>De dónde sale cada número</h2>
+  <div class="card sub">Todo de PROVEEDORES › FRIOTEKA_Proveedores.xlsx: compras, pagos, semanas y proveedores de la hoja Compras (una fila por comprobante); subas de la hoja Precios. No se usan las hojas Resumen ni Pagos pendientes (dependen de la fecha del día): la app hace esas cuentas sola. Fenovo va en su propio botón y el detalle del IVA en el botón IVA. El sistema solo lee este archivo; no lo modifica.</div>`;
+}
+
 let semana = -1; // -1 = todo el mes
 function bancos(x) {
   const b = x.b;
@@ -664,7 +745,7 @@ let datos = null;
 function pintar(arriba = true) {
   if (!datos) return;
   const h = location.hash;
-  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : inicio(datos);
+  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : inicio(datos);
   document.getElementById("releer").onclick = cargar;
   const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
   for (const bt of document.querySelectorAll("[data-s]")) bt.onclick = () => { semana = +bt.dataset.s; const y = scrollY; pintar(false); scrollTo(0, y); };
@@ -679,6 +760,7 @@ async function cargar() {
     try { if (!F) throw new Error("no se pudo abrir el archivo"); datos.f = calcularFenovo(F, datos.hoy, datos.mes); } catch (e) { datos.f = { error: `No pude leer ${RUTA.fenovo}: ${e.message || e}` }; }
     let P = null; try { P = await libro(RUTA.proveedores); } catch {}
     try { datos.i = calcularIva(datos, F, P); } catch (e) { datos.i = { error: `No pude armar el IVA: ${e.message || e}` }; }
+    try { if (!P) throw new Error("no se pudo abrir el archivo"); datos.p = calcularProveedores(P, datos.hoy, datos.mes); } catch (e) { datos.p = { error: `No pude leer ${RUTA.proveedores}: ${e.message || e}` }; }
     pintar();
   }
   catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
