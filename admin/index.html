@@ -55,6 +55,10 @@ ul{margin:4px 0;padding-left:18px}li{margin:3px 0}
 <script type="module">
 import { requireLogin } from "../login.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, setPersistence, browserSessionPersistence, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// ---------- Quién puede entrar (usuario de las apps, sin @frioteka.app) ----------
+const USUARIOS = ["esteban"];
 
 // ---------- Login (el mismo Firebase de las apps) ----------
 const fbApp = initializeApp({
@@ -65,7 +69,14 @@ const fbApp = initializeApp({
   messagingSenderId: "212598423220",
   appId: "1:212598423220:web:aee51bc39626b3c08621e1"
 }, "admin");
+const auth = getAuth(fbApp);
+await setPersistence(auth, browserSessionPersistence); // la sesión se cierra al cerrar Chrome
 await requireLogin(fbApp, { color: "#1f3a5f", titulo: "Administración FRIOTEKA" });
+window.salir = async () => { await signOut(auth); location.reload(); };
+if (!USUARIOS.includes(window.FRIO_USUARIO)) {
+  document.getElementById("app").innerHTML = `<div class="centro"><h1>No tenés acceso</h1><p>El usuario "${String(window.FRIO_USUARIO).replace(/[<>&"]/g, "")}" no puede ver el sistema de administración.</p><button class="btn pri" onclick="salir()">Salir</button></div>`;
+  throw new Error("sin acceso");
+}
 
 // ---------- Archivos: se leen de la carpeta TODO CLAUDE de esta PC, nunca se escriben ----------
 const RUTA = {
@@ -246,7 +257,7 @@ const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digi
 
 function cabecera(titulo, crumb, x) {
   return `<header><div><div class="crumb">${crumb}</div><h1>${titulo}</h1></div>
-  <div><button class="btn" id="releer">↻ Volver a leer los Excel</button>
+  <div><button class="btn" id="releer">↻ Volver a leer los Excel</button> <button class="btn" onclick="salir()">Salir</button>
   <div class="lect">GASTOS.xlsx: ${hora(x.gMod)} · Ventas: ${x.ve?.ultimo ? "hasta el " + dm(x.ve.ultimo) : "sin datos"}</div></div></header>`;
 }
 const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}</div>`).join("") || `<div class="sub">Sin alertas.</div>`}
