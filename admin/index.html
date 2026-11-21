@@ -51,6 +51,17 @@ ul{margin:4px 0;padding-left:18px}li{margin:3px 0}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .btn.on{background:var(--acc);border-color:var(--acc);color:#fff}
 details summary{cursor:pointer;font-size:14px}
+:root{--plan:#b6c2d6}
+@media (prefers-color-scheme:dark){:root{--plan:#3a4659}}
+.sem{display:grid;grid-template-columns:90px 1fr 120px;gap:8px;align-items:center;margin:8px 0;font-size:13px}
+.par{display:flex;flex-direction:column;gap:3px}
+.b{height:10px;border-radius:3px}
+.b.plan{background:var(--plan)}
+.b.real{background:var(--bar)}
+.b.real.mal{background:var(--red)}
+.ley{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--mut);margin-bottom:6px}
+.ley i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.split{display:flex;height:14px;border-radius:4px;overflow:hidden;margin:8px 0 4px}
 </style>
 </head>
 <body>
@@ -302,7 +313,7 @@ function semanas(mes, hasta) {
   if (s.length > 1 && +s[0].desde === +s[0].hasta) s.splice(0, 2, { desde: s[0].desde, hasta: s[1].hasta }); // un día suelto se suma a la semana siguiente
   return s;
 }
-async function calcularBancos(hoy, mes) {
+async function calcularBancos(hoy, mes, F) {
   const B = await libro(RUTA.bancos), hoja = n => B.wb.Sheets[n] ? grilla(B.wb.Sheets[n]) : null;
   const cuentas = [], avisos = [], alertas = [];
   for (const [h, nombre] of CUENTAS) { const g = hoja(h); if (!g) { avisos.push(`BANCOS.xlsx no tiene la hoja ${h}`); continue; } cuentas.push({ nombre, ...leerCuenta(g), fuente: "extracto" }); }
@@ -320,7 +331,7 @@ async function calcularBancos(hoy, mes) {
   // E-cheqs de Fenovo contra el Bancor
   const bancor = cuentas.find(c => c.nombre === "Bancor");
   let echeqs = [], pend = [], prox = [], ajustado = bancor?.saldo ?? null, falta = null;
-  try { const F = await libro(RUTA.fenovo); echeqs = leerEcheqs(grilla(F.wb.Sheets["PAGOS"])); } catch { avisos.push(`No pude leer ${RUTA.fenovo} (hoja PAGOS)`); }
+  try { echeqs = leerEcheqs(grilla(F.wb.Sheets["PAGOS"])); } catch { avisos.push(`No pude leer ${RUTA.fenovo} (hoja PAGOS)`); }
   if (bancor?.fSaldo) {
     const debitos = bancor.movs.filter(m => grupo(m.cat) === "Fenovo" && m.m < 0);
     const visto = e => debitos.some(m => Math.abs(-m.m - e.monto) < 1 && m.d >= new Date(+e.d - 864e5) && m.d <= new Date(+e.d + 5 * 864e5));
@@ -354,8 +365,54 @@ async function calcularBancos(hoy, mes) {
   return { mod: B.mod, cuentas, total, bancor, ajustado, pend, prox, siguientes, falta, delMes, semanas: semanas(mes, ultimo), ultimo, sinId, costos, prevB, cobertura, alertas, avisos };
 }
 
+// ---------- Lectura de FRIOTEKA_Fenovo.xlsx ----------
+const aFecha = v => typeof v === "number" ? fecha(v) : v instanceof Date ? v : fechaTexto(v, new Date());
+function porRotulo(g, col = 0, val = 1) { const m = {}; for (const f of g) { const k = norm(f[col]); if (k && !(k in m)) m[k] = f[val]; } return k => { for (const [r, v] of Object.entries(m)) if (r.startsWith(k)) return num(v) ?? 0; return null; }; }
+function calcularFenovo(F, hoy, mes) {
+  const hoja = n => { const ws = F.wb.Sheets[n]; if (!ws) throw new Error(`FRIOTEKA_Fenovo.xlsx no tiene la hoja ${n}`); return grilla(ws); };
+  const avisos = [], alertas = [];
+  // PLAN_DEUDA: rótulos en la fila 3 y valores en la fila 4 (ubicación fija que el área dejó para PANORAMA)
+  const pd = hoja("PLAN_DEUDA"), plan = {};
+  for (let c = 0; c < (pd[2] || []).length; c++) { const k = norm(pd[2][c]); if (k) plan[k] = num(pd[3]?.[c]); }
+  const p = k => { for (const [r, v] of Object.entries(plan)) if (r.startsWith(k)) return v; avisos.push(`PLAN_DEUDA: no encontré "${k}"`); return null; };
+  const deudaTotal = p("DEUDA TOTAL HOY"), excInicio = p("DEUDA EXCEDENTE AL INICIO"), excHoy = p("DEUDA EXCEDENTE HOY"), atraso = p("ADELANTO"), intPlan = p("INTERESES COBRADOS");
+  const inicioPlan = Object.keys(plan).join(" ").match(/\((\d{1,2}\/\d{1,2}\/\d{4})\)/)?.[1] || "";
+  const hs = pd.findIndex(f => norm(f[0]) === "SEMANA"), semanasPlan = [];
+  for (let i = hs + 1; hs >= 0 && i < pd.length; i++) { const f = pd[i]; if (num(f[0]) == null || num(f[14]) == null) continue; semanasPlan.push({ desde: aFecha(f[1]), hasta: aFecha(f[2]), plan: num(f[6]), real: f[14] }); }
+  // RESUMEN, por rótulo
+  const r = porRotulo(hoja("RESUMEN"));
+  const res = { blanco: r("SALDO EN BLANCO"), negro: r("SALDO EN NEGRO"), cc: r("SALDO TOTAL CON FENOVO"), enAviso: r("EN AVISO"), vencido: r("VENCIDO SEGUN EL ARREGLO"), tope: r("PASADO DEL TOPE"), entraAviso: r("ENTRA EN AVISO"),
+    echeqsPend: r("E-CHEQS PENDIENTES DE DEBITO"), apartado: r("DEBERIA ESTAR APARTADO"), usado: r("DIFERENCIA: LO QUE SE USO"), calle: r("EN LA CALLE CON MAYORISTAS"), faltaTransf: r("FALTA TRANSFERIR A FENOVO"),
+    intAcum: r("INTERESES COBRADOS POR FENOVO"), impAcum: r("IMPUESTO AL CHEQUE"), costoTot: r("COSTO FINANCIERO TOTAL"), pctInt: r("% DE INTERES PROMEDIO") };
+  for (const [k, v] of Object.entries(res)) if (v == null) avisos.push(`RESUMEN de Fenovo: no encontré el dato "${k}"`);
+  // CTA_CTE: una fila por mes
+  const cc = hoja("CTA_CTE"); let ccMes = null, ccAnt = null; const mesAnt = new Date(mes.getFullYear(), mes.getMonth() - 1, 1);
+  for (const f of cc) { const d = aFecha(f[0]); if (!d || num(f[5]) == null) continue; const fila = { bIni: f[1], bCom: f[2], bNC: f[3], bPag: f[4], bFin: f[5], nIni: f[6], nCom: f[7], nNC: f[8], nPag: f[9], nFin: f[10], total: f[11] };
+    if (d.getFullYear() === mes.getFullYear() && d.getMonth() === mes.getMonth()) ccMes = fila; if (d.getFullYear() === mesAnt.getFullYear() && d.getMonth() === mesAnt.getMonth()) ccAnt = fila; }
+  if (!ccMes) avisos.push("CTA_CTE de Fenovo: no está la fila de este mes");
+  // INTERESES: lo del mes y la tasa de las últimas tandas
+  const gi = hoja("INTERESES"), hi = gi.findIndex(f => norm(f[0]) === "FECHA"), tandas = [];
+  for (let i = hi + 1; hi >= 0 && i < gi.length; i++) { const f = gi[i]; if (num(f[0]) == null || num(f[3]) == null) continue; tandas.push({ d: fecha(f[0]), interes: f[3], tasa: parseFloat((txt(f[9]).match(/([\d]+[,.]?\d*)\s*%\s*mensual/i) || [])[1]?.replace(",", ".")) }); }
+  const intMes = tandas.filter(t => t.d >= mes).reduce((a, t) => a + t.interes, 0);
+  const conTasa = tandas.filter(t => !isNaN(t.tasa)), ult = conTasa[conTasa.length - 1], ant = conTasa[conTasa.length - 2];
+  // E-cheqs que faltan debitar
+  const echeqs = leerEcheqs(hoja("PAGOS")).filter(e => e.d >= hoy).sort((a, b) => a.d - b.d);
+  const sumaE = echeqs.reduce((a, e) => a + e.monto, 0);
+  if (res.echeqsPend != null && Math.abs(sumaE - res.echeqsPend) > 1) avisos.push(`E-cheqs: la lista de PAGOS suma ${$(sumaE)} y el RESUMEN dice ${$(res.echeqsPend)}`);
+  const en30 = echeqs.filter(e => e.d <= new Date(+hoy + 30 * 864e5)).reduce((a, e) => a + e.monto, 0);
+  const porMes = {}; for (const e of echeqs) { const k = mesNom(e.d); porMes[k] = (porMes[k] || 0) + e.monto; }
+  // Alertas
+  if (excHoy != null && excInicio != null && excHoy > excInicio) alertas.push({ t: "r", h: `<b>La deuda con Fenovo subió ${pesos(excHoy - excInicio)} desde que empezó el plan</b> (excedente ${pesos(excInicio)} → ${pesos(excHoy)}).` });
+  else if (atraso != null && atraso < 0) alertas.push({ t: "r", h: `<b>Plan de deuda atrasado:</b> ${pesos(atraso)}.` });
+  if (res.vencido > 0) alertas.push({ t: "r", h: `<b>Camiones vencidos</b> (más de 30 días): ${pesos(res.vencido)}.` });
+  if (res.tope > 0) alertas.push({ t: "r", h: `<b>Camiones pasados del tope</b> (más de 35 días): ${pesos(res.tope)}.` });
+  if (ult && ant && ult.tasa > ant.tasa) alertas.push({ t: "y", h: `<b>Interés más caro:</b> la última tanda de e-cheqs (${dm(ult.d)}) salió a ~${String(ult.tasa).replace(".", ",")}% mensual; la anterior, ~${String(ant.tasa).replace(".", ",")}%.` });
+  if (res.usado > 0) alertas.push({ t: "y", h: `<b>Apartado para Fenovo:</b> debería haber ${pesos(res.apartado)}; se usaron ${pesos(res.usado)} para otra cosa.` });
+  return { mod: F.mod, deudaTotal, excInicio, excHoy, atraso, intPlan, inicioPlan, semanasPlan, res, ccMes, ccAnt, intMes, echeqs, sumaE, en30, porMes, alertas, avisos };
+}
+
 // ---------- Pantallas ----------
-const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["", "Proveedores", "Pronto"], ["", "Fenovo / deuda", "Pronto"], ["", "IVA", "Pronto"], ["", "Compras almacén", "Pronto"], ["", "Energía", "Pronto"]];
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["", "Proveedores", "Pronto"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["", "IVA", "Pronto"], ["", "Compras almacén", "Pronto"], ["", "Energía", "Pronto"]];
 const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
 const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -371,10 +428,11 @@ const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}<
   ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
 
 function inicio(x) {
-  const ve = x.ve, b = x.b;
-  const todas = { alertas: [...(b.alertas || []).filter(a => a.t === "r"), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...(b.error ? [b.error] : [])] };
+  const ve = x.ve, b = x.b, fv = x.f;
+  const todas = { alertas: [...(b.alertas || []).filter(a => a.t === "r"), ...(fv.alertas || []).filter(a => a.t === "r"), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...(b.error ? [b.error] : []), ...(fv.error ? [fv.error] : [])] };
   return cabecera("Administración FRIOTEKA", "Inicio", lectG(x) + (b.error ? "" : " · " + lectB(b))) + `
   <div class="grid kpis">
+    <div class="card"><div class="lbl">Deuda total Fenovo + banco</div><div class="big">${fv.error ? "sin dato" : pesos(fv.deudaTotal)}</div><div class="sub">${fv.error ? "No se pudo leer el Excel de Fenovo" : `Contra el plan: <span class="${fv.atraso < 0 ? "neg" : ""}">${pesos(fv.atraso)}</span>`}</div></div>
     <div class="card"><div class="lbl">Plata en bancos</div><div class="big ${b.total < 0 ? "neg" : ""}">${b.error ? "sin dato" : pesos(b.total)}</div><div class="sub">${b.error ? "No se pudo leer BANCOS.xlsx" : `Bancor ${pesos(b.ajustado)}${b.pend?.length ? " (con e-cheq pendiente)" : ""}`}</div></div>
     <div class="card"><div class="lbl">Venta del último día${ve?.ultimo ? " (" + dm(ve.ultimo) + ")" : ""}</div><div class="big">$ ${$(ve && ve.ayer.sm + ve.ayer.carcano)}</div><div class="sub">SM ${$(ve?.ayer.sm)} · Cárcano ${$(ve?.ayer.carcano)}</div></div>
     <div class="card"><div class="lbl">Venta de ${mesNom(x.mes).toLowerCase()}</div><div class="big">$ ${$(ve?.total)}</div><div class="sub">${ve?.dias || 0} días cargados</div></div>
@@ -383,6 +441,55 @@ function inicio(x) {
   <h2>Áreas</h2>
   <div class="grid areas">${AREAS.map(([id, n, s]) => `<a class="card area ${id ? "" : "off"}" href="${id ? "#" + id : "#"}">${n}<small>${s}</small></a>`).join("")}</div>
   <h2>Alertas</h2><div class="card">${bloqueAlertas(todas)}</div>`;
+}
+
+function fenovo(x) {
+  const f = x.f, cr = `<a href="#">Inicio</a> › Fenovo / deuda`;
+  if (f.error) return cabecera("Fenovo / deuda", cr, "FRIOTEKA_Fenovo.xlsx: no se pudo leer") + `<div class="card">${esc(f.error)}</div>`;
+  const r = f.res, c = f.ccMes, mx = Math.max(1, ...f.semanasPlan.flatMap(s => [s.plan || 0, s.real || 0]));
+  const fen = r.cc ?? 0, pctFen = f.deudaTotal ? fen / f.deudaTotal * 100 : 0;
+  const M = n => n == null ? "—" : (n / 1e6).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const prox = f.echeqs[0];
+  return cabecera(`Fenovo · ${mesNom(x.mes)}`, cr, `FRIOTEKA_Fenovo.xlsx: ${hora(f.mod)}`) + `
+  <div class="grid kpis">
+    <div class="card"><div class="lbl">Deuda total</div><div class="big">${pesos(f.deudaTotal)}</div>
+      <div class="split"><div style="width:${pctFen}%;background:var(--bar)"></div><div style="width:${100 - pctFen}%;background:var(--plan)"></div></div>
+      <div class="sub">Fenovo $ ${M(fen)}M · Banco (e-cheqs) $ ${M(f.deudaTotal - fen)}M</div></div>
+    <div class="card"><div class="lbl">Contra el plan</div><div class="big ${f.atraso < 0 ? "neg" : ""}">${pesos(f.atraso)}</div><div class="sub">${f.atraso < 0 ? "Atrasados" : "Adelantados"}. Deuda excedente: $ ${M(f.excInicio)}M al inicio${f.inicioPlan ? " (" + f.inicioPlan.slice(0, 5) + ")" : ""} → $ ${M(f.excHoy)}M hoy</div></div>
+    <div class="card"><div class="lbl">E-cheqs próximos 30 días</div><div class="big">${pesos(f.en30)}</div><div class="sub">${prox ? `El próximo: N°${esc(prox.n)} ${pesos(prox.monto)} el ${dm(prox.d)}` : "No hay e-cheqs por debitar"}</div></div>
+    <div class="card"><div class="lbl">Camiones que entran en aviso (7 días)</div><div class="big">${pesos(r.entraAviso)}</div><div class="sub">Vencido: ${r.vencido ? pesos(r.vencido) : "nada"} · Pasado del tope: ${r.tope ? pesos(r.tope) : "nada"}</div></div>
+  </div>
+  <div class="grid two">
+    <div><h2>¿La deuda baja o sube? · deuda excedente por semana</h2><div class="card">
+      <div class="ley"><span><i style="background:var(--plan)"></i>Lo que marcaba el plan</span><span><i style="background:var(--bar)"></i>Lo real</span><span><i style="background:var(--red)"></i>Real peor que el plan</span></div>
+      ${f.semanasPlan.map(s => `<div class="sem"><span>${s.desde ? dm(s.desde) : ""}–${s.hasta ? dm(s.hasta) : ""}</span><div class="par"><div class="b plan" style="width:${(s.plan || 0) / mx * 100}%"></div><div class="b real ${s.real > s.plan ? "mal" : ""}" style="width:${s.real / mx * 100}%"></div></div><span class="n">${M(s.real)}M <span class="sub">(plan ${M(s.plan)})</span></span></div>`).join("") || `<div class="sub">Todavía no hay semanas cerradas.</div>`}
+      <div class="src">Deuda excedente = lo que se debe más allá de 30 días de compras (la que se financia con cheques largos y genera intereses). Intereses del plan: ${pesos(f.intPlan)}.</div>
+    </div></div>
+    <div><h2>Calendario de e-cheqs · ${pesos(f.sumaE)} sin debitar</h2><div class="card tbl"><table>
+      <tr><th>Débito</th><th>N°</th><th class="n">Monto</th></tr>
+      ${f.echeqs.map((e, i) => `<tr><td>${i === 0 ? "<b>" + dm(e.d) + "</b>" : dm(e.d)}</td><td>${esc(e.n)}</td><td class="n">${i === 0 ? "<b>" + $(e.monto) + "</b>" : $(e.monto)}</td></tr>`).join("") || `<tr><td colspan="3" class="sub">No hay e-cheqs por debitar.</td></tr>`}
+    </table><div class="src">${Object.entries(f.porMes).map(([m, v]) => `${m.split(" ")[0]}: $ ${M(v)}M`).join(" · ")}. El fondeo del Bancor para cada uno está en el botón Bancos.</div></div></div>
+  </div>
+  <div class="grid two">
+    <div><h2>${mesNom(x.mes).split(" ")[0]}: compras y pagos</h2><div class="card tbl">${c ? `<table>
+      <tr><th></th><th class="n">En blanco</th><th class="n">En negro</th></tr>
+      <tr><td>Saldo al 1/${x.mes.getMonth() + 1}</td><td class="n">${$(c.bIni)}</td><td class="n">${$(c.nIni)}</td></tr>
+      <tr><td>+ Compras (facturas, ND, intereses)</td><td class="n">${$(c.bCom)}</td><td class="n">${$(c.nCom)}</td></tr>
+      <tr><td>− Notas de crédito</td><td class="n">${$(Math.abs(c.bNC || 0))}</td><td class="n">${$(Math.abs(c.nNC || 0))}</td></tr>
+      <tr><td>− Pagos</td><td class="n">${$(c.bPag)}</td><td class="n">${$(c.nPag)}</td></tr>
+      <tr><td><b>Saldo hoy</b></td><td class="n"><b>${$(c.bFin)}</b></td><td class="n"><b>${$(c.nFin)}</b></td></tr>
+    </table><div class="src">Blanco se cubre con e-cheqs; negro, con depósitos.${f.ccAnt ? ` El mes pasado cerró con ${pesos(f.ccAnt.total)} de saldo total; hoy ${pesos(c.total)}.` : ""}</div>` : `<div class="sub">No está la fila de este mes en CTA_CTE.</div>`}</div></div>
+    <div><h2>Plata apartada y alertas</h2><div class="card">
+      ${f.alertas.map(a => `<div class="al ${a.t}">${a.h}</div>`).join("") || `<div class="sub">Sin alertas.</div>`}
+      <div class="sub" style="margin-top:8px">Falta transferir a Fenovo (excedente): ${pesos(r.faltaTransf)} · En la calle con mayoristas: ${pesos(r.calle)}${f.intMes ? ` · Interés de e-cheqs este mes: ${pesos(f.intMes)}` : ""}</div>
+      <div class="src">El apartado y los avisos de camiones el Excel los calcula con la fecha del día: acá se ven como quedaron la última vez que se guardó (${hora(f.mod)}).</div>
+      <div class="lbl" style="margin-top:10px">Lo que cuestan los cheques (acumulado)</div>
+      <div class="sub">Intereses ${pesos(r.intAcum)} + impuesto al cheque ${pesos(r.impAcum)} = <b>${pesos(r.costoTot)}</b>${r.pctInt ? ` (${pct(r.pctInt)} promedio)` : ""}.</div>
+      ${f.avisos.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${f.avisos.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
+    </div></div>
+  </div>
+  <h2>De dónde sale cada número</h2>
+  <div class="card sub">Todo de FENOVO › FRIOTEKA_Fenovo.xlsx: deuda total, excedente, atraso e intereses del plan de PLAN_DEUDA (celdas fijas de la fila 4 y la tabla semanal) · cuenta corriente, vencimientos de camiones, plata apartada y costo de los cheques de RESUMEN (por rótulo) · compras y pagos del mes de CTA_CTE · e-cheqs de PAGOS · tasa de cada tanda de INTERESES. El sistema solo lee este archivo; no lo modifica.</div>`;
 }
 
 let semana = -1; // -1 = todo el mes
@@ -471,7 +578,7 @@ let datos = null;
 function pintar(arriba = true) {
   if (!datos) return;
   const h = location.hash;
-  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : inicio(datos);
+  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : inicio(datos);
   document.getElementById("releer").onclick = cargar;
   const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
   for (const bt of document.querySelectorAll("[data-s]")) bt.onclick = () => { semana = +bt.dataset.s; const y = scrollY; pintar(false); scrollTo(0, y); };
@@ -481,7 +588,9 @@ async function cargar() {
   $app.innerHTML = `<div class="centro"><p>Leyendo los Excel…</p></div>`;
   try {
     datos = await calcular();
-    try { datos.b = await calcularBancos(datos.hoy, datos.mes); } catch (e) { datos.b = { error: `No pude leer ${RUTA.bancos}: ${e.message || e}` }; }
+    let F = null; try { F = await libro(RUTA.fenovo); } catch {}
+    try { datos.b = await calcularBancos(datos.hoy, datos.mes, F); } catch (e) { datos.b = { error: `No pude leer ${RUTA.bancos}: ${e.message || e}` }; }
+    try { if (!F) throw new Error("no se pudo abrir el archivo"); datos.f = calcularFenovo(F, datos.hoy, datos.mes); } catch (e) { datos.f = { error: `No pude leer ${RUTA.fenovo}: ${e.message || e}` }; }
     pintar();
   }
   catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
