@@ -59,6 +59,10 @@ tr.ver td{color:var(--yel)}
 .up{color:var(--red);font-weight:600}
 .dia{font-weight:600;white-space:nowrap}
 .debe{color:var(--red);font-size:13px}
+.rub2{display:grid;grid-template-columns:minmax(150px,260px) 1fr 110px;gap:8px;align-items:center;margin:8px 0;font-size:14px}
+.tag.m{background:#e3f1e8;color:#1f6b3a}.tag.e{background:var(--yelbg);color:var(--yel)}
+@media (prefers-color-scheme:dark){.tag.m{background:#1d3326;color:#7dd3a0}}
+@media (max-width:600px){.rub,.rub2{grid-template-columns:1fr 90px}.rub .track,.rub2 .track{grid-column:1/-1;order:3}}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .btn.on{background:var(--acc);border-color:var(--acc);color:#fff}
 details summary{cursor:pointer;font-size:14px}
@@ -115,6 +119,7 @@ const RUTA = {
   proveedores: "PROVEEDORES/FRIOTEKA_Proveedores.xlsx",
   visitas: "_CIRCUITO/VISITAS_PROVEEDORES.xlsx",
   almacen: "COMPRAS ALMACEN/COMPRAS_ALMACEN.xlsx",
+  inventarioLuz: "ENERGIA CARCANO/INVENTARIO_CONSUMO_CARCANO.xlsx",
   cierreB: ym => `PANORAMA GENERAL/CIERRES/${ym}/CIERRE_BANCOS_${ym}.json`
 };
 const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
@@ -548,8 +553,53 @@ function calcularAlmacen(x, veAnt, VIS, CA) {
   return { act, ant, tA, tP, compAct, compAnt, sems, acum, desde: mesAnt, visitas, cupo, alertas, avisos };
 }
 
+// ---------- Energía: boletas de GASTOS › EPEC e inventario de consumo de Cárcano ----------
+function calcularEnergia(x, INV) {
+  const avisos = [], alertas = [], proximos = [], hoy = x.hoy;
+  const g = grilla(x.G.wb.Sheets["EPEC"]), h = g[0], C = {};
+  for (const [k, n] of [["loc", "LOCAL"], ["emi", "EMISION"], ["ven", "VENCIMIENTO"], ["per", "PERIODO"], ["dias", "DIAS"], ["kwh", "KWH"], ["tot", "TOTAL"], ["real", "COSTO REAL"], ["est", "ESTADO"]]) C[k] = col(h, n);
+  if (C.loc < 0 || C.kwh < 0 || C.tot < 0) throw new Error("GASTOS.xlsx › EPEC: faltan columnas (LOCAL, kWh o TOTAL)");
+  const boletas = [];
+  for (const f of g.slice(1)) {
+    const loc = norm(f[C.loc]), kwh = num(f[C.kwh]), tot = num(f[C.tot]); if (!loc || kwh == null || tot == null) continue;
+    const est = txt(f[C.est]), rec = est.match(/\+\s*\$?\s*([\d.]+(?:,\d+)?)\s*(?:de\s+)?recargo/i);
+    const dias = num(f[C.dias]) ?? (txt(f[C.per]).match(/\((\d+)\s*d[ií]as\)/i) ? +txt(f[C.per]).match(/\((\d+)\s*d[ií]as\)/i)[1] : null);
+    boletas.push({ local: loc === "CARCANO" ? "Cárcano" : loc === "SAN MARTIN" ? "San Martín" : txt(f[C.loc]), per: txt(f[C.per]), dias, kwh, tot, pk: tot / kwh, real: num(f[C.real]), ven: num(f[C.ven]) != null ? fecha(f[C.ven]) : null, emi: num(f[C.emi]) != null ? fecha(f[C.emi]) : null, pagada: /PAGAD/i.test(est), recargo: rec ? parseFloat(rec[1].replace(/\./g, "").replace(",", ".")) : 0, est });
+  }
+  boletas.sort((a, b) => (a.ven || a.emi || 0) - (b.ven || b.emi || 0));
+  const locales = {}; for (const b of boletas) (locales[b.local] ||= []).push(b);
+  const resumen = Object.entries(locales).map(([local, bs]) => { const u = bs[bs.length - 1], conDias = bs.filter(b => b.dias), a = conDias[conDias.length - 2], z = conDias[conDias.length - 1];
+    const k = local === "Cárcano" ? "carcano" : local === "San Martín" ? "sm" : null, venta = k && x.veAnt ? x.veAnt[k] : null;
+    return { local, u, cambio: a && z && z !== a ? (z.kwh / z.dias) / (a.kwh / a.dias) - 1 : null, porDiaAhora: z ? z.kwh / z.dias : null, porDiaAntes: a && a !== z ? a.kwh / a.dias : null, sobreVenta: venta ? u.tot / venta : null, venta }; });
+  for (const b of boletas) if (!b.pagada && b.ven) { if (b.ven < hoy) alertas.push({ t: "r", h: `<b>Luz ${b.local} vencida sin pagar:</b> ${pesos(b.tot)} (vencía ${dm(b.ven)}).` }); else proximos.push({ f: b.ven, h: `Luz ${b.local} · $ ${$(b.tot)}` }); }
+  const tarde = boletas.filter(b => b.recargo > 0); if (tarde.length) alertas.push({ t: "y", h: `<b>Se pagaron tarde:</b> ${tarde.length} boleta(s), ${pesos(tarde.reduce((s, b) => s + b.recargo, 0))} de recargos (${tarde.map(b => b.local + " " + pesos(b.recargo)).join(" · ")}).` });
+  if ([10, 11, 0, 1].includes(hoy.getMonth())) alertas.push({ t: "y", h: `<b>Verano:</b> con el aire acondicionado la luz sube. Para comparar con el mismo mes del año pasado faltan las boletas viejas en la hoja EPEC de Gastos.` });
+  // Inventario de consumo de Cárcano
+  let inv = null;
+  // Las columnas calculadas del Excel (horas, kWh, cuadre) son fórmulas sin resultado guardado:
+  // la app hace la misma cuenta con lo que se carga a mano (kW, % del tiempo, horario de 24 h y parámetros de LEEME).
+  try { const gc = grilla(INV.wb.Sheets["CARGAS"]), hi = gc.findIndex(f => norm(f[0]) === "ID"), hc = gc[hi];
+    const cg = col(hc, "GRUPO"), ce = col(hc, "EQUIPO"), cq = col(hc, "CANT"), ck = col(hc, "KW DEL RENGLON"), co = col(hc, "ORIGEN"), cp = col(hc, "% DEL TIEMPO");
+    // HORARIO: mismo orden de renglones que CARGAS (su columna ID también es fórmula sin resultado guardado)
+    const gh = grilla(INV.wb.Sheets["HORARIO"]), hh = gh.findIndex(f => norm(f[0]) === "ID");
+    const horasFila = i => { const f = gh[hh + (i - hi)]; return f ? f.slice(2, 26).reduce((s, v) => s + (num(v) ?? 0), 0) : 0; };
+    if (hh < 0) avisos.push("Inventario: no encontré la hoja HORARIO con su encabezado");
+    const L = porRotulo(grilla(INV.wb.Sheets["LEEME"])), diasMes = L("DIAS POR MES") || 30, pk = L("$ POR KWH"), kwhBol = L("KWH DE LA BOLETA"), diasBol = L("DIAS DE LA BOLETA"), sinFrio = L("SIN FRIO NI AIRE");
+    const items = []; let baseKw = 0;
+    for (let i = hi + 1; i < gc.length; i++) { const f = gc[i], id = txt(f[0]); if (!/^[A-Z]+\d+$|^AA$/.test(id)) continue; const kw = num(f[ck]); if (kw == null) continue;
+      if (norm(f[cg]) === "BASE") baseKw += kw;
+      const idH = txt(gh[hh + (i - hi)]?.[0]); if (idH && idH !== id) { avisos.push(`Inventario: HORARIO y CARGAS no están en el mismo orden (${id})`); continue; }
+      const k = kw * horasFila(i) * (num(f[cp]) ?? 1) * diasMes; if (!k) continue;
+      items.push({ eq: txt(f[ce]) + (num(f[cq]) > 1 ? ` (${f[cq]})` : ""), kwh: k, medido: /^MEDIDO/i.test(txt(f[co])) }); }
+    const mes = kwhBol && diasBol ? kwhBol / diasBol * diasMes : null, cargado = items.reduce((s, i) => s + i.kwh, 0), kwSin = sinFrio != null ? sinFrio - baseKw : null;
+    inv = { items: items.sort((a, b) => b.kwh - a.kwh), mes, cargado, resto: mes != null ? mes - cargado : null, kwSin, plataSin: kwSin != null && pk ? kwSin * 24 * diasMes * pk : null };
+    if (inv.kwSin > 0.5) alertas.push({ t: "y", h: `<b>Cárcano: ${inv.kwSin.toLocaleString("es-AR", { maximumFractionDigits: 1 })} kW sin explicar</b> con todo el frío y el aire apagados. Si anduvieran las 24 h serían hasta ${pesos(inv.plataSin)} por mes. Lo está midiendo la conversación de Energía.` });
+  } catch { avisos.push(`No pude leer ${RUTA.inventarioLuz}`); }
+  return { boletas, resumen, inv, alertas, proximos, avisos };
+}
+
 // ---------- Pantallas ----------
-const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["", "Energía", "Pronto"]];
+const AREAS = [["gastos", "Gastos", "Fijos, variables e impuestos"], ["bancos", "Bancos", "Saldos, fondeo y movimientos"], ["", "Empleados", "Pronto"], ["proveedores", "Proveedores", "Compras, pagos y precios"], ["fenovo", "Fenovo / deuda", "Deuda, plan y e-cheqs"], ["iva", "IVA", "Saldo a favor, débito y crédito"], ["almacen", "Compras almacén", "Compra contra venta y visitas"], ["energia", "Energía", "Luz de los dos locales"]];
 const mesNom = d => MESES[d.getMonth()].charAt(0) + MESES[d.getMonth()].slice(1).toLowerCase() + " " + d.getFullYear();
 const hora = d => d ? d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -565,8 +615,8 @@ const bloqueAlertas = x => `${x.alertas.map(a => `<div class="al ${a.t}">${a.h}<
   ${x.faltan.length ? `<div class="lbl" style="margin-top:10px">Datos que faltan o no cierran</div><ul class="sub">${x.faltan.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
 
 function inicio(x) {
-  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a;
-  const todas = { alertas: [...[b, fv, iv, pr, al].flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: x.proximos, faltan: [...x.faltan, ...[b, fv, iv, pr, al].filter(o => o.error).map(o => o.error)] };
+  const ve = x.ve, b = x.b, fv = x.f, iv = x.i, pr = x.p, al = x.a, en = x.e, mods = [b, fv, iv, pr, al, en];
+  const todas = { alertas: [...mods.flatMap(o => (o.alertas || []).filter(a => a.t === "r")), ...x.alertas], proximos: [...x.proximos, ...(en.proximos || [])].sort((p, q) => p.f - q.f), faltan: [...x.faltan, ...mods.filter(o => o.error).map(o => o.error)] };
   return cabecera("Administración FRIOTEKA", "Inicio", lectG(x) + (b.error ? "" : " · " + lectB(b))) + `
   <div class="grid kpis">
     <div class="card"><div class="lbl">Deuda total Fenovo + banco</div><div class="big">${fv.error ? "sin dato" : pesos(fv.deudaTotal)}</div><div class="sub">${fv.error ? "No se pudo leer el Excel de Fenovo" : `Contra el plan: <span class="${fv.atraso < 0 ? "neg" : ""}">${pesos(fv.atraso)}</span>`}</div></div>
@@ -745,6 +795,38 @@ function almacen(x) {
   <div class="card sub">Venta y ganancia de almacén por día y local: JORNADAS › ${MESES[a.desde.getMonth()]}_CLAUDE y ${MESES[x.mes.getMonth()]}_CLAUDE.xlsx (TV ALMACEN y RG ALMACEN, caja 1 + caja 2) · Comprado: PROVEEDORES › FRIOTEKA_Proveedores.xlsx › Compras (el detalle de facturas y pagos está en el botón Proveedores) · Visitas: _CIRCUITO › VISITAS_PROVEEDORES.xlsx · Cupo: COMPRAS ALMACEN › COMPRAS_ALMACEN.xlsx › CUPO. El sistema solo lee estos archivos; no los modifica.</div>`;
 }
 
+function energia(x) {
+  const e = x.e, cr = `<a href="#">Inicio</a> › Energía`;
+  if (e.error) return cabecera("Energía", cr, "No se pudo leer") + `<div class="card">${esc(e.error)}</div>`;
+  const pc = v => v == null ? "—" : (v >= 0 ? "+" : "−") + Math.round(Math.abs(v) * 100) + " %";
+  const tarj = r => `<div class="card"><div class="lbl">${r.local} · última boleta</div><div class="big">${pesos(r.u.tot)}</div><div class="sub">${$(r.u.kwh)} kWh${r.u.dias ? " en " + r.u.dias + " días" : ""} · $ ${$(r.u.pk)}/kWh · ${r.u.pagada ? "pagada" : r.u.ven ? "vence " + dm(r.u.ven) : "sin pagar"}${r.u.recargo ? ` (+${pesos(r.u.recargo)} recargo)` : ""}</div></div>`;
+  const car = e.resumen.find(r => r.local === "Cárcano"), mxI = e.inv?.items[0]?.kwh || 1;
+  const otros = e.resumen.filter(r => r.local !== "Cárcano" && r.sobreVenta != null).map(r => `${r.local} ${pct(r.sobreVenta)}`).join(" · ");
+  return cabecera(`Energía · ${mesNom(x.mes)}`, cr, `Boletas cargadas en GASTOS › EPEC: ${e.boletas.length}`) + `
+  <div class="grid kpis">
+    ${e.resumen.map(tarj).join("")}
+    ${e.resumen.filter(r => r.cambio != null).map(r => `<div class="card"><div class="lbl">Consumo ${r.local} por día</div><div class="big ${r.cambio > 0.03 ? "neg" : ""}">${pc(r.cambio)}</div><div class="sub">${$(r.porDiaAhora)} kWh/día contra ${$(r.porDiaAntes)} de la boleta anterior</div></div>`).join("")}
+    ${car?.sobreVenta != null ? `<div class="card"><div class="lbl">Luz sobre la venta</div><div class="big">${pct(car.sobreVenta)}</div><div class="sub">Cárcano (venta del mes pasado $ ${(car.venta / 1e6).toLocaleString("es-AR", { maximumFractionDigits: 1 })}M)${otros ? " · " + otros : ""}</div></div>` : ""}
+  </div>
+  <div class="grid two">
+    <div><h2>Boletas por local</h2><div class="card tbl"><table>
+      <tr><th>Local · período</th><th class="n">kWh</th><th class="n">kWh/día</th><th class="n">Total</th><th class="n">$/kWh</th><th class="n">Costo real*</th></tr>
+      ${e.boletas.map(b => `<tr><td>${b.local} · ${esc(b.per)}</td><td class="n">${$(b.kwh)}</td><td class="n">${b.dias ? $(b.kwh / b.dias) : "—"}</td><td class="n">${$(b.tot)}</td><td class="n">${$(b.pk)}</td><td class="n">${b.real ? $(b.real) : "—"}</td></tr>`).join("")}
+    </table><div class="src">* Sin IVA ni percepciones, que van a cuenta: es lo que realmente se gasta.</div></div></div>
+    <div><h2>Alertas</h2><div class="card">${e.alertas.map(a => `<div class="al ${a.t}">${a.h}</div>`).join("") || `<div class="sub">Sin alertas.</div>`}
+      ${e.proximos.length ? `<div class="lbl" style="margin-top:8px">Por vencer</div><ul>${e.proximos.map(p => `<li>${dm(p.f)} · ${esc(p.h)}</li>`).join("")}</ul>` : ""}
+      ${e.avisos.length ? `<ul class="sub">${e.avisos.map(v => `<li>${esc(v)}</li>`).join("")}</ul>` : ""}</div></div>
+  </div>
+  ${e.inv ? `<h2>En qué se va la luz de Cárcano · kWh por mes</h2><div class="card">
+    <div class="ley"><span><i style="background:var(--bar)"></i>Medido</span><span><i style="background:#c9b26b"></i>Estimado</span><span><i style="background:var(--red)"></i>Sin explicar todavía</span></div>
+    ${e.inv.items.map(i => `<div class="rub2"><span>${esc(i.eq)} <span class="tag ${i.medido ? "m" : "e"}">${i.medido ? "medido" : "estimado"}</span></span><div class="track"><div class="fill" style="width:${i.kwh / mxI * 100}%;${i.medido ? "" : "background:#c9b26b"}"></div></div><span class="n">${$(i.kwh)} kWh</span></div>`).join("")}
+    ${e.inv.resto > 0 ? `<div class="rub2"><span>Sin explicar todavía</span><div class="track"><div class="fill" style="width:${e.inv.resto / mxI * 100}%;background:var(--red)"></div></div><span class="n">${$(e.inv.resto)} kWh</span></div>` : ""}
+    <div class="src">Boleta llevada a un mes: ${$(e.inv.mes)} kWh. Repartido en el inventario: ${$(e.inv.cargado)} kWh (el frío al 100% del tiempo: es techo). Lo lleva la conversación de Energía.</div>
+  </div>` : ""}
+  <h2>De dónde sale cada número</h2>
+  <div class="card sub">Boletas: GASTOS FIJOS Y VARIABLES › GASTOS.xlsx › hoja EPEC (las carga Gastos) · En qué se va la luz: ENERGIA CARCANO › INVENTARIO_CONSUMO_CARCANO.xlsx (hojas CARGAS y CUADRE) · Venta del local: JORNADAS (mes pasado). El sistema solo lee estos archivos; no los modifica.</div>`;
+}
+
 let semana = -1; // -1 = todo el mes
 function bancos(x) {
   const b = x.b;
@@ -831,7 +913,7 @@ let datos = null;
 function pintar(arriba = true) {
   if (!datos) return;
   const h = location.hash;
-  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : inicio(datos);
+  $app.innerHTML = h === "#gastos" ? gastos(datos) : h === "#bancos" ? bancos(datos) : h === "#fenovo" ? fenovo(datos) : h === "#iva" ? ivaPantalla(datos) : h === "#proveedores" ? proveedores(datos) : h === "#almacen" ? almacen(datos) : h === "#energia" ? energia(datos) : inicio(datos);
   document.getElementById("releer").onclick = cargar;
   const t = document.getElementById("vars"); if (t) t.onclick = e => { const tr = e.target.closest("tr.fila"); if (tr) tr.nextElementSibling.hidden = !tr.nextElementSibling.hidden; };
   for (const bt of document.querySelectorAll("[data-s]")) bt.onclick = () => { semana = +bt.dataset.s; const y = scrollY; pintar(false); scrollTo(0, y); };
@@ -850,9 +932,11 @@ async function cargar() {
     try {
       const mesAnt = new Date(datos.mes.getFullYear(), datos.mes.getMonth() - 1, 1);
       let veAnt = null; try { const V = await libro(RUTA.ventas(mesAnt)); veAnt = leerVentas(grilla(V.wb.Sheets[V.wb.SheetNames[0]]), mesAnt); } catch {}
+      datos.veAnt = veAnt;
       let VIS = null, CA = null; try { VIS = await libro(RUTA.visitas); } catch {} try { CA = await libro(RUTA.almacen); } catch {}
       datos.a = calcularAlmacen(datos, veAnt, VIS, CA);
     } catch (e) { datos.a = { error: `No pude armar Compras almacén: ${e.message || e}` }; }
+    try { let INV = null; try { INV = await libro(RUTA.inventarioLuz); } catch {} datos.e = calcularEnergia(datos, INV); } catch (e) { datos.e = { error: `No pude armar Energía: ${e.message || e}` }; }
     pintar();
   }
   catch (e) { $app.innerHTML = `<div class="centro"><h1>No pude leer los Excel</h1><p>${esc(e.message || e)}</p><button class="btn pri" id="otra">Elegir la carpeta TODO CLAUDE</button></div>`; document.getElementById("otra").onclick = elegir; }
