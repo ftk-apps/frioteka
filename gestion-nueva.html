@@ -1603,14 +1603,14 @@ function renderVentas(c){
       btnSis.className="btn-sm g";btnSis.textContent="Cargado en sistema";
       (function(pRecord,idx){btnSis.onclick=function(){
         // Si ya tenía número (se había desmarcado), lo conserva
-        if(compLabel(pRecord)){
+        if(pRecord.tipoComp&&compLabel(pRecord)){
           pedidos[idx].enSistema=true;pedidos[idx].fechaSistema=_hoyAR();
           window.guardarPedidos();toast("✓ Cargada al sistema ("+compLabel(pRecord)+")");renderGestion();
         } else abrirModalComprobante(idx,"cargar");
       };})(p,realIdx);
     }
     acc.appendChild(btnSis);
-    if(enSist&&!compLabel(p)){
+    if(enSist&&!p.tipoComp){
       var btnNro=document.createElement("button");btnNro.className="btn-sm";btnNro.style.cssText="background:#FFF3E0;color:#8A3D00;font-size:12px;font-weight:700;";btnNro.textContent="Poner Nº";
       (function(idx){btnNro.onclick=function(){abrirModalComprobante(idx,"numero");};})(realIdx);
       acc.appendChild(btnNro);
@@ -1654,7 +1654,8 @@ function compLabel(p){
 }
 function compBadge(p){
   var l=compLabel(p);
-  if(l) return '<span style="display:inline-block;font-size:12px;font-weight:800;padding:2px 8px;border-radius:8px;background:#FFF3E0;color:#8A3D00;margin-left:6px;">'+l+'</span>';
+  if(l&&p.tipoComp) return '<span style="display:inline-block;font-size:12px;font-weight:800;padding:2px 8px;border-radius:8px;background:#FFF3E0;color:#8A3D00;margin-left:6px;">'+l+'</span>';
+  if(l) return '<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:#eee;color:#555;margin-left:6px;" title="Número anterior, sin confirmar">'+l+' ?</span>';
   if(p.enSistema) return '<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:#eee;color:#666;margin-left:6px;">sin Nº</span>';
   return "";
 }
@@ -1673,13 +1674,14 @@ function abrirModalComprobante(idx,modo){
   box.innerHTML='<h3>¿Cómo se cargó en el sistema?</h3>'
     +'<div style="font-size:14px;margin-bottom:12px;">'+p.nv+' · '+p.cliente+' — <b>'+fmt(p.total)+'</b></div>'
     +(yaSF?'<div style="font-size:13px;color:#8A3D00;margin-bottom:10px;">Este pedido ya tiene el remito <b>'+p.nroSF+'</b>. Ese número no se cambia.</div>':'')
+    +(!p.tipoComp&&p.nroFactura?'<div style="font-size:13px;color:#555;margin-bottom:10px;">Tenía anotada la factura <b>'+p.nroFactura+'</b>. Confirmala con el formato completo.</div>':'')
     +'<div style="display:flex;gap:8px;margin-bottom:12px;">'
     +'<button class="btn-sm" id="cmpFac" style="flex:1;padding:12px;background:#E3F2FD;color:#0D47A1;font-weight:800;">🧾 Con factura</button>'
     +(yaSF?'':'<button class="btn-sm" id="cmpRem" style="flex:1;padding:12px;background:#FFF3E0;color:#8A3D00;font-weight:800;">📦 Remito sin factura</button>')
     +'</div>'
     +'<div id="cmpFacBox" style="display:none;">'
     +'<label>Nº de factura (ej. 0008-00000079)</label>'
-    +'<input id="cmpNro" type="text" inputmode="numeric" placeholder="0008-00000079" value="'+(p.nroFactura||"")+'">'
+    +'<input id="cmpNro" type="text" inputmode="numeric" placeholder="0008-00000079" value="'+(normFactura(p.nroFactura)||p.nroFactura||"")+'">'
     +'<div id="cmpErr" style="color:#B3261E;font-size:13px;font-weight:700;margin:-6px 0 10px;display:none;"></div>'
     +'<button class="btn-sm g" style="width:100%;padding:12px;" id="cmpFacOk">Guardar factura</button>'
     +'</div>'
@@ -1723,8 +1725,8 @@ async function imprimirPedido(pRecord){
   await generarPDF(items,ctx);
 }
 /* Detalle de una entrega desde la cuenta corriente */
-function verEntregaCC(nv){
-  var p=pedidos.find(function(q){return q.nv===nv;}); if(!p){toast("No encontré "+nv);return;}
+function verEntregaCC(pidx){
+  var p=pedidos[pidx]; if(!p){toast("No encontré esa entrega");return;}
   var overlay=document.createElement("div");overlay.className="export-modal";
   var box=document.createElement("div");box.className="export-modal-box";box.style.maxHeight="88vh";box.style.overflowY="auto";
   var filas=(p.items||[]).map(function(it){var c=it.cant||it.cantidad||0;var cn=parseFloat(it.cantNum!=null?it.cantNum:c)||0;
@@ -1794,7 +1796,7 @@ function renderPasadas(c){
       }
     };})(p,realIdx);
     acc.appendChild(btnDesm);
-    if(!compLabel(p)){
+    if(!p.tipoComp){
       var btnNro2=document.createElement("button");btnNro2.className="btn-sm";btnNro2.style.cssText="background:#FFF3E0;color:#8A3D00;font-size:12px;font-weight:700;";btnNro2.textContent="Poner Nº";
       (function(idx){btnNro2.onclick=function(){abrirModalComprobante(idx,"numero");};})(realIdx);
       acc.appendChild(btnNro2);
@@ -2260,8 +2262,8 @@ function renderCC(c){
         }
         facturasHtml+='<div style="border:1.5px solid '+estadoBorder+';border-radius:10px;background:'+estadoBg+';margin-bottom:8px;overflow:hidden;">'
           // Cabecera factura
-          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;'+(fac.id.indexOf('__')===0?'':'cursor:pointer;')+'"'+(fac.id.indexOf('__')===0?'':' onclick="verEntregaCC(\''+fac.id+'\')" title="Ver detalle"')+'>'
-          +'<div><span style="font-size:13px;font-weight:700;">'+fac.label+'</span>'+(fac.id.indexOf('__')===0?'':' <span style="font-size:11px;color:#1a73e8;">🔎 ver</span>')+vencTxt+'</div>'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;'+(fac.pidx==null?'':'cursor:pointer;')+'"'+(fac.pidx==null?'':' onclick="verEntregaCC('+fac.pidx+')" title="Ver detalle"')+'>'
+          +'<div><span style="font-size:13px;font-weight:700;">'+fac.label+'</span>'+(fac.pidx==null?'':' <span style="font-size:11px;color:#1a73e8;">🔎 ver</span>')+vencTxt+'</div>'
           +'<div style="display:flex;gap:8px;align-items:center;">'
           +estadoTag
           +(cancelada
@@ -2534,7 +2536,7 @@ function _obtenerFacturasCC(cli){
     var lbl=(compLabel(v)?compLabel(v)+' · ':'')+v.nv;
     var fvenc=v.fecha?_sumarDias(v.fecha,20):null;
     var dias=fvenc?_diasHasta(fvenc):null;
-    facturas.push({id:v.nv,label:lbl,fecha:v.fecha||'—',fechaVenc:fvenc,monto:parseFloat(v.total)||0,pagado:0,saldo:parseFloat(v.total)||0,vencida:dias!==null&&dias<0,diasVenc:dias});
+    facturas.push({id:v.nv,pidx:pedidos.indexOf(v),label:lbl,fecha:v.fecha||'—',fechaVenc:fvenc,monto:parseFloat(v.total)||0,pagado:0,saldo:parseFloat(v.total)||0,vencida:dias!==null&&dias<0,diasVenc:dias});
   });
   // Ordenar por fecha (más vieja primero)
   facturas.sort(function(a,b){return _fechaNum(a.fecha)-_fechaNum(b.fecha);});
