@@ -1211,12 +1211,12 @@ function pdfNota(items, ctx){
       var copia = k === 0 ? "COPIA CLIENTE" : "COPIA FRIOTEKA";
       logoFrioteka(d, X, Y + 11);
       d.text("Av. J. Ramon Carcano 619  y  Av. San Martin 1211  -  Villa Carlos Paz", X, Y + 67, 8.5, "F1", "#444444");
-      var bw = 120, bx = X + W - bw;
+      var bw = (ctx.comp && ctx.comp.nro) ? 175 : 120, bx = X + W - bw;
       d.box(bx, Y + 11, bw, 50, ROJO, 2);
       if(ctx.comp && ctx.comp.nro){
         d.text(ctx.comp.tipo === "factura" ? "FACTURA" : "REMITO", bx + bw / 2, Y + 22, 9, "F2", "#000000", "c");
-        d.text(ctx.comp.nro, bx + bw / 2, Y + 39, ctx.comp.nro.length > 10 ? 12 : 15, "F2", "#000000", "c");
-        d.text(ctx.np + " · " + ctx.fecha + hojaTxt, bx + bw / 2, Y + 54, 7, "F1", "#555555", "c");
+        d.text(ctx.comp.nro, bx + bw / 2, Y + 41, 17, "F2", "#000000", "c");
+        d.text(ctx.np + " · " + ctx.fecha + hojaTxt, bx + bw / 2, Y + 55, 7, "F1", "#555555", "c");
       } else {
         d.text("NOTA DE VENTA", bx + bw / 2, Y + 25, 10, "F2", "#000000", "c");
         d.text(ctx.np, bx + bw / 2, Y + 42, 15, "F2", "#000000", "c");
