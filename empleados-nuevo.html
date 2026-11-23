@@ -514,8 +514,9 @@ function vCargar(){
     <label>A cuenta de</label><select id="fi" ${c==="pago"?`onchange="pendPago()"`:""}>${impOpts(emp,pre.imp)}</select>
     <div class="two"><div><label>Fecha</label><input id="ff" type="date" value="${HOY}"></div><div><label>Importe</label><input id="fm" type="number" inputmode="decimal" step="0.01" placeholder="0"></div></div>
     ${c==="pago"?`<div class="muted" id="pendTxt" style="margin-top:4px"></div>`:""}
-    <div class="two"><div><label>Forma</label><select id="fo"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="deposito">Depósito Banco de Córdoba</option></select></div>
+    <div class="two"><div><label>Forma</label><select id="fo" onchange="mixtoVer('')"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="deposito">Depósito Banco de Córdoba</option><option value="mixto">Mixto (efectivo + transferencia)</option></select></div>
     <div><label>Condición</label><select id="fc"><option value="">—</option><option>blanco</option><option>negro</option></select></div></div>
+    <div id="mx_" style="display:none"><label>De ese importe, en efectivo</label><input id="mxE_" type="number" inputmode="decimal" step="0.01" placeholder="0" oninput="mixtoVer('')"><div class="muted" id="mxT_" style="margin-top:4px"></div></div>
     <label>Nota (opcional)</label><input id="fn">
     <button class="btn full" style="margin-top:14px" onclick="guardarPago('${c}')">Guardar</button>`;if(c==="pago")setTimeout(pendPago,0)}
   else if(c==="desc"||c==="compra"){
@@ -540,8 +541,14 @@ function vCargar(){
     <div id="posOut"></div>`}
   $("#main").innerHTML=h+`</div>`}
 function vNum(id){const v=parseFloat(($(id).value||"").replace(",","."));return isNaN(v)?0:v}
+function mixtoPartes(total,ef){total=Math.round(total*100)/100;ef=Math.round(ef*100)/100;return [["efectivo",ef],["transferencia",Math.round((total-ef)*100)/100]].filter(x=>x[1]>0)}
+function mixtoVer(k){const sel=k?$("#pgO_"+k):$("#fo"),box=$("#mx_"+k);if(!sel||!box)return;const on=sel.value==="mixto";box.style.display=on?"":"none";if(!on)return;
+  const tot=k?vNum("#pgI_"+k):vNum("#fm"),ef=vNum("#mxE_"+k),t=$("#mxT_"+k);if(t)t.innerHTML=ef>tot+0.005?`<b style="color:var(--bad)">El efectivo es más que el total</b>`:`Por transferencia: <b>${fmt2(tot-ef)}</b>`}
 function guardarPago(tipo){const m=vNum("#fm");if(!m)return toast("Falta el importe");
-  DB.pagos.push({id:uid("p"),emp:$("#fe").value,fecha:$("#ff").value,tipo,imputa:$("#fi").value,forma:$("#fo").value,importe:m,cond:$("#fc").value,nota:$("#fn").value,sinCaja:false});
+  const base={emp:$("#fe").value,fecha:$("#ff").value,tipo,imputa:$("#fi").value,cond:$("#fc").value,nota:$("#fn").value,sinCaja:false};
+  if($("#fo").value==="mixto"){const ef=vNum("#mxE_");if(ef<=0||ef>=m)return toast("En mixto, poné cuánto va en efectivo (más de 0 y menos que el total)");
+    mixtoPartes(m,ef).forEach(([fo,imp])=>DB.pagos.push({id:uid("p"),...base,forma:fo,importe:imp}))}
+  else DB.pagos.push({id:uid("p"),...base,forma:$("#fo").value,importe:m});
   save(tipo+" "+$("#fe").value);toast(tipo==="pago"?"Pago guardado":"Adelanto guardado");st.pre=null;go("empleado",$("#fe").value)}
 function guardarMov(c){const m=vNum("#fm");if(!m)return toast("Falta el importe");const emp=$("#fe").value;
   DB.movs.push({id:uid("m"),emp,fecha:$("#ff").value,tipo:c==="desc"?"descuento":"cargo",detalle:$("#fn").value||(c==="desc"?"Descuento en sueldo":"Cargo"),importe:m,imputa:c==="desc"?$("#fi").value:null});
@@ -982,15 +989,16 @@ function pgPanel(id,lun){pgAseg();const ck=id+"|"+lun,{pend}=fjDatos(id,lun),C=p
   C.adel.forEach(p=>h+=pgR(`Adelanto ${dm(p.fecha)} · ${FORMA[p.forma]||p.forma||""}`,`− ${fmt2(p.importe)}`));
   h+=`<div id="pgV_${k}"></div>
     <div class="two" style="margin-top:8px"><div><label>Fecha de pago</label><input id="pgF_${k}" type="date" value="${p0.fecha||HOY}"></div>
-    <div><label>Forma</label><select id="pgO_${k}">${["efectivo","transferencia","deposito"].map(f=>`<option value="${f}" ${(p0.forma||"efectivo")===f?"selected":""}>${FORMA[f]}</option>`).join("")}</select></div></div>
+    <div><label>Forma</label><select id="pgO_${k}" onchange="mixtoVer('${k}')">${["efectivo","transferencia","deposito","mixto"].map(f=>`<option value="${f}" ${((C.pagos.length>1?"mixto":p0.forma)||"efectivo")===f?"selected":""}>${f==="mixto"?"Mixto (efectivo + transferencia)":FORMA[f]}</option>`).join("")}</select></div></div>
     <label>Lo que le pagás ahora <span class="muted">(si le pagás menos, queda pendiente)</span></label><input id="pgI_${k}" type="number" inputmode="decimal" step="0.01" ${C.pagos.length?`value="${C.totPag}" data-tocado="1"`:""} oninput="this.dataset.tocado=1;pgVivo('${id}','${lun}')">
+    <div id="mx_${k}" style="display:${C.pagos.length>1?"":"none"}"><label>De lo que le pagás, en efectivo</label><input id="mxE_${k}" type="number" inputmode="decimal" step="0.01" value="${C.pagos.length>1?C.pagos.filter(p=>p.forma==="efectivo").reduce((a,p)=>a+p.importe,0):""}" oninput="mixtoVer('${k}')"><div class="muted" id="mxT_${k}" style="margin-top:4px"></div></div>
     <div class="two" style="margin-top:10px"><button class="btn" onclick="pgRegistrar('${id}','${lun}')">Registrar pago</button>${st.pgCam[ck]?`<button class="btn ghost" onclick="st.pgCam['${ck}']=false;render()">Cancelar</button>`:`<button class="btn ghost" onclick="imprimirRecibo('${id}','${lun}')">🖨 Imprimir recibo</button>`}</div>
     <div class="muted" style="margin-top:6px">Registrar reemplaza el descuento y el pago de esta semana si ya había uno (no se duplica). Los adelantos se cargan aparte y acá se restan solos.</div></div>`;
   setTimeout(()=>pgVivo(id,lun),0);return h}
 function pgVivo(id,lun){const k=id.replace(/\W/g,"_"),dI=$("#pgD_"+k),out=$("#pgV_"+k),iI=$("#pgI_"+k);if(!dI||!out)return;const C=pgCalc(id,lun);
   const d=parseFloat((dI.value||"0").replace(",","."))||0,ap=C.bruto-d-C.totAdel;
   out.innerHTML=pgR("Saldo de cta. cte. que queda",fmt2(C.totCC-d))+pgR("<b>A PAGAR</b>",`<b>${fmt2(ap)}</b>`,"tot big");
-  if(iI&&!iI.dataset.tocado)iI.value=(Math.round(ap*100)/100).toFixed(2)}
+  if(iI&&!iI.dataset.tocado)iI.value=(Math.round(ap*100)/100).toFixed(2);mixtoVer(k)}
 function pgConfirmar(id){pgAseg();const lun=st.fjLun,k=id.replace(/\W/g,"_"),{pend}=fjDatos(id,lun);const nuevo={};
   for(let i=0;i<pend.length;i++){const p=pend[i];const o=nuevo[p.key]=nuevo[p.key]||{...(DB.fj.ed[p.key]||{})};
     if(p.k==="r"){const v=(document.querySelector(`input[name="pg_${k}_${i}"]:checked`)||{}).value;if(!v)return toast(`Elegí a qué hora redondear el ${DIAS[D(p.f).getDay()]} ${dm(p.f)}`);o[p.campo]=v;o.red={...(o.red||{}),[p.campo]:p.m}}
@@ -1004,13 +1012,14 @@ function pgEditarHoras(id){pgAseg();DB.fj.conf[id+"|"+st.fjLun]="no";st.fjAb[id]
 function pgRegistrar(id,lun){pgAseg();const k=id.replace(/\W/g,"_"),key="S"+lun,ck=id+"|"+lun;
   const d=vNum("#pgD_"+k),imp=vNum("#pgI_"+k),f=$("#pgF_"+k).value,fo=$("#pgO_"+k).value;
   if(d<0||imp<0)return toast("Los importes no pueden ser negativos");if(!f)return toast("Falta la fecha de pago");
+  const ef=fo==="mixto"?vNum("#mxE_"+k):0;if(fo==="mixto"&&imp>0&&(ef<=0||ef>=imp))return toast("En mixto, poné cuánto va en efectivo (más de 0 y menos que lo que le pagás)");
   const C=pgCalc(id,lun);if(d>C.totCC+0.5&&!confirm(`El descuento (${fmt2(d)}) es mayor que la cuenta corriente (${fmt2(C.totCC)}). ¿Seguir igual?`))return;
   const sem=`semana ${dm(lun)} al ${dm(addD(lun,6))}`;
   DB.movs=DB.movs.filter(m=>!(m.emp===id&&m.tipo==="descuento"&&m.imputa===key));
   if(d>0)DB.movs.push({id:uid("m"),emp:id,fecha:f,tipo:"descuento",detalle:"Descuento en sueldo "+sem,importe:Math.round(d*100)/100,imputa:key});
   const viejo=pagosImp(id,key,"pago")[0]||{};
   DB.pagos=DB.pagos.filter(p=>!(p.emp===id&&p.tipo==="pago"&&p.imputa===key));
-  if(imp>0)DB.pagos.push({id:uid("p"),emp:id,fecha:f,tipo:"pago",imputa:key,forma:fo,importe:Math.round(imp*100)/100,cond:viejo.cond||"",nota:viejo.nota||"",sinCaja:false});
+  if(imp>0)(fo==="mixto"?mixtoPartes(imp,ef):[[fo,Math.round(imp*100)/100]]).forEach(([fx,ix])=>DB.pagos.push({id:uid("p"),emp:id,fecha:f,tipo:"pago",imputa:key,forma:fx,importe:ix,cond:viejo.cond||"",nota:viejo.nota||"",sinCaja:false}));
   st.pgCam[ck]=false;st.fjCC[ck]=C.cc;save("pago "+id+" "+sem);toast(`${id}: pago registrado`);render()}
 function vFichaje(){
   fjAseg();if(!st.fjLun)st.fjLun=lunes(HOY);if(!st.fjEmp)st.fjEmp="todos";const lun=st.fjLun;
