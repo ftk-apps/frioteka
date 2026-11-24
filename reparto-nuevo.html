@@ -650,7 +650,7 @@ Object.keys(CF).forEach(id => $(id).addEventListener('change', async () => {
 /* ---------- destinos ---------- */
 const SM = '045 · San Martín (reposición)';
 // Lista fija de destinos (Banchi 24/11). Los que se suman con "Otro destino" quedan en rp_config/destinos.
-const DEST_BASE = ['Panino','La Pulpería','Barlovento','Bar La Terminal','Quenty','Hotel Parque','Maxi · Mercadito Rey','Grugri S.A.S','Prado',"Supermercado Dimi's",'Fernando de Venetto','Posada de Quenti','Villa Burguesa','Il Panino Homa (Las Cañitas)','Pizzería Willy'];
+const DEST_BASE = ['Panino','La Pulpería','Barlovento','Bar La Terminal','Quenty','Hotel Parque','Maxi · Mercadito Rey','Grugri S.A.S','Prado',"Supermercado Dimi's",'Fernando de Venetto','Posada de Quenti','Villa Burguesa','Il Panino Homa (Las Cañitas)','Pizzería Willy','Hamburg House'];
 let selForm = new Set(), selQR = new Set(), editViejo = false, buscaDD = {};
 const norm = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 function listaDestinos(extra){
