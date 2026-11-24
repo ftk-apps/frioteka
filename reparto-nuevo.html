@@ -130,9 +130,7 @@ a.primary#waResumen{background:var(--wa)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips .chip{font-size:13px;padding:5px 10px}
 .chip.qr{background:var(--pri);color:#fff}
-.cam{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1/1}
-.cam video{width:100%;height:100%;object-fit:cover;display:block}
-.cam .marco{position:absolute;inset:18%;border:4px solid #fff;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+
 </style>
 </head>
 <body>
@@ -378,7 +376,7 @@ $('form').addEventListener('submit', async e => {
     x.creado = vie?.creado || new Date().toISOString();
     x.origen = vie?.origen || 'manual';
     if(vie) ['lugarSale','lugarVuelve','gpsSale','gpsVuelve','saleTs','vuelveTs'].forEach(k => { if(vie[k] !== undefined) x[k] = vie[k]; });
-    if(vie && vie.origen === 'qr' && (vie.sale !== x.sale || vie.vuelve !== x.vuelve)) x.horaCorregida = true;
+    if(vie && (vie.origen === 'qr' || vie.origen === 'gps') && (vie.sale !== x.sale || vie.vuelve !== x.vuelve)) x.horaCorregida = true;
     await ref.set(x);
     const txt = (editId ? 'Cambios guardados: ' : 'Salida guardada: ') + (x.motivo==='casa' ? 'a casa y vuelta, ' : dur(minutos(x)) + ', ') + nf(kms(x)) + ' km.';
     if(!salidas.some(s => s.id===ref.id)) salidas.push({id:ref.id, ...x}); else salidas = salidas.map(s => s.id===ref.id ? {id:ref.id, ...x} : s);
@@ -557,7 +555,7 @@ function txtResumen(LL){
 $('excel').onclick = () => {
   const q = v => '"' + String(v ?? '').replace(/"/g,'""') + '"';
   const filas = [['Fecha','Día','Hora salida','Hora vuelta','Minutos','Km al salir','Km al volver','Km recorridos','Para qué fue','Entregas','Destinos','Costo camioneta','Costo repartidor','Costo total','Nota','Cargada con']]
-    .concat(ordenadas().map(x => [corta(x.fecha) + '/' + x.fecha.slice(0,4), DIAS[parseF(x.fecha).getDay()], x.sale, x.vuelve, minutos(x), x.kmSale, x.kmVuelve, kms(x), MOTIVO[x.motivo]||x.motivo, x.entregas, (x.destinos||[]).join(', '), ...(c => [Math.round(c.cam), Math.round(c.rep), Math.round(c.tot)])(costoDe(x)), x.nota||'', x.origen==='qr' ? 'QR' + (x.horaCorregida ? ' (hora corregida)' : '') : 'A mano']));
+    .concat(ordenadas().map(x => [corta(x.fecha) + '/' + x.fecha.slice(0,4), DIAS[parseF(x.fecha).getDay()], x.sale, x.vuelve, minutos(x), x.kmSale, x.kmVuelve, kms(x), MOTIVO[x.motivo]||x.motivo, x.entregas, (x.destinos||[]).join(', '), ...(c => [Math.round(c.cam), Math.round(c.rep), Math.round(c.tot)])(costoDe(x)), x.nota||'', x.origen==='gps' || x.origen==='qr' ? 'En el local' + (x.horaCorregida ? ' (hora corregida)' : '') : 'A mano']));
   const csv = '﻿' + filas.map(f => f.map(q).join(';')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
@@ -608,7 +606,7 @@ function pintarHistorial(){
     return '<div class="item"><div class="hd"><b>' + DIAS[d.getDay()] + ' ' + corta(x.fecha) + (esCasa(x) ? '' : ' · ' + esc(x.sale) + ' a ' + esc(x.vuelve)) + '</b>'
       + (esCasa(x) ? '<span class="chip">A casa</span>' : esLore(x) ? '<span class="chip">Lorena</span>' : '<span class="chip' + (x.entregas===1?' one':'') + '">' + x.entregas + (x.entregas===1?' entrega':' entregas') + '</span>') + '</div>'
       + (hayCostos() ? (() => { const c = costoDe(x); return '<div class="cost"><b>' + money(c.tot) + '</b>' + (esCasa(x) ? ' de camioneta' : ' camioneta ' + money(c.cam) + ' + repartidor ' + money(c.rep)) + '</div>'; })() : '')
-      + '<div class="meta">' + (x.origen==='qr' ? '<span class="chip qr">QR' + (x.horaCorregida ? ' · hora corregida' : '') + '</span> ' : '') + esc(MOTIVO[x.motivo]||x.motivo) + (esCasa(x) ? '' : ' · ' + dur(minutos(x))) + ' · ' + nf(kms(x)) + ' km (' + nf(x.kmSale) + ' a ' + nf(x.kmVuelve) + ')' + ((x.destinos||[]).length ? '<br>' + esc(x.destinos.join(' · ')) : '') + (x.nota ? '<br>' + esc(x.nota) : '') + '</div>'
+      + '<div class="meta">' + (x.origen==='gps' || x.origen==='qr' ? '<span class="chip qr">En el local' + (x.horaCorregida ? ' · hora corregida' : '') + '</span> ' : '') + esc(MOTIVO[x.motivo]||x.motivo) + (esCasa(x) ? '' : ' · ' + dur(minutos(x))) + ' · ' + nf(kms(x)) + ' km (' + nf(x.kmSale) + ' a ' + nf(x.kmVuelve) + ')' + ((x.destinos||[]).length ? '<br>' + esc(x.destinos.join(' · ')) : '') + (x.nota ? '<br>' + esc(x.nota) : '') + '</div>'
       + '<div class="acts"><button class="ghost" data-ed="' + esc(x.id) + '">Corregir</button><button class="ghost del" data-del="' + esc(x.id) + '">Borrar</button></div></div>';
   }).join('');
 }
@@ -696,35 +694,22 @@ document.addEventListener('keydown', e => { const i = e.target.closest('input[da
 /* ---------- QR: marcar salida y vuelta ---------- */
 const TZ = 'America/Argentina/Cordoba';
 const LUGAR = {carcano:'051 · Cárcano', sanmartin:'045 · San Martín'};
-function lugarDeQR(t){ const m = String(t||'').match(/[?&]qr=([a-z]+)/i); const q = m ? m[1].toLowerCase() : ''; return LUGAR[q] ? q : null; }
-let camStream = null, camTimer = null, camMsg = '';
-function pararCam(){ if(camTimer){ clearInterval(camTimer); camTimer = null; } if(camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; } }
-function cargarJsQR(){ return window.jsQR ? Promise.resolve() : new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = './jsqr.js'; sc.onload = ok; sc.onerror = mal; document.head.appendChild(sc); }); }
-async function escanear(){
-  camMsg = ''; pararCam();
-  try{
-    camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
-  }catch(e){ camMsg = 'No pude abrir la cámara. Dale permiso al navegador para usar la cámara y probá de nuevo.'; pintarQR(); return; }
-  pintarQR();
-  const v = $('camV'); if(!v){ pararCam(); return; }
-  v.srcObject = camStream; v.setAttribute('playsinline',''); await v.play().catch(() => {});
-  let det = null;
-  if('BarcodeDetector' in window){ try{ det = new BarcodeDetector({formats:['qr_code']}); }catch(e){ det = null; } }
-  if(!det){ try{ await cargarJsQR(); }catch(e){ camMsg = 'No se pudo cargar el lector de QR. Revisá internet.'; pararCam(); pintarQR(); return; } }
-  const cv = document.createElement('canvas'), cx = cv.getContext('2d', {willReadFrequently:true});
-  camTimer = setInterval(async () => {
-    if(!v.videoWidth) return;
-    let txt = null;
-    try{
-      if(det){ const r = await det.detect(v); if(r.length) txt = r[0].rawValue; }
-      else { cv.width = v.videoWidth; cv.height = v.videoHeight; cx.drawImage(v, 0, 0); const im = cx.getImageData(0, 0, cv.width, cv.height); const r = window.jsQR(im.data, im.width, im.height); if(r) txt = r.data; }
-    }catch(e){}
-    if(!txt) return;
-    const l = lugarDeQR(txt);
-    if(!l){ camMsg = 'Ese QR no es el de reparto del local.'; const m = $('camMsg'); if(m) m.textContent = camMsg; return; }
-    pararCam(); qrLugar = l; msgQR = ''; if(navigator.vibrate) navigator.vibrate(80);
-    pintarQR(); if(db && db.locales) db.locales().then(x => { locs = x; buscarGPS(); });
-  }, 300);
+// Marcar solo estando en 051 · Cárcano (GPS contra la ubicación cargada en el fichaje). Sin QR.
+const RADIO_REP = 150, PRECISION_REP = 100;
+let gpsMsg = '';
+async function verificarLocal(){
+  gpsMsg = ''; gpsQR = {estado:'buscando'}; pintarQR();
+  if(db && db.locales && !locs.carcano) locs = await db.locales();
+  const L = locs.carcano;
+  if(!L || L.lat == null){ gpsQR = {estado:'sin-config'}; qrLugar = 'carcano'; return pintarQR(); }
+  if(!navigator.geolocation){ gpsQR = null; gpsMsg = 'Este celular no deja ver la ubicación. Cargala a mano.'; return pintarQR(); }
+  navigator.geolocation.getCurrentPosition(p => {
+    const d = Math.round(dist({lat:p.coords.latitude, lng:p.coords.longitude}, L)), acc = Math.round(p.coords.accuracy||0);
+    if(d > RADIO_REP){ gpsQR = null; gpsMsg = 'Estás a ' + (d >= 1000 ? (d/1000).toFixed(1).replace('.',',') + ' km' : d + ' m') + ' de 051 · Cárcano. Para marcar tenés que estar en el local.'; }
+    else if(acc > PRECISION_REP){ gpsQR = null; gpsMsg = 'Tu ubicación no es precisa (±' + acc + ' m). Acercate a la puerta, esperá unos segundos y probá de nuevo.'; }
+    else { gpsQR = {estado:'ok', dist:d, acc}; qrLugar = 'carcano'; }
+    pintarQR();
+  }, () => { gpsQR = null; gpsMsg = 'No pude ver tu ubicación. Activá la ubicación del celular y dale permiso al navegador.'; pintarQR(); }, {enableHighAccuracy:true, timeout:20000, maximumAge:0});
 }
 function ahora(){
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false}).formatToParts(new Date()).map(x => [x.type, x.value]));
@@ -745,6 +730,7 @@ function gpsTxt(){
   if(!gpsQR) return '';
   if(gpsQR.estado === 'buscando') return '<div class="estado">Buscando tu ubicación…<small>Aceptá el permiso si el celular lo pide.</small></div>';
   if(gpsQR.estado === 'ok') return '<div class="estado">✓ Estás en ' + LUGAR[qrLugar] + ' · a ' + gpsQR.dist + ' m</div>';
+  if(gpsQR.estado === 'sin-config') return '<div class="estado warn">La ubicación del local no está cargada<small>Se marca igual y queda anotado.</small></div>';
   if(gpsQR.estado === 'lejos') return '<div class="estado warn">Estás a ' + (gpsQR.dist >= 1000 ? (gpsQR.dist/1000).toFixed(1).replace('.',',') + ' km' : gpsQR.dist + ' m') + ' del local<small>Se puede marcar igual, pero queda anotado.</small></div>';
   return '<div class="estado warn">No pude ver tu ubicación<small>Se puede marcar igual, pero queda anotado.</small></div>';
 }
@@ -756,11 +742,11 @@ function pintarQR(){
   if(!qrLugar){
     el.hidden = false;
     const enCurso = abierta ? '<div class="estado">Salida en curso: salió ' + diaCorto(abierta.fecha) + ' a las ' + esc(abierta.sale) + (abierta.destinos?.length ? '<small>' + esc(abierta.destinos.join(' · ')) + '</small>' : '') + '</div>' : '';
+    const buscando = gpsQR && gpsQR.estado === 'buscando';
     el.innerHTML = '<h2>' + (abierta ? 'Marcar vuelta' : 'Marcar salida') + '</h2>' + enCurso
-      + (camStream ? '<div class="cam"><video id="camV" muted playsinline></video><div class="marco"></div></div><p class="note" id="camMsg" style="margin:0">' + esc(camMsg || 'Apuntá al QR de reparto del local.') + '</p><button class="ghost" id="camNo" type="button">Cancelar</button>'
-        : '<p class="note" style="margin:0">' + (abierta ? 'Al volver al local, escaneá el QR de reparto.' : 'Antes de salir, escaneá el QR de reparto del local.') + '</p>'
-          + (camMsg ? '<div class="msg err">' + esc(camMsg) + '</div>' : '') + (msgQR ? '<div class="msg ok">' + esc(msgQR) + '</div>' : '')
-          + '<button class="big" id="camGo" type="button">📷 Escanear QR</button>');
+      + '<p class="note" style="margin:0">' + (abierta ? 'Cuando vuelvas a 051 · Cárcano, marcá la vuelta.' : 'Marcá la salida desde 051 · Cárcano.') + '</p>'
+      + (gpsMsg ? '<div class="estado warn">' + esc(gpsMsg) + '</div>' : '') + (msgQR ? '<div class="msg ok">' + esc(msgQR) + '</div>' : '')
+      + '<button class="big" id="camGo" type="button"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando tu ubicación…' : abierta ? 'Marcar vuelta' : 'Marcar salida') + '</button>';
     return;
   }
   if(!cargado){ el.hidden = false; el.innerHTML = '<div class="empty">Cargando…</div>'; return; }
@@ -790,11 +776,10 @@ function pintarQR(){
 setInterval(() => { const c = $('qClk'); if(c){ const r = ahora(); c.textContent = r.hm; const g = $('qGo'); if(g) g.textContent = g.textContent.replace(/\d\d:\d\d$/, r.hm); } }, 10000);
 function qMsg(t, c){ msgQR = t; const m = $('qMsg'); if(m){ m.textContent = t; m.className = 'msg ' + (c||''); } }
 $('qrPanel').addEventListener('click', async e => {
-  if(e.target.closest('#camGo')){ escanear(); return; }
-  if(e.target.closest('#camNo')){ pararCam(); camMsg = ''; pintarQR(); return; }
+  if(e.target.closest('#camGo')){ msgQR = ''; verificarLocal(); return; }
   const t = e.target.closest('button[data-tq]'); if(t){ tipoQR = t.dataset.tq; msgQR = ''; pintarQR(); return; }
   if(!e.target.closest('#qGo')) return;
-  if(!db) return qMsg('Sin conexión. Revisá internet y volvé a escanear.','err');
+  if(!db) return qMsg('Sin conexión. Revisá internet y probá de nuevo.','err');
   const km = ent($('qKm').value), r = ahora(), b = $('qGo');
   if(isNaN(km)) return qMsg(abierta ? 'Faltan los km al volver.' : 'Faltan los km al salir.','err');
   b.disabled = true; qMsg('Guardando…');
@@ -803,9 +788,9 @@ $('qrPanel').addEventListener('click', async e => {
       if(tipoQR === 'rep' && !selQR.size){ b.disabled = false; return qMsg('Elegí al menos un destino.','err'); }
       const d = tipoQR === 'rep' ? [...selQR] : [];
       const x = {fecha:r.fecha, sale:r.hm, vuelve:'', kmSale:km, kmVuelve:null, motivo: tipoQR === 'rep' ? motivoDe(d) : 'lore', destinos:d, entregas:d.length, nota:'',
-                 estado:'abierta', origen:'qr', lugarSale:qrLugar, gpsSale:gpsDato(), saleTs:db.ts ? db.ts() : null, creado:new Date().toISOString()};
+                 estado:'abierta', origen:'gps', lugarSale:qrLugar, gpsSale:gpsDato(), saleTs:db.ts ? db.ts() : null, creado:new Date().toISOString()};
       await db.collection('salidas').doc().set(x);
-      selQR = new Set(); qrLugar = null; gpsQR = null; msgQR = 'Salida marcada a las ' + r.hm + '. Al volver, escaneá el QR de nuevo.'; pintarQR();
+      selQR = new Set(); qrLugar = null; gpsQR = null; msgQR = 'Salida marcada a las ' + r.hm + '. Cuando vuelvas, marcá la vuelta.'; pintarQR();
     } else {
       const a = abierta, lore = esLore(a);
       if(km < a.kmSale){ b.disabled = false; return qMsg('Los km al volver no pueden ser menos que al salir (' + nf(a.kmSale) + ').','err'); }
