@@ -104,6 +104,32 @@ a.primary#waResumen{background:var(--wa)}
 .acts .ghost{padding:7px 12px;min-height:38px;font-size:13px}
 .acts .del{color:var(--bad);border-color:var(--bad)}
 .empty{text-align:center;color:var(--muted);padding:22px 10px;font-weight:600;font-size:15px}
+/* QR de salida y vuelta */
+.qrcard{border:2px solid var(--pri)}
+.reloj{text-align:center}
+.reloj b{display:block;font-family:var(--display);font-weight:400;font-size:56px;line-height:1;color:var(--pri2);font-variant-numeric:tabular-nums}
+.reloj small{color:var(--muted);font-weight:700;font-size:14px}
+.estado{border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:var(--pril);color:var(--pri2)}
+.estado small{display:block;font-weight:600;font-size:13px;margin-top:2px}
+.estado.warn{background:var(--warn-soft);color:var(--warn)}
+.big{font:800 20px var(--body);padding:18px;min-height:64px;border:0;border-radius:18px;background:var(--pri);color:#fff;cursor:pointer;width:100%}
+.big:disabled{background:#D8D3CD}
+/* Destinos */
+.dd{border:1.5px solid var(--line);border-radius:12px;background:#fff}
+.dd summary{list-style:none;cursor:pointer;padding:12px;min-height:48px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dd summary::-webkit-details-marker{display:none}
+.dd summary::after{content:"▾";color:var(--pri);font-size:18px}
+.dd[open] summary::after{content:"▴"}
+.dd .lista{border-top:1px solid var(--line);max-height:330px;overflow-y:auto}
+.dd .op{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px;cursor:pointer}
+.dd .op input{width:22px;height:22px;accent-color:var(--pri);flex:none}
+.dd .op.sm{color:var(--pri2)}
+.dd .buscar{padding:10px 12px;border-top:1px solid var(--line)}
+.dd .otro{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.dd .otro input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .chip{font-size:13px;padding:5px 10px}
+.chip.qr{background:var(--pri);color:#fff}
 </style>
 </head>
 <body>
@@ -122,6 +148,8 @@ a.primary#waResumen{background:var(--wa)}
   <div class="banner" id="sinDb" hidden>No se pudo conectar con la base de datos. Revisá que el celular tenga internet y volvé a abrir la página.</div>
 
   <section id="p-cargar">
+    <div class="panel qrcard" id="qrPanel" hidden></div>
+    <button class="ghost" id="aMano" type="button" hidden>Cargar una salida a mano</button>
     <form class="panel" id="form" novalidate>
       <h2 id="formTitulo">Nueva salida</h2>
       <div class="field"><label for="fecha">Fecha</label><input type="date" id="fecha" required></div>
@@ -134,17 +162,19 @@ a.primary#waResumen{background:var(--wa)}
         <div class="field"><label for="kmVuelve">Km al volver</label><input type="text" inputmode="numeric" id="kmVuelve" placeholder="84.238" autocomplete="off"></div>
       </div>
       <div class="field">
-        <span class="lbl" id="lblMotivo">Para qué fue</span>
+        <span class="lbl" id="lblMotivo">Tipo de viaje</span>
         <div class="seg m4" role="group" aria-labelledby="lblMotivo">
-          <button type="button" data-m="mayorista" aria-pressed="false">Mayorista</button>
-          <button type="button" data-m="reposicion" aria-pressed="false">Reposición San Martín</button>
-          <button type="button" data-m="ambas" aria-pressed="false">Las dos</button>
+          <button type="button" data-m="rep" aria-pressed="false" style="grid-column:1/-1">Reparto</button>
+          <button type="button" data-m="lore" aria-pressed="false">Llevar a Lorena a San Martín</button>
           <button type="button" data-m="casa" aria-pressed="false">A casa y vuelta</button>
-          <button type="button" data-m="lore" aria-pressed="false" style="grid-column:1/-1">Llevar a Lorena a San Martín (mañana)</button>
         </div>
       </div>
       <p class="note" id="notaCasa" hidden style="margin:0">Km al salir: los que marca cuando se va del local a la casa. Km al volver: los que marca cuando vuelve al local al otro día. Así queda anotada la ida y la vuelta en una sola carga, sin horas ni entregas.</p>
-      <div class="field" id="fEntregas">
+      <div class="field" id="fDestinos" hidden>
+        <span class="lbl">Destinos (cada uno cuenta como una entrega)</span>
+        <div id="ddForm"></div>
+      </div>
+      <div class="field" id="fEntregas" hidden>
         <label for="entregas">Cuántas entregas hizo</label>
         <div class="step">
           <button type="button" id="menos" aria-label="Una entrega menos">−</button>
@@ -152,7 +182,7 @@ a.primary#waResumen{background:var(--wa)}
           <button type="button" id="mas" aria-label="Una entrega más">+</button>
         </div>
       </div>
-      <div class="field"><label for="nota">Nota (opcional)</label><input type="text" id="nota" maxlength="140" placeholder="Cliente, zona, algo para acordarse" autocomplete="off"></div>
+      <div class="field"><label for="nota">Nota (opcional)</label><input type="text" id="nota" maxlength="140" placeholder="Algo para acordarse" autocomplete="off"></div>
       <div class="calc" id="calc" aria-live="polite"></div>
       <button class="primary" id="guardar" type="submit">Guardar salida</button>
       <button class="ghost" id="cancelar" type="button" hidden>Cancelar cambios</button>
@@ -220,7 +250,7 @@ a.primary#waResumen{background:var(--wa)}
 <script type="module">
 import { requireLogin } from "./login.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, query, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, query, limit, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const app = initializeApp({
   apiKey: "AIzaSyC5voDKO_imN8QqRRpjMQdwV7QILrJw40g",
   authDomain: "frioteka-preventista.firebaseapp.com",
@@ -245,7 +275,12 @@ window.RP = {
   doc(path){
     const [c, id] = path.split("/"); const r = doc(fs, C[c], id);
     return { set: o => setDoc(r, o), onSnapshot: (cb, err) => onSnapshot(r, s => cb({ exists: s.exists(), data: () => s.data() }), err) };
-  }
+  },
+  // Solo lectura: clientes de la app Preventista (datos/clientes) para la lista de destinos
+  onClientes(cb){ return onSnapshot(doc(fs, "datos", "clientes"), s => cb(((s.data() || {}).lista || []).map(c => c && c.nombre).filter(Boolean)), () => cb([])); },
+  // Solo lectura: ubicación de los locales cargada en el fichaje (fj_config/general)
+  async locales(){ try { return ((await getDoc(doc(fs, "fj_config", "general"))).data() || {}).locales || {}; } catch (e) { return {}; } },
+  ts: () => serverTimestamp()
 };
 window.dispatchEvent(new Event("rp-ready"));
 </script>
@@ -259,6 +294,7 @@ const esCasa = x => x.motivo === 'casa';
 const esLore = x => x.motivo === 'lore';
 const esFuera = x => esCasa(x) || esLore(x);
 
+let todas = [], destExtra = [], clientesPrev = [], abierta = null, qrLugar = null, locs = {}, gpsQR = null;
 let db = null, salidas = [], cfg = {precio:2100, rinde:15, fijos:0, kmMes:0, costoKm:0, costoHora:6100}, editId = null, motivo = null, periodo = '4', cargado = false, diaVer = '';
 
 /* ---------- utilidades de fecha y numeros ---------- */
@@ -283,9 +319,10 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => tab(b.d
 { const h = location.hash.slice(1); if(['cargar','resumen','historial'].includes(h)) tab(h); }
 
 /* ---------- formulario ---------- */
-function setMotivo(m){ motivo = m; document.querySelectorAll('.seg button[data-m]').forEach(b => b.setAttribute('aria-pressed', b.dataset.m===m));
-  const c = m === 'casa'; $('sale').closest('.row2').hidden = c; $('fEntregas').hidden = c || m === 'lore'; $('notaCasa').hidden = !c; calc(); }
-document.querySelectorAll('.seg button[data-m]').forEach(b => b.onclick = () => setMotivo(b.dataset.m));
+function setMotivo(m){ motivo = m; document.querySelectorAll('#form .seg button[data-m]').forEach(b => b.setAttribute('aria-pressed', b.dataset.m===m));
+  const c = m === 'casa'; $('sale').closest('.row2').hidden = c; $('fDestinos').hidden = m !== 'rep';
+  $('fEntregas').hidden = !(m === 'rep' && editViejo && !selForm.size); $('notaCasa').hidden = !c; calc(); }
+document.querySelectorAll('#form .seg button[data-m]').forEach(b => b.onclick = () => setMotivo(b.dataset.m));
 $('menos').onclick = () => { const n = ent($('entregas').value); $('entregas').value = Math.max(0, (isNaN(n)?1:n) - 1); };
 $('mas').onclick = () => { const n = ent($('entregas').value); $('entregas').value = (isNaN(n)?0:n) + 1; };
 ['kmSale','kmVuelve'].forEach(id => $(id).addEventListener('blur', () => { const n = ent($(id).value); if(!isNaN(n)) $(id).value = nf(n); }));
@@ -298,7 +335,7 @@ function calc(){
   $('calc').textContent = p.join('  ·  ');
 }
 function limpiar(){
-  editId = null; $('waSalida').hidden = true;
+  editId = null; editViejo = false; selForm = new Set(); pintarDD('ddForm', selForm); $('waSalida').hidden = true;
   $('formTitulo').textContent = 'Nueva salida'; $('guardar').textContent = 'Guardar salida'; $('cancelar').hidden = true;
   $('fecha').value = hoy(); $('sale').value = ''; $('vuelve').value = ''; $('kmVuelve').value = ''; $('entregas').value = '1'; $('nota').value = '';
   setMotivo(null);
@@ -314,7 +351,12 @@ $('form').addEventListener('submit', async e => {
   const x = { fecha:$('fecha').value, sale:$('sale').value, vuelve:$('vuelve').value, kmSale:ent($('kmSale').value), kmVuelve:ent($('kmVuelve').value),
               motivo, entregas:ent($('entregas').value), nota:$('nota').value.trim() };
   if(!x.fecha) return msg('Falta la fecha.','err');
-  if(!x.motivo) return msg('Elegí para qué fue la salida.','err');
+  if(!x.motivo) return msg('Elegí qué tipo de viaje fue.','err');
+  if(x.motivo === 'rep'){
+    if(selForm.size){ const d = [...selForm]; x.destinos = d; x.motivo = motivoDe(d); x.entregas = d.length; }
+    else if(editViejo){ const v = salidas.find(s => s.id===editId); x.motivo = v ? v.motivo : 'mayorista'; }
+    else return msg('Elegí al menos un destino.','err');
+  } else x.destinos = [];
   if(x.motivo === 'casa'){ x.sale = ''; x.vuelve = ''; x.entregas = 0; }
   else {
     if(x.motivo === 'lore') x.entregas = 0;
@@ -329,7 +371,11 @@ $('form').addEventListener('submit', async e => {
   $('guardar').disabled = true; msg('Guardando…');
   try{
     const ref = editId ? db.collection('salidas').doc(editId) : db.collection('salidas').doc();
-    x.creado = (editId && salidas.find(s => s.id===editId)?.creado) || new Date().toISOString();
+    const vie = editId ? salidas.find(s => s.id===editId) : null;
+    x.creado = vie?.creado || new Date().toISOString();
+    x.origen = vie?.origen || 'manual';
+    if(vie) ['lugarSale','lugarVuelve','gpsSale','gpsVuelve','saleTs','vuelveTs'].forEach(k => { if(vie[k] !== undefined) x[k] = vie[k]; });
+    if(vie && vie.origen === 'qr' && (vie.sale !== x.sale || vie.vuelve !== x.vuelve)) x.horaCorregida = true;
     await ref.set(x);
     const txt = (editId ? 'Cambios guardados: ' : 'Salida guardada: ') + (x.motivo==='casa' ? 'a casa y vuelta, ' : dur(minutos(x)) + ', ') + nf(kms(x)) + ' km.';
     if(!salidas.some(s => s.id===ref.id)) salidas.push({id:ref.id, ...x}); else salidas = salidas.map(s => s.id===ref.id ? {id:ref.id, ...x} : s);
@@ -483,7 +529,7 @@ function txtSalida(x){
     + (hayCostos() ? '\n*Costo: ' + money(costoDe(x).tot) + '*' : '') + (x.nota ? '\nNota: ' + x.nota : '');
   return '*Reparto FRIOTEKA*\n' + diaCorto(x.fecha) + ' · ' + x.sale + ' a ' + x.vuelve + ' (' + dur(minutos(x)) + ')\n'
     + 'Km ' + nf(x.kmSale) + ' a ' + nf(x.kmVuelve) + ' (' + nf(kms(x)) + ' km)\n'
-    + (MOTIVO[x.motivo]||x.motivo) + ' · ' + x.entregas + (x.entregas===1?' entrega':' entregas')
+    + (MOTIVO[x.motivo]||x.motivo) + ' · ' + x.entregas + (x.entregas===1?' entrega':' entregas') + ((x.destinos||[]).length ? '\nDestinos: ' + x.destinos.join(', ') : '')
     + (hayCostos() ? (() => { const c = costoDe(x); return '\n*Costo: ' + money(c.tot) + '* (camioneta ' + money(c.cam) + ' + repartidor ' + money(c.rep) + ')'; })() : '')
     + (x.nota ? '\nNota: ' + x.nota : '');
 }
@@ -507,8 +553,8 @@ function txtResumen(LL){
 }
 $('excel').onclick = () => {
   const q = v => '"' + String(v ?? '').replace(/"/g,'""') + '"';
-  const filas = [['Fecha','Día','Hora salida','Hora vuelta','Minutos','Km al salir','Km al volver','Km recorridos','Para qué fue','Entregas','Costo camioneta','Costo repartidor','Costo total','Nota']]
-    .concat(ordenadas().map(x => [corta(x.fecha) + '/' + x.fecha.slice(0,4), DIAS[parseF(x.fecha).getDay()], x.sale, x.vuelve, minutos(x), x.kmSale, x.kmVuelve, kms(x), MOTIVO[x.motivo]||x.motivo, x.entregas, ...(c => [Math.round(c.cam), Math.round(c.rep), Math.round(c.tot)])(costoDe(x)), x.nota||'']));
+  const filas = [['Fecha','Día','Hora salida','Hora vuelta','Minutos','Km al salir','Km al volver','Km recorridos','Para qué fue','Entregas','Destinos','Costo camioneta','Costo repartidor','Costo total','Nota','Cargada con']]
+    .concat(ordenadas().map(x => [corta(x.fecha) + '/' + x.fecha.slice(0,4), DIAS[parseF(x.fecha).getDay()], x.sale, x.vuelve, minutos(x), x.kmSale, x.kmVuelve, kms(x), MOTIVO[x.motivo]||x.motivo, x.entregas, (x.destinos||[]).join(', '), ...(c => [Math.round(c.cam), Math.round(c.rep), Math.round(c.tot)])(costoDe(x)), x.nota||'', x.origen==='qr' ? 'QR' + (x.horaCorregida ? ' (hora corregida)' : '') : 'A mano']));
   const csv = '﻿' + filas.map(f => f.map(q).join(';')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
@@ -559,7 +605,7 @@ function pintarHistorial(){
     return '<div class="item"><div class="hd"><b>' + DIAS[d.getDay()] + ' ' + corta(x.fecha) + (esCasa(x) ? '' : ' · ' + esc(x.sale) + ' a ' + esc(x.vuelve)) + '</b>'
       + (esCasa(x) ? '<span class="chip">A casa</span>' : esLore(x) ? '<span class="chip">Lorena</span>' : '<span class="chip' + (x.entregas===1?' one':'') + '">' + x.entregas + (x.entregas===1?' entrega':' entregas') + '</span>') + '</div>'
       + (hayCostos() ? (() => { const c = costoDe(x); return '<div class="cost"><b>' + money(c.tot) + '</b>' + (esCasa(x) ? ' de camioneta' : ' camioneta ' + money(c.cam) + ' + repartidor ' + money(c.rep)) + '</div>'; })() : '')
-      + '<div class="meta">' + esc(MOTIVO[x.motivo]||x.motivo) + (esCasa(x) ? '' : ' · ' + dur(minutos(x))) + ' · ' + nf(kms(x)) + ' km (' + nf(x.kmSale) + ' a ' + nf(x.kmVuelve) + ')' + (x.nota ? '<br>' + esc(x.nota) : '') + '</div>'
+      + '<div class="meta">' + (x.origen==='qr' ? '<span class="chip qr">QR' + (x.horaCorregida ? ' · hora corregida' : '') + '</span> ' : '') + esc(MOTIVO[x.motivo]||x.motivo) + (esCasa(x) ? '' : ' · ' + dur(minutos(x))) + ' · ' + nf(kms(x)) + ' km (' + nf(x.kmSale) + ' a ' + nf(x.kmVuelve) + ')' + ((x.destinos||[]).length ? '<br>' + esc(x.destinos.join(' · ')) : '') + (x.nota ? '<br>' + esc(x.nota) : '') + '</div>'
       + '<div class="acts"><button class="ghost" data-ed="' + esc(x.id) + '">Corregir</button><button class="ghost del" data-del="' + esc(x.id) + '">Borrar</button></div></div>';
   }).join('');
 }
@@ -568,7 +614,9 @@ $('historial').addEventListener('click', async e => {
   if(b.dataset.ed){
     const x = salidas.find(s => s.id===b.dataset.ed); if(!x) return;
     editId = x.id; $('waSalida').hidden = true; $('fecha').value = x.fecha; $('sale').value = x.sale; $('vuelve').value = x.vuelve; $('kmSale').value = nf(x.kmSale); $('kmVuelve').value = nf(x.kmVuelve);
-    $('entregas').value = x.entregas; $('nota').value = x.nota||''; setMotivo(x.motivo);
+    $('entregas').value = x.entregas; $('nota').value = x.nota||'';
+    selForm = new Set(x.destinos||[]); editViejo = !(x.destinos||[]).length; pintarDD('ddForm', selForm);
+    setMotivo(esFuera(x) ? x.motivo : 'rep');
     $('formTitulo').textContent = 'Corregir salida del ' + corta(x.fecha); $('guardar').textContent = 'Guardar cambios'; $('cancelar').hidden = false;
     msg(''); calc(); tab('cargar'); window.scrollTo(0,0);
   } else if(b.dataset.del){
@@ -599,20 +647,169 @@ Object.keys(CF).forEach(id => $(id).addEventListener('change', async () => {
   catch(err){ $('msgCfg').textContent = 'No se pudieron guardar los costos.'; $('msgCfg').className = 'msg err'; }
 }));
 
+/* ---------- destinos ---------- */
+const SM = '045 · San Martín (reposición)';
+let selForm = new Set(), selQR = new Set(), editViejo = false, buscaDD = {};
+const norm = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function listaDestinos(extra){
+  const vistos = new Set([norm(SM)]), out = [];
+  [...clientesPrev, ...destExtra, ...(extra||[])].forEach(n => { const k = norm(n); if(k && !vistos.has(k)){ vistos.add(k); out.push(String(n).trim()); } });
+  out.sort((a,b) => a.localeCompare(b,'es'));
+  return [SM, ...out];
+}
+function motivoDe(d){ const sm = d.includes(SM), otros = d.some(n => n !== SM); return sm && otros ? 'ambas' : sm ? 'reposicion' : 'mayorista'; }
+function pintarDD(id, sel){
+  const el = $(id); if(!el) return;
+  const abierto = el.querySelector('details')?.open || false, q = buscaDD[id] || '';
+  const L = listaDestinos([...sel]), ver = q ? L.filter(n => norm(n).includes(norm(q))) : L;
+  el.innerHTML = '<details class="dd"' + (abierto ? ' open' : '') + '><summary>' + (sel.size ? sel.size + (sel.size===1 ? ' destino elegido' : ' destinos elegidos') : 'Elegí los destinos') + '</summary>'
+    + (L.length > 10 ? '<div class="buscar"><input type="text" data-busca="' + id + '" placeholder="Buscar" value="' + esc(q) + '" autocomplete="off"></div>' : '')
+    + '<div class="lista">' + ver.map(n => '<label class="op' + (n===SM ? ' sm' : '') + '"><input type="checkbox" data-dd="' + id + '" value="' + esc(n) + '"' + (sel.has(n) ? ' checked' : '') + '>' + esc(n) + '</label>').join('') + '</div>'
+    + '<div class="otro"><input type="text" data-otro="' + id + '" placeholder="Otro destino" maxlength="60" autocomplete="off"><button type="button" class="ghost" data-add="' + id + '">Agregar</button></div></details>'
+    + (sel.size ? '<div class="chips" style="margin-top:8px">' + [...sel].map(n => '<span class="chip">' + esc(n) + '</span>').join('') + '</div>' : '');
+}
+const selDe = id => id === 'ddForm' ? selForm : selQR;
+function repintarDD(id){ if(id === 'ddForm'){ pintarDD(id, selForm); if(motivo === 'rep') setMotivo('rep'); } else pintarDDqr(); }
+document.addEventListener('change', e => {
+  const c = e.target.closest('input[data-dd]'); if(!c) return;
+  const sel = selDe(c.dataset.dd); c.checked ? sel.add(c.value) : sel.delete(c.value); repintarDD(c.dataset.dd);
+});
+document.addEventListener('input', e => {
+  const b = e.target.closest('input[data-busca]'); if(!b) return;
+  buscaDD[b.dataset.busca] = b.value; const id = b.dataset.busca; repintarDD(id);
+  const nb = document.querySelector('input[data-busca="' + id + '"]'); if(nb){ nb.focus(); nb.setSelectionRange(nb.value.length, nb.value.length); }
+});
+async function agregarOtro(id){
+  const inp = document.querySelector('input[data-otro="' + id + '"]'); const n = (inp?.value || '').trim().replace(/\s+/g,' ');
+  if(!n) return;
+  const ya = listaDestinos().find(x => norm(x) === norm(n)), nombre = ya || n;
+  selDe(id).add(nombre); buscaDD[id] = '';
+  if(!ya){ destExtra = [...destExtra, nombre]; if(db){ try{ await db.doc('config/destinos').set({lista: destExtra}); }catch(err){} } }
+  repintarDD(id);
+}
+document.addEventListener('click', e => { const b = e.target.closest('button[data-add]'); if(b) agregarOtro(b.dataset.add); });
+document.addEventListener('keydown', e => { const i = e.target.closest('input[data-otro]'); if(i && e.key === 'Enter'){ e.preventDefault(); agregarOtro(i.dataset.otro); } });
+
+/* ---------- QR: marcar salida y vuelta ---------- */
+const TZ = 'America/Argentina/Cordoba';
+const LUGAR = {carcano:'051 · Cárcano', sanmartin:'045 · San Martín'};
+{ const q = (new URLSearchParams(location.search).get('qr') || '').toLowerCase().replace(/[^a-z]/g,''); qrLugar = LUGAR[q] ? q : null; }
+function ahora(){
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false}).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return {fecha: p.year + '-' + p.month + '-' + p.day, hm: (p.hour === '24' ? '00' : p.hour) + ':' + p.minute};
+}
+function dist(a, b){ const R = 6371000, r = x => x*Math.PI/180, dLa = r(b.lat-a.lat), dLo = r(b.lng-a.lng);
+  const h = Math.sin(dLa/2)**2 + Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function buscarGPS(){
+  const L = locs[qrLugar];
+  if(!L || L.lat == null || !navigator.geolocation){ gpsQR = null; return pintarQR(); }
+  gpsQR = {estado:'buscando'}; pintarQR();
+  navigator.geolocation.getCurrentPosition(p => {
+    const d = dist({lat:p.coords.latitude, lng:p.coords.longitude}, L);
+    gpsQR = {estado: d > 150 ? 'lejos' : 'ok', dist: Math.round(d), acc: Math.round(p.coords.accuracy||0)}; pintarQR();
+  }, () => { gpsQR = {estado:'sin'}; pintarQR(); }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+}
+function gpsTxt(){
+  if(!gpsQR) return '';
+  if(gpsQR.estado === 'buscando') return '<div class="estado">Buscando tu ubicación…<small>Aceptá el permiso si el celular lo pide.</small></div>';
+  if(gpsQR.estado === 'ok') return '<div class="estado">✓ Estás en ' + LUGAR[qrLugar] + ' · a ' + gpsQR.dist + ' m</div>';
+  if(gpsQR.estado === 'lejos') return '<div class="estado warn">Estás a ' + (gpsQR.dist >= 1000 ? (gpsQR.dist/1000).toFixed(1).replace('.',',') + ' km' : gpsQR.dist + ' m') + ' del local<small>Se puede marcar igual, pero queda anotado.</small></div>';
+  return '<div class="estado warn">No pude ver tu ubicación<small>Se puede marcar igual, pero queda anotado.</small></div>';
+}
+const gpsDato = () => gpsQR && gpsQR.estado !== 'buscando' ? {estado: gpsQR.estado, dist: gpsQR.dist ?? null, acc: gpsQR.acc ?? null} : null;
+let tipoQR = 'rep', msgQR = '';
+function pintarDDqr(){ if(qrLugar && !abierta && tipoQR === 'rep') pintarDD('ddQR', selQR); if(qrLugar && abierta && !esLore(abierta)) pintarDD('ddQR', selQR); }
+function pintarQR(){
+  const el = $('qrPanel'); if(!el) return;
+  if(!qrLugar){
+    if(abierta){ el.hidden = false; el.innerHTML = '<h2>Salida en curso</h2><div class="estado">Salió ' + diaCorto(abierta.fecha) + ' a las ' + esc(abierta.sale) + (abierta.destinos?.length ? '<small>' + esc(abierta.destinos.join(' · ')) + '</small>' : '') + '</div><p class="note" style="margin:0">Al volver, escaneá el QR del local para marcar la vuelta.</p>'; }
+    else el.hidden = true;
+    return;
+  }
+  if(!cargado){ el.hidden = false; el.innerHTML = '<div class="empty">Cargando…</div>'; return; }
+  el.hidden = false;
+  const r = ahora();
+  const foco = document.activeElement && el.contains(document.activeElement) ? document.activeElement.id : null;
+  const est = abierta ? abierta.id : 'nueva', kmPrev = $('qKm') && pintarQR.est === est ? $('qKm').value : ''; pintarQR.est = est;
+  let h = '<div class="reloj"><b id="qClk">' + r.hm + '</b><small>' + LUGAR[qrLugar] + ' · ' + diaCorto(r.fecha) + '</small></div>' + gpsTxt();
+  if(!abierta){
+    const ult = ordenadas().slice(-1)[0];
+    h += '<h2>Marcar salida</h2>'
+      + '<div class="seg" style="grid-template-columns:1fr 1fr" role="group" aria-label="Tipo de viaje"><button type="button" data-tq="rep" aria-pressed="' + (tipoQR==='rep') + '">Reparto</button><button type="button" data-tq="lore" aria-pressed="' + (tipoQR==='lore') + '">Llevar a Lorena</button></div>'
+      + (tipoQR === 'rep' ? '<div class="field"><span class="lbl">Destinos</span><div id="ddQR"></div></div>' : '')
+      + '<div class="field"><label for="qKm">Km al salir</label><input type="text" inputmode="numeric" id="qKm" autocomplete="off" value="' + esc(kmPrev || (ult ? nf(ult.kmVuelve) : '')) + '"></div>'
+      + '<button class="big" id="qGo" type="button">Marcar salida · ' + r.hm + '</button>';
+  } else {
+    h += '<h2>Marcar vuelta</h2><div class="estado">Salió a las ' + esc(abierta.sale) + (abierta.fecha !== r.fecha ? ' del ' + diaCorto(abierta.fecha) : '') + ' · km ' + nf(abierta.kmSale) + '<small>' + (esLore(abierta) ? 'Traslado de Lorena' : 'Revisá los destinos: dejá marcados los que entregaste') + '</small></div>'
+      + (esLore(abierta) ? '' : '<div class="field"><span class="lbl">Destinos</span><div id="ddQR"></div></div>')
+      + '<div class="field"><label for="qKm">Km al volver</label><input type="text" inputmode="numeric" id="qKm" autocomplete="off" value="' + esc(kmPrev) + '" placeholder="' + nf(abierta.kmSale) + '"></div>'
+      + '<button class="big" id="qGo" type="button">Marcar vuelta · ' + r.hm + '</button>';
+  }
+  h += '<div class="msg" id="qMsg" aria-live="polite">' + esc(msgQR) + '</div>';
+  el.innerHTML = h;
+  if($('ddQR')) pintarDD('ddQR', selQR);
+  if(foco && $(foco)) $(foco).focus();
+}
+setInterval(() => { const c = $('qClk'); if(c){ const r = ahora(); c.textContent = r.hm; const g = $('qGo'); if(g) g.textContent = g.textContent.replace(/\d\d:\d\d$/, r.hm); } }, 10000);
+function qMsg(t, c){ msgQR = t; const m = $('qMsg'); if(m){ m.textContent = t; m.className = 'msg ' + (c||''); } }
+$('qrPanel').addEventListener('click', async e => {
+  const t = e.target.closest('button[data-tq]'); if(t){ tipoQR = t.dataset.tq; msgQR = ''; pintarQR(); return; }
+  if(!e.target.closest('#qGo')) return;
+  if(!db) return qMsg('Sin conexión. Revisá internet y volvé a escanear.','err');
+  const km = ent($('qKm').value), r = ahora(), b = $('qGo');
+  if(isNaN(km)) return qMsg(abierta ? 'Faltan los km al volver.' : 'Faltan los km al salir.','err');
+  b.disabled = true; qMsg('Guardando…');
+  try{
+    if(!abierta){
+      if(tipoQR === 'rep' && !selQR.size){ b.disabled = false; return qMsg('Elegí al menos un destino.','err'); }
+      const d = tipoQR === 'rep' ? [...selQR] : [];
+      const x = {fecha:r.fecha, sale:r.hm, vuelve:'', kmSale:km, kmVuelve:null, motivo: tipoQR === 'rep' ? motivoDe(d) : 'lore', destinos:d, entregas:d.length, nota:'',
+                 estado:'abierta', origen:'qr', lugarSale:qrLugar, gpsSale:gpsDato(), saleTs:db.ts ? db.ts() : null, creado:new Date().toISOString()};
+      await db.collection('salidas').doc().set(x);
+      selQR = new Set(); msgQR = '';
+      qMsg('Salida marcada a las ' + r.hm + '. Al volver, escaneá el QR de nuevo.','ok');
+    } else {
+      const a = abierta, lore = esLore(a);
+      if(km < a.kmSale){ b.disabled = false; return qMsg('Los km al volver no pueden ser menos que al salir (' + nf(a.kmSale) + ').','err'); }
+      if(km - a.kmSale > 500){ b.disabled = false; return qMsg('Son más de 500 km. Revisá los kilómetros.','err'); }
+      if(!lore && !selQR.size){ b.disabled = false; return qMsg('Dejá marcado al menos un destino.','err'); }
+      const mismoDia = a.fecha === r.fecha;
+      if(mismoDia && mins(r.hm) <= mins(a.sale)){ b.disabled = false; return qMsg('Esperá al menos un minuto desde la salida.','err'); }
+      const d = lore ? [] : [...selQR];
+      const x = {...a, vuelve:r.hm, kmVuelve:km, destinos:d, entregas:d.length, motivo: lore ? 'lore' : motivoDe(d), estado:'cerrada', lugarVuelve:qrLugar, gpsVuelve:gpsDato(), vuelveTs:db.ts ? db.ts() : null};
+      if(!mismoDia) x.nota = (x.nota ? x.nota + ' · ' : '') + 'Volvió el ' + diaCorto(r.fecha) + ' (revisar)';
+      delete x.id;
+      await db.collection('salidas').doc(a.id).set(x);
+      selQR = new Set(); msgQR = '';
+      qMsg('Vuelta marcada a las ' + r.hm + ': ' + dur(mins(r.hm) - mins(a.sale)) + ', ' + nf(km - a.kmSale) + ' km, ' + d.length + (d.length===1 ? ' entrega.' : ' entregas.'),'ok');
+      $('waSalida').href = wa(txtSalida({...x})); $('waSalida').hidden = false;
+    }
+  }catch(err){ b.disabled = false; qMsg('No se pudo guardar. Revisá que haya internet y probá de nuevo.','err'); }
+});
+let abiertaPrev = null;
+const pintarQRorig = pintarQR;
+pintarQR = function(){ if(abierta && abierta.id !== abiertaPrev){ abiertaPrev = abierta.id; selQR = new Set(abierta.destinos||[]); } if(!abierta) abiertaPrev = null; pintarQRorig(); };
+
 /* ---------- arranque ---------- */
 diaVer = hoy(); $('diaFecha').value = diaVer;
 $('nFecha').value = hoy();
-limpiar(); pintar();
+limpiar(); pintar(); pintarQR();
+if(qrLugar){ $('form').hidden = true; $('aMano').hidden = false; $('aMano').onclick = () => { $('form').hidden = false; $('aMano').hidden = true; }; }
 Object.keys(CF).forEach(id => { $(id).value = fmtCfg(CF[id], cfg[CF[id]]); }); pintarCalc();
 (async () => {
   db = window.RP || await new Promise(r => { window.addEventListener('rp-ready', () => r(window.RP), {once:true}); setTimeout(() => r(window.RP || null), 15000); });
   if(!db){ cargado = true; $('sinDb').hidden = false; pintar(); return; }
   db.collection('salidas').limit(1000).onSnapshot(snap => {
-    salidas = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(x => x.fecha && (esCasa(x) || (x.sale && x.vuelve)));
-    const primera = !cargado; cargado = true; pintar(); pintarCalc();
+    todas = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    salidas = todas.filter(x => x.estado !== 'abierta' && x.fecha && (esCasa(x) || (x.sale && x.vuelve)));
+    abierta = todas.filter(x => x.estado === 'abierta').sort((a,b) => (b.fecha+b.sale).localeCompare(a.fecha+a.sale))[0] || null;
+    const primera = !cargado; cargado = true; pintar(); pintarCalc(); pintarQR();
     if(primera && !editId && !$('kmSale').value){ const u = ordenadas().slice(-1)[0]; if(u) $('kmSale').value = nf(u.kmVuelve); }
   }, () => { cargado = true; $('sinDb').hidden = false; pintar(); });
   db.collection('cargas').limit(1000).onSnapshot(snap => { cargas = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(c => c.fecha && c.pesos && c.litros); pintarNafta(); }, () => {});
+  db.doc('config/destinos').onSnapshot(s => { destExtra = (s.exists && s.data().lista) || []; pintarDD('ddForm', selForm); pintarDDqr(); }, () => {});
+  if(db.onClientes) db.onClientes(l => { clientesPrev = l; pintarDD('ddForm', selForm); pintarDDqr(); });
+  if(qrLugar && db.locales) db.locales().then(l => { locs = l; buscarGPS(); });
   db.doc('config/costos').onSnapshot(s => {
     if(!s.exists) return; const d = s.data();
     cfg = {precio:Number(d.precio)||0, rinde:Number(d.rinde)||0, fijos:Number(d.fijos)||0, kmMes:Number(d.kmMes)||0, costoKm:Number(d.costoKm)||0, costoHora:Number(d.costoHora)||0};
