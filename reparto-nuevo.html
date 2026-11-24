@@ -278,8 +278,6 @@ window.RP = {
     const [c, id] = path.split("/"); const r = doc(fs, C[c], id);
     return { set: o => setDoc(r, o), onSnapshot: (cb, err) => onSnapshot(r, s => cb({ exists: s.exists(), data: () => s.data() }), err) };
   },
-  // Solo lectura: clientes de la app Preventista (datos/clientes) para la lista de destinos
-  onClientes(cb){ return onSnapshot(doc(fs, "datos", "clientes"), s => cb(((s.data() || {}).lista || []).map(c => c && c.nombre).filter(Boolean)), () => cb([])); },
   // Solo lectura: ubicación de los locales cargada en el fichaje (fj_config/general)
   async locales(){ try { return ((await getDoc(doc(fs, "fj_config", "general"))).data() || {}).locales || {}; } catch (e) { return {}; } },
   ts: () => serverTimestamp()
@@ -296,7 +294,7 @@ const esCasa = x => x.motivo === 'casa';
 const esLore = x => x.motivo === 'lore';
 const esFuera = x => esCasa(x) || esLore(x);
 
-let todas = [], destExtra = [], clientesPrev = [], abierta = null, qrLugar = null, locs = {}, gpsQR = null;
+let todas = [], destExtra = [], abierta = null, qrLugar = null, locs = {}, gpsQR = null;
 let db = null, salidas = [], cfg = {precio:2100, rinde:15, fijos:0, kmMes:0, costoKm:0, costoHora:6100}, editId = null, motivo = null, periodo = '4', cargado = false, diaVer = '';
 
 /* ---------- utilidades de fecha y numeros ---------- */
@@ -651,11 +649,13 @@ Object.keys(CF).forEach(id => $(id).addEventListener('change', async () => {
 
 /* ---------- destinos ---------- */
 const SM = '045 · San Martín (reposición)';
+// Lista fija de destinos (Banchi 24/11). Los que se suman con "Otro destino" quedan en rp_config/destinos.
+const DEST_BASE = ['Panino','La Pulpería','Barlovento','Bar La Terminal','Quenty','Hotel Parque','Maxi · Mercadito Rey','Grugri S.A.S','Prado',"Supermercado Dimi's",'Fernando de Venetto','Posada de Quenti','Villa Burguesa','Il Panino Homa (Las Cañitas)','Pizzería Willy'];
 let selForm = new Set(), selQR = new Set(), editViejo = false, buscaDD = {};
 const norm = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 function listaDestinos(extra){
   const vistos = new Set([norm(SM)]), out = [];
-  [...clientesPrev, ...destExtra, ...(extra||[])].forEach(n => { const k = norm(n); if(k && !vistos.has(k)){ vistos.add(k); out.push(String(n).trim()); } });
+  [...DEST_BASE, ...destExtra, ...(extra||[])].forEach(n => { const k = norm(n); if(k && !vistos.has(k)){ vistos.add(k); out.push(String(n).trim()); } });
   out.sort((a,b) => a.localeCompare(b,'es'));
   return [SM, ...out];
 }
@@ -840,7 +840,6 @@ Object.keys(CF).forEach(id => { $(id).value = fmtCfg(CF[id], cfg[CF[id]]); }); p
   }, () => { cargado = true; $('sinDb').hidden = false; pintar(); });
   db.collection('cargas').limit(1000).onSnapshot(snap => { cargas = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(c => c.fecha && c.pesos && c.litros); pintarNafta(); }, () => {});
   db.doc('config/destinos').onSnapshot(s => { destExtra = (s.exists && s.data().lista) || []; pintarDD('ddForm', selForm); pintarDDqr(); }, () => {});
-  if(db.onClientes) db.onClientes(l => { clientesPrev = l; pintarDD('ddForm', selForm); pintarDDqr(); });
   db.doc('config/costos').onSnapshot(s => {
     if(!s.exists) return; const d = s.data();
     cfg = {precio:Number(d.precio)||0, rinde:Number(d.rinde)||0, fijos:Number(d.fijos)||0, kmMes:Number(d.kmMes)||0, costoKm:Number(d.costoKm)||0, costoHora:Number(d.costoHora)||0};
