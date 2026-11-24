@@ -810,7 +810,7 @@ function impuestosPantalla(x) {
   const mx = Math.max(1, ...m.semanas.map(s => s.v || 0));
   const M = n => n == null ? "—" : (n / 1e6).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   return cabecera(`Impuestos · informe del ${dm(u.fi)}`, cr, `IMPUESTOS_MES.xlsx: ${hora(m.mod)}${per ? " · Período " + per : ""}`) + `
-  ${m.faltantes.length ? `<div class="al r" style="font-size:15px"><b>Faltan datos en este informe:</b><ul>${m.faltantes.map(f => `<li><b>${f.n}:</b> ${esc(f.t)}</li>`).join("")}</ul>Los números de abajo pueden cambiar cuando se completen.</div>` : ""}
+  ${m.faltantes.length ? `<div class="al r" style="font-size:15px"><b>Faltan datos en este informe:</b><ul>${m.faltantes.map(f => `<li>${f.n === "Total" ? "" : `<b>${f.n}:</b> `}${esc(f.t)}</li>`).join("")}</ul>Los números de abajo pueden cambiar cuando se completen.</div>` : ""}
   ${m.viejo ? `<div class="al y">El último informe es del ${dm(u.fi)}: tiene más de una semana.</div>` : ""}
   <div class="grid kpis">
     <div class="card"><div class="lbl">IVA a favor acumulado</div><div class="big">${pesos(T.iva_a_favor_acumulado)}</div><div class="sub">Saldo del mes: ${pesos(T.iva_saldo_mes)}</div></div>
@@ -829,7 +829,7 @@ function impuestosPantalla(x) {
   <h2>IIBB a favor: cómo evoluciona por semana</h2>
   <div class="card">
     <div class="ley"><span><i style="background:var(--bar)"></i>Bajó o quedó igual</span><span><i style="background:var(--red)"></i>Creció: plata atrapada</span></div>
-    ${m.semanas.map(s => `<div class="sem"><span>${dm(s.fi)}</span><div class="par"><div class="b real ${s.crece ? "mal" : ""}" style="width:${(s.v || 0) / mx * 100}%"></div></div><span class="n">${M(s.v)}M <span class="sub">(Cárc. ${M(s.cr)} · SM ${M(s.sm)})</span></span></div>`).join("")}
+    ${m.semanas.map(s => `<div class="sem"><span>${dm(s.fi)}</span><div class="par"><div class="b real ${s.crece ? "mal" : ""}" style="width:${(s.v || 0) / mx * 100}%"></div></div><span class="n">${M(s.v)}M${s.cr != null || s.sm != null ? ` <span class="sub">(Cárc. ${M(s.cr)} · SM ${M(s.sm)})</span>` : ""}</span></div>`).join("")}
     <div class="src">Saldo a favor de IIBB al día de cada informe (fila Total). Si crece, se está reteniendo más de lo que corresponde pagar y esa plata queda trabada.</div>
   </div>
   ${m.avisos.length ? `<h2>Datos que faltan o no cierran</h2><div class="card"><ul class="sub">${m.avisos.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>` : ""}
