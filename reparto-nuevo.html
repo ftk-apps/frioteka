@@ -746,7 +746,8 @@ function pintarQR(){
     el.innerHTML = '<h2>' + (abierta ? 'Marcar vuelta' : 'Marcar salida') + '</h2>' + enCurso
       + '<p class="note" style="margin:0">' + (abierta ? 'Cuando vuelvas a 051 · Cárcano, marcá la vuelta.' : 'Marcá la salida desde 051 · Cárcano.') + '</p>'
       + (gpsMsg ? '<div class="estado warn">' + esc(gpsMsg) + '</div>' : '') + (msgQR ? '<div class="msg ok">' + esc(msgQR) + '</div>' : '')
-      + '<button class="big" id="camGo" type="button"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando tu ubicación…' : abierta ? 'Marcar vuelta' : 'Marcar salida') + '</button>';
+      + '<button class="big" id="camGo" type="button"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando tu ubicación…' : abierta ? 'Marcar vuelta' : 'Marcar salida') + '</button>'
+      + (abierta ? '<button class="ghost del" id="anular" type="button">Anular esta salida (se marcó por error)</button>' : '');
     return;
   }
   if(!cargado){ el.hidden = false; el.innerHTML = '<div class="empty">Cargando…</div>'; return; }
@@ -777,6 +778,14 @@ setInterval(() => { const c = $('qClk'); if(c){ const r = ahora(); c.textContent
 function qMsg(t, c){ msgQR = t; const m = $('qMsg'); if(m){ m.textContent = t; m.className = 'msg ' + (c||''); } }
 $('qrPanel').addEventListener('click', async e => {
   if(e.target.closest('#camGo')){ msgQR = ''; verificarLocal(); return; }
+  const an = e.target.closest('#anular');
+  if(an){
+    if(an.dataset.ok !== '1'){ an.dataset.ok = '1'; an.textContent = 'Tocá de nuevo para anularla'; return; }
+    if(!db || !abierta) return; an.disabled = true;
+    try{ await db.collection('salidas').doc(abierta.id).delete(); abierta = null; gpsMsg = ''; msgQR = 'Salida anulada.'; pintarQR(); }
+    catch(err){ an.disabled = false; an.textContent = 'No se pudo anular'; }
+    return;
+  }
   const t = e.target.closest('button[data-tq]'); if(t){ tipoQR = t.dataset.tq; msgQR = ''; pintarQR(); return; }
   if(!e.target.closest('#qGo')) return;
   if(!db) return qMsg('Sin conexión. Revisá internet y probá de nuevo.','err');
