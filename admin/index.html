@@ -180,7 +180,12 @@ function leerHoja1(g) {
   }
   // Gestión: el monto está escrito en el rótulo ("BANCHI 2M", "FERNANDA (2M ...")
   let gestion = 0, nGest = 0;
-  for (const f of g) { const t = txt(f[1]); if (/^GESTION\s*-/i.test(norm(t))) { const m = t.match(/(\d+(?:[.,]\d+)?)\s*M\b/); if (m) { gestion += parseFloat(m[1].replace(",", ".")) * 1e6; nGest++; } } }
+  // El rótulo puede estar en B (monto en el texto) o en C con el monto como número en B (así desde el 24/11)
+  for (const f of g) {
+    const t = [txt(f[1]), txt(f[2])].find(s => /^GESTION\s*-/i.test(norm(s))); if (!t) continue;
+    const m = t.match(/(\d+(?:[.,]\d+)?)\s*M\b/), monto = num(f[1]) ?? (m ? parseFloat(m[1].replace(",", ".")) * 1e6 : null);
+    if (monto != null) { gestion += monto; nGest++; }
+  }
   if (nGest !== 2) avisos.push(`Hoja1: encontré ${nGest} sueldos de gestión (esperaba 2)`);
   // Vencimientos anotados en Hoja1 ("a pagar hasta 30/11", "VEP expira 13/12")
   const notas = [];
