@@ -129,6 +129,18 @@ window.guardarPreventistas = async function() {
 window.guardarHistorialRemitos = async function() {
   await setDoc(doc(db, "datos", "historialRemitos"), {lista: window.historialRemitos});
 };
+/* Número de nota de venta: se pide a la base al confirmar la venta (transacción).
+   "valor" = último NV usado. Nunca se repite aunque haya varios celulares o se recargue la página. */
+window.siguienteNV = async function(maxLocal) {
+  return await runTransaction(db, async function(tx){
+    var ref = doc(db, "datos", "nv");
+    var snap = await tx.get(ref);
+    var ult = snap.exists() ? (parseInt(snap.data().valor) || 0) : 0;
+    var sig = Math.max(ult, parseInt(maxLocal) || 0) + 1;
+    tx.set(ref, {valor: sig}, {merge:true});
+    return sig;
+  });
+};
 window.guardarNv = async function() {
   await setDoc(doc(db, "datos", "nv"), {valor: window.nv, nroRecibo: window.nroReciboCC||0}, {merge:true});
 };
@@ -3366,6 +3378,13 @@ document.addEventListener("DOMContentLoaded", function(){
         ctaCteInfo={saldoAnterior:saldoActual,estaVenta:f.final,saldoNuevo:saldoTrasVenta};
       }
     }
+    // Número único de la nota de venta (se pide recién ahora, justo antes de imprimir)
+    var btnGen=this;btnGen.disabled=true;
+    try{
+      var maxLocal=pedidos.reduce(function(m,p){var k=parseInt(String(p.nv||"").replace(/\D/g,""))||0;return k>m?k:m;},0);
+      nv=await window.siguienteNV(maxLocal);
+    }catch(eNv){btnGen.disabled=false;toast("No se pudo obtener el número de nota. Revisá la conexión y probá de nuevo.");return;}
+    btnGen.disabled=false;
     var ctx={cl:cl,dir:dir2,pago:nvFpago,np:nvFmt(nv),fecha:new Date().toLocaleDateString("es-AR"),total:f.final,subtotal:subtotal,bultos:bultos,kg:kg,descLinea:descLinea,envio:tMin>=60000,obs:obsVal,nroFactura:nroFactVal,ctaCteInfo:ctaCteInfo};
     var ok=await generarPDF(items,ctx);
     if(ok){
@@ -3387,7 +3406,7 @@ document.addEventListener("DOMContentLoaded", function(){
         clientes.push({nombre:cl,tel:"",dir:dir2,cuit:"",notas:"Creado desde venta preventista",cc:esCC,saldo:0,tipoCliente:"sin_clasificar"});
         window.guardarClientes();
       }
-      window.guardarNv();nv++;
+      nv++; // el contador ya quedó guardado en la base al pedir el número
       toast("Venta "+rec.nv+" registrada");
       marcarPendienteProcessado();
       setTimeout(function(){nvNuevoPedido();gTab="ventas";irA("p3");renderGestion();},1800);
