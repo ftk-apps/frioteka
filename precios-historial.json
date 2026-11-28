@@ -3793,5 +3793,23 @@
 "despues": 11
 }
 ]
+},
+{
+"fecha": "28/11/2026",
+"hora": "10:40",
+"tipo": "Alta",
+"fuente": "t051.frioteka.ar/admin/productos (RETAIL), 3070 cargada en el sistema el 27/11",
+"cargo": "Claude",
+"aprobo": "Banchi",
+"resumen": "Alta de 3070 PAQ. PAPAS LW 9MM FRY ESSENTIALS X 2KG: minorista $10.320, mayorista $7.625,58, caja 6. La 3047 (2,5 kg) sigue activa en el sistema y en las apps",
+"cambios": [
+{
+"cod": 3070,
+"producto": "PAQ. PAPAS LW 9MM FRY ESSENTIALS X 2KG",
+"campo": "alta",
+"antes": null,
+"despues": "min 10320 / may 7626 / caja 6"
+}
+]
 }
 ]
